@@ -8,6 +8,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [RouterLink, RouterLinkActive, CommonModule],
   template: `
+    <button class="menu-fab" (click)="toggleMenu()" [class.hidden]="isOpen">☰</button>
     <aside class="sidebar" [class.open]="isOpen">
       <div class="sidebar-header">
         <h2>Expenses Control</h2>
@@ -16,7 +17,7 @@ import { CommonModule } from '@angular/common';
         </button>
       </div>
 
-      <nav class="sidebar-nav">
+      <nav class="sidebar-nav" (click)="closeMenu()">
         <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
           <span class="icon">📊</span> Dashboard
         </a>
@@ -146,6 +147,30 @@ import { CommonModule } from '@angular/common';
     .logout-btn:hover {
       background: #c62828;
     }
+    .menu-fab {
+      display: none;
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 101;
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 8px;
+      background: #1a1a2e;
+      color: white;
+      font-size: 1.3rem;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    @media (max-width: 768px) {
+      .menu-fab {
+        display: block;
+      }
+      .menu-fab.hidden {
+        display: none;
+      }
+    }
     @media (max-width: 768px) {
       .sidebar {
         transform: translateX(-100%);
@@ -166,6 +191,10 @@ export class SidebarComponent {
 
   toggleMenu(): void {
     this.isOpen = !this.isOpen;
+  }
+
+  closeMenu(): void {
+    this.isOpen = false;
   }
 
   logout(): void {
