@@ -1,0 +1,40 @@
+name: Keep Alive
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: Ping services
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping frontend and backend
+        env:
+          FRONTEND_URL: ${{ secrets.RENDER_FRONTEND_URL }}
+          BACKEND_URL: ${{ secrets.RENDER_BACKEND_URL }}
+        run: |
+          if [ -z "$FRONTEND_URL" ] || [ -z "$BACKEND_URL" ]; then
+            echo "::error::Set RENDER_FRONTEND_URL and RENDER_BACKEND_URL as repository secrets"
+            exit 1
+          fi
+
+          ping_url() {
+            local url="$1"
+            echo "Pinging $url"
+            for attempt in 1 2 3; do
+              code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 120 "$url" || echo "timeout")
+              echo "  attempt $attempt -> HTTP $code"
+              if [ "$code" = "200" ] || [ "$code" = "304" ]; then
+                return 0
+              fi
+              echo "  cold start in progress, retrying in 30s..."
+              sleep 30
+            done
+            echo "::warning::$url did not respond with 2xx after retries (got $code)"
+            return 0
+          }
+
+          ping_url "$FRONTEND_URL"
+          ping_url "$BACKEND_URL"
