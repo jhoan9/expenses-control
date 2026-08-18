@@ -11,6 +11,7 @@ const pool = new Pool({
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
   options: '-c search_path=expenses_control',
+  ...(env.DB_SSL ? { ssl: { rejectUnauthorized: false } } : {}),
 });
 
 export const query = async <T = any>(

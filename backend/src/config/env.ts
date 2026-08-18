@@ -12,6 +12,7 @@ export const env = {
   DB_USER: process.env.DB_USER || 'postgres',
   DB_PASSWORD: process.env.DB_PASSWORD || '',
   DB_NAME: process.env.DB_NAME || 'expenses_control',
+  DB_SSL: process.env.DB_SSL === 'true',
 
   JWT_SECRET: process.env.JWT_SECRET || 'fallback-secret',
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '15m',
