@@ -78,10 +78,11 @@ export class IncomeService {
     return { income, total };
   }
 
-  async findById(id: number, userId: number): Promise<Income> {
+  async findById(id: number, userId: number, client?: PoolClient): Promise<Income> {
     const income = await queryOne<Income>(
       'SELECT * FROM income WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL',
-      [id, userId]
+      [id, userId],
+      client
     );
 
     if (!income) {
@@ -103,7 +104,7 @@ export class IncomeService {
         throw AppError.notFound('Account not found');
       }
 
-      const newBalance = account.balance + data.amount;
+      const newBalance = Number(account.balance) + Number(data.amount);
 
       const result = await execute(
         'INSERT INTO income (user_id, account_id, category_id, amount, description, date) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
@@ -121,11 +122,11 @@ export class IncomeService {
 
       await execute(
         'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-        [data.account_id, 'income', data.amount, account.balance, newBalance, 'income', insertId, data.description || null],
+        [data.account_id, 'income', data.amount, Number(account.balance), newBalance, 'income', insertId, data.description || null],
         client
       );
 
-      return this.findById(insertId, userId);
+      return this.findById(insertId, userId, client);
     });
   }
 
@@ -172,7 +173,7 @@ export class IncomeService {
 
       await execute(
         'UPDATE accounts SET balance = $1 WHERE id = $2',
-        [oldAccount.balance - existing.amount, existing.account_id],
+        [Number(oldAccount.balance) - Number(existing.amount), existing.account_id],
         client
       );
 
@@ -185,11 +186,11 @@ export class IncomeService {
 
         await execute(
           'UPDATE accounts SET balance = $1 WHERE id = $2',
-          [newAccount.balance + newAmount, newAccountId],
+          [Number(newAccount.balance) + Number(newAmount), newAccountId],
           client
         );
       } else {
-        const updatedBalance = oldAccount.balance - existing.amount + newAmount;
+        const updatedBalance = Number(oldAccount.balance) - Number(existing.amount) + Number(newAmount);
         await execute(
           'UPDATE accounts SET balance = $1 WHERE id = $2',
           [updatedBalance, newAccountId],
@@ -204,7 +205,7 @@ export class IncomeService {
         client
       );
 
-      return this.findById(id, userId);
+      return this.findById(id, userId, client);
     });
   }
 
@@ -220,7 +221,7 @@ export class IncomeService {
 
       await execute(
         'UPDATE accounts SET balance = $1 WHERE id = $2',
-        [account.balance - existing.amount, existing.account_id],
+        [Number(account.balance) - Number(existing.amount), existing.account_id],
         client
       );
 
