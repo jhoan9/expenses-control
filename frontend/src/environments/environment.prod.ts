@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: '/api',
+  apiUrl: 'https://expenses-control-api-dv9k.onrender.com/api',
 };
