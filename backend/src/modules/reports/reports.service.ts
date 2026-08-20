@@ -12,7 +12,7 @@ export class ReportsService {
     const lastDayMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
 
     const totalBalance = await queryOne<{ total: number }>(
-      'SELECT COALESCE(SUM(balance), 0) as total FROM accounts WHERE user_id = $1 AND deleted_at IS NULL',
+      'SELECT COALESCE(SUM(CASE WHEN type = \'credit_card\' THEN -balance ELSE balance END), 0) as total FROM accounts WHERE user_id = $1 AND deleted_at IS NULL',
       [userId]
     );
 
@@ -70,16 +70,16 @@ export class ReportsService {
     );
 
     return {
-      balance: totalBalance?.total || 0,
+      balance: Number(totalBalance?.total) || 0,
       monthly: {
-        income: monthlyIncome?.total || 0,
-        expenses: monthlyExpenses?.total || 0,
-        net: (monthlyIncome?.total || 0) - (monthlyExpenses?.total || 0),
+        income: Number(monthlyIncome?.total) || 0,
+        expenses: Number(monthlyExpenses?.total) || 0,
+        net: (Number(monthlyIncome?.total) || 0) - (Number(monthlyExpenses?.total) || 0),
       },
-      third_party: thirdPartyTotal?.total || 0,
-      investments: investmentsSummary?.total_invested || 0,
-      loans: loansSummary?.total_remaining || 0,
-      credits: creditsSummary?.total_balance || 0,
+      third_party: Number(thirdPartyTotal?.total) || 0,
+      investments: Number(investmentsSummary?.total_invested) || 0,
+      loans: Number(loansSummary?.total_remaining) || 0,
+      credits: Number(creditsSummary?.total_balance) || 0,
       recent_expenses: recentExpenses,
       recent_income: recentIncome,
     };
@@ -292,7 +292,8 @@ export class ReportsService {
       [userId]
     );
 
-    const totalBalance = accounts.reduce((sum: number, a: any) => sum + Number(a.balance), 0);
+    const totalBalance = accounts.reduce((sum: number, a: any) =>
+      sum + (a.type === 'credit_card' ? -Number(a.balance) : Number(a.balance)), 0);
 
     return {
       accounts,
