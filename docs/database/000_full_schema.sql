@@ -214,6 +214,7 @@ CREATE TABLE IF NOT EXISTS positions (
 
 CREATE TABLE IF NOT EXISTS third_party_accounts (
   id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL,
   person_name VARCHAR(100) NOT NULL,
   total_contributed DECIMAL(15,2) DEFAULT 0.00,
   total_invested DECIMAL(15,2) DEFAULT 0.00,
@@ -221,7 +222,9 @@ CREATE TABLE IF NOT EXISTS third_party_accounts (
   total_gains DECIMAL(15,2) DEFAULT 0.00,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  deleted_at TIMESTAMP NULL
+  deleted_at TIMESTAMP NULL,
+  CONSTRAINT fk_third_party_account_user FOREIGN KEY (user_id)
+    REFERENCES users(id)
 );
 
 CREATE TABLE IF NOT EXISTS third_party_movements (

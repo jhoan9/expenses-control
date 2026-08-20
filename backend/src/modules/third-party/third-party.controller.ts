@@ -5,7 +5,7 @@ import { AuthRequest } from '../../shared/middleware/auth.middleware';
 export class ThirdPartyController {
   async getAll(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const accounts = await thirdPartyService.findAll();
+      const accounts = await thirdPartyService.findAll(req.userId!);
       res.json({
         success: true,
         data: accounts,
@@ -18,7 +18,7 @@ export class ThirdPartyController {
   async getById(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = parseInt(req.params.id);
-      const account = await thirdPartyService.findById(id);
+      const account = await thirdPartyService.findById(id, req.userId!);
       res.json({
         success: true,
         data: account,
@@ -30,7 +30,7 @@ export class ThirdPartyController {
 
   async create(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const account = await thirdPartyService.create(req.body);
+      const account = await thirdPartyService.create(req.userId!, req.body);
       res.status(201).json({
         success: true,
         data: account,
@@ -43,7 +43,7 @@ export class ThirdPartyController {
   async update(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = parseInt(req.params.id);
-      const account = await thirdPartyService.update(id, req.body);
+      const account = await thirdPartyService.update(id, req.userId!, req.body);
       res.json({
         success: true,
         data: account,
@@ -56,7 +56,7 @@ export class ThirdPartyController {
   async delete(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = parseInt(req.params.id);
-      await thirdPartyService.delete(id);
+      await thirdPartyService.delete(id, req.userId!);
       res.json({
         success: true,
         message: 'Third party account deleted successfully',
@@ -82,7 +82,7 @@ export class ThirdPartyController {
   async getSummary(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = parseInt(req.params.id);
-      const summary = await thirdPartyService.getSummary(id);
+      const summary = await thirdPartyService.getSummary(id, req.userId!);
       res.json({
         success: true,
         data: summary,

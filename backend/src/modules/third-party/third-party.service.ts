@@ -42,16 +42,17 @@ interface CreateMovementDTO {
 }
 
 export class ThirdPartyService {
-  async findAll(): Promise<ThirdPartyAccount[]> {
+  async findAll(userId: number): Promise<ThirdPartyAccount[]> {
     return query<ThirdPartyAccount>(
-      'SELECT * FROM third_party_accounts WHERE deleted_at IS NULL ORDER BY person_name'
+      'SELECT * FROM third_party_accounts WHERE user_id = $1 AND deleted_at IS NULL ORDER BY person_name',
+      [userId]
     );
   }
 
-  async findById(id: number): Promise<ThirdPartyAccountWithMovements> {
+  async findById(id: number, userId: number): Promise<ThirdPartyAccountWithMovements> {
     const account = await queryOne<ThirdPartyAccount>(
-      'SELECT * FROM third_party_accounts WHERE id = $1 AND deleted_at IS NULL',
-      [id]
+      'SELECT * FROM third_party_accounts WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL',
+      [id, userId]
     );
 
     if (!account) {
@@ -66,10 +67,10 @@ export class ThirdPartyService {
     return { ...account, movements };
   }
 
-  async create(data: CreateThirdPartyDTO): Promise<ThirdPartyAccount> {
+  async create(userId: number, data: CreateThirdPartyDTO): Promise<ThirdPartyAccount> {
     const result = await execute(
-      'INSERT INTO third_party_accounts (person_name) VALUES ($1) RETURNING id',
-      [data.person_name]
+      'INSERT INTO third_party_accounts (user_id, person_name) VALUES ($1, $2) RETURNING id',
+      [userId, data.person_name]
     );
 
     return queryOne<ThirdPartyAccount>(
@@ -78,8 +79,8 @@ export class ThirdPartyService {
     ) as Promise<ThirdPartyAccount>;
   }
 
-  async update(id: number, data: Partial<CreateThirdPartyDTO>): Promise<ThirdPartyAccount> {
-    await this.findById(id);
+  async update(id: number, userId: number, data: Partial<CreateThirdPartyDTO>): Promise<ThirdPartyAccount> {
+    await this.findById(id, userId);
 
     if (data.person_name !== undefined) {
       await execute(
@@ -94,8 +95,8 @@ export class ThirdPartyService {
     ) as Promise<ThirdPartyAccount>;
   }
 
-  async delete(id: number): Promise<void> {
-    await this.findById(id);
+  async delete(id: number, userId: number): Promise<void> {
+    await this.findById(id, userId);
     await execute(
       'UPDATE third_party_accounts SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1',
       [id]
@@ -105,8 +106,8 @@ export class ThirdPartyService {
   async addMovement(thirdPartyId: number, userId: number, data: CreateMovementDTO): Promise<ThirdPartyMovement> {
     return transaction(async (client: PoolClient) => {
       const account = await queryOne<ThirdPartyAccount>(
-        'SELECT * FROM third_party_accounts WHERE id = $1 AND deleted_at IS NULL',
-        [thirdPartyId],
+        'SELECT * FROM third_party_accounts WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL',
+        [thirdPartyId, userId],
         client
       );
 
@@ -166,8 +167,8 @@ export class ThirdPartyService {
     });
   }
 
-  async getSummary(id: number): Promise<any> {
-    const account = await this.findById(id);
+  async getSummary(id: number, userId: number): Promise<any> {
+    const account = await this.findById(id, userId);
 
     const movementsByType = await query<{ type: string; total: number }>(
       'SELECT type, COALESCE(SUM(amount), 0) as total FROM third_party_movements WHERE third_party_account_id = $1 GROUP BY type',
