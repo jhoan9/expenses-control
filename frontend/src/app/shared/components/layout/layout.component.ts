@@ -28,7 +28,7 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
     @media (max-width: 768px) {
       .main-content {
         margin-left: 0;
-        padding: 16px;
+        padding: 68px 16px 16px;
       }
     }
   `]
