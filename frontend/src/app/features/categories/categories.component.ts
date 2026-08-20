@@ -25,18 +25,11 @@ import { ApiService } from '../../core/services/api.service';
       <div class="cards-grid">
         <div class="category-card" *ngFor="let cat of filteredCategories">
           <div class="card-header">
-            <div class="card-title-row">
-              <span class="color-dot" [style.background]="cat.color || '#999'"></span>
-              <span class="card-icon" *ngIf="cat.icon">{{ cat.icon }}</span>
-              <h3>{{ cat.name }}</h3>
-            </div>
+            <h3>{{ cat.name }}</h3>
             <div class="card-actions">
               <button class="btn-icon" (click)="openCategoryModal(cat)">✏️</button>
               <button class="btn-icon" (click)="deleteCategory(cat.id)">🗑️</button>
             </div>
-          </div>
-          <div class="card-type">
-            <span class="type-badge" [ngClass]="'type-' + cat.type">{{ getTypeLabel(cat.type) }}</span>
           </div>
 
           <div class="subcategories-section">
@@ -55,10 +48,12 @@ import { ApiService } from '../../core/services/api.service';
               </div>
             </div>
 
-            <div class="subcategory-form">
+            <div class="subcategory-form" *ngIf="subInputFor === cat.id">
               <input [(ngModel)]="newSubName" placeholder="Nueva subcategoría" class="sub-input" (keyup.enter)="addSubcategory(cat.id)" />
               <button class="btn-icon-sm btn-add" (click)="addSubcategory(cat.id)" [disabled]="!newSubName.trim()">✓</button>
+              <button class="btn-icon-sm" (click)="cancelAddSub()">✕</button>
             </div>
+            <button class="btn-add-sub" *ngIf="subInputFor !== cat.id" (click)="startAddSub(cat.id)">+ Agregar subcategoría</button>
           </div>
         </div>
       </div>
@@ -232,6 +227,19 @@ import { ApiService } from '../../core/services/api.service';
       font-size: 0.85rem;
       font-style: italic;
     }
+    .btn-add-sub {
+      margin-top: 8px;
+      background: none;
+      border: 1px dashed #c5d3ea;
+      color: #1565c0;
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .btn-add-sub:hover { background: #f0f4ff; }
     .btn-primary {
       background: #4caf50;
       color: white;
@@ -369,6 +377,7 @@ export class CategoriesComponent implements OnInit {
   categoryForm: FormGroup;
 
   newSubName = '';
+  subInputFor: number | null = null;
 
   editingSubId: number | null = null;
   editingSubName = '';
@@ -448,11 +457,21 @@ export class CategoriesComponent implements OnInit {
     this.api.delete(`/categories/${id}`).subscribe({ next: () => this.loadCategories() });
   }
 
+  startAddSub(categoryId: number): void {
+    this.subInputFor = categoryId;
+    this.newSubName = '';
+  }
+
+  cancelAddSub(): void {
+    this.subInputFor = null;
+    this.newSubName = '';
+  }
+
   addSubcategory(categoryId: number): void {
     const name = this.newSubName.trim();
     if (!name) return;
     this.api.post(`/categories/${categoryId}/subcategories`, { name }).subscribe({
-      next: () => { this.loadCategories(); this.newSubName = ''; },
+      next: () => { this.loadCategories(); this.cancelAddSub(); },
     });
   }
 

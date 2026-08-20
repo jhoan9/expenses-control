@@ -11,6 +11,7 @@ interface Account {
   type: AccountType;
   currency: string;
   balance: number;
+  credit_limit: number;
   is_active: boolean;
   created_at: Date;
   updated_at: Date;
@@ -21,12 +22,14 @@ interface CreateAccountDTO {
   type: AccountType;
   currency?: string;
   balance?: number;
+  credit_limit?: number;
 }
 
 interface UpdateAccountDTO {
   name?: string;
   type?: AccountType;
   balance?: number;
+  credit_limit?: number;
   is_active?: boolean;
 }
 
@@ -68,8 +71,8 @@ export class AccountsService {
 
   async create(userId: number, data: CreateAccountDTO): Promise<Account> {
     const result = await execute(
-      'INSERT INTO accounts (user_id, name, type, currency, balance) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-      [userId, data.name, data.type, data.currency || 'COP', data.balance || 0]
+      'INSERT INTO accounts (user_id, name, type, currency, balance, credit_limit) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+      [userId, data.name, data.type, data.currency || 'COP', data.balance || 0, data.credit_limit || 0]
     );
 
     return this.findById(result.rows[0].id, userId);
@@ -96,6 +99,10 @@ export class AccountsService {
     if (data.balance !== undefined) {
       fields.push(`balance = $${fields.length + 1}`);
       values.push(data.balance);
+    }
+    if (data.credit_limit !== undefined) {
+      fields.push(`credit_limit = $${fields.length + 1}`);
+      values.push(data.credit_limit);
     }
 
     if (fields.length === 0) {

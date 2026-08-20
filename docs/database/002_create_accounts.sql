@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS accounts (
   type VARCHAR(20) CHECK (type IN ('savings', 'checking', 'cash', 'investment', 'credit_card', 'other')) NOT NULL,
   currency VARCHAR(3) DEFAULT 'COP',
   balance DECIMAL(15,2) DEFAULT 0.00,
+  credit_limit DECIMAL(15,2) DEFAULT 0.00,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -51,14 +51,14 @@ import { ApiService } from '../../core/services/api.service';
             </div>
             <div class="detail-actions">
               <button class="btn-action btn-buy" (click)="openTradeModal('buy')">Comprar</button>
-              <button class="btn-action btn-sell" (click)="openTradeModal('sell')">Vender</button>
+              <button class="btn-action btn-sell" (click)="openTradeModal('sell')" *ngIf="hasOpenQuantity(selectedInvestment)">Vender</button>
             </div>
           </div>
 
           <div class="summary-bar" *ngIf="selectedInvestment">
             <div class="summary-item">
               <span>Cantidad Abierta</span>
-              <strong>{{ selectedInvestment.open_quantity || 0 }}</strong>
+              <strong>{{ formatQuantity(selectedInvestment.open_quantity) }}</strong>
             </div>
             <div class="summary-item">
               <span>Precio Promedio</span>
@@ -89,7 +89,7 @@ import { ApiService } from '../../core/services/api.service';
                   <td>
                     <span class="trade-badge" [class]="'trade-' + pos.type">{{ pos.type === 'buy' ? 'Compra' : 'Venta' }}</span>
                   </td>
-                  <td>{{ pos.quantity }}</td>
+                  <td>{{ formatQuantity(pos.quantity) }}</td>
                   <td>{{ formatCurrency(pos.unit_price) }}</td>
                   <td>{{ formatCurrency(pos.commission) }}</td>
                   <td>{{ formatCurrency(pos.total_cost) }}</td>
@@ -141,7 +141,7 @@ import { ApiService } from '../../core/services/api.service';
                 <td>{{ pos.name }}</td>
                 <td><span class="ticker">{{ pos.ticker || '-' }}</span></td>
                 <td><span class="type-badge" [class]="'type-' + pos.type">{{ getTypeLabel(pos.type) }}</span></td>
-                <td>{{ pos.open_quantity }}</td>
+                <td>{{ formatQuantity(pos.open_quantity) }}</td>
                 <td>{{ formatCurrency(pos.total_cost) }}</td>
                 <td>{{ formatCurrency(pos.total_cost / pos.open_quantity) }}</td>
                 <td>{{ pos.position_count }}</td>
@@ -194,8 +194,8 @@ import { ApiService } from '../../core/services/api.service';
                 <td>{{ pos.name }}</td>
                 <td><span class="ticker">{{ pos.ticker || '-' }}</span></td>
                 <td><span class="type-badge" [class]="'type-' + pos.type">{{ getTypeLabel(pos.type) }}</span></td>
-                <td>{{ pos.bought_quantity }}</td>
-                <td>{{ pos.sold_quantity }}</td>
+                <td>{{ formatQuantity(pos.bought_quantity) }}</td>
+                <td>{{ formatQuantity(pos.sold_quantity) }}</td>
                 <td>{{ formatCurrency(pos.bought_value) }}</td>
                 <td>{{ formatCurrency(pos.sold_value) }}</td>
                 <td>
@@ -690,6 +690,14 @@ export class InvestmentsComponent implements OnInit {
 
   get closedResult(): number {
     return this.closedTotalReceived - this.closedTotalInvested;
+  }
+
+  hasOpenQuantity(inv: any): boolean {
+    return (Number(inv.open_quantity) || 0) > 0;
+  }
+
+  formatQuantity(quantity: number): string {
+    return Math.round(Number(quantity)).toLocaleString('es-CO');
   }
 
   positionResult(pos: any): number {

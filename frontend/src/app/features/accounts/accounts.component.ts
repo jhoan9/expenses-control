@@ -28,6 +28,9 @@ import { ApiService } from '../../core/services/api.service';
           <p class="account-balance" [class.debt]="account.type === 'credit_card'">
             {{ account.type === 'credit_card' ? 'Debe: ' + formatCurrency(account.balance) : formatCurrency(account.balance) }}
           </p>
+          <p class="account-available" *ngIf="account.type === 'credit_card' && availableCredit(account) > 0">
+            Disponible: {{ formatCurrency(availableCredit(account)) }} de {{ formatCurrency(account.credit_limit) }}
+          </p>
           <div class="account-actions-row">
             <button class="btn-action" (click)="openTransfer(account)">⇄ Transferir</button>
             <button class="btn-action btn-card" *ngIf="account.type === 'credit_card'" (click)="openAbono(account)">💳 Pagar Tarjeta</button>
@@ -70,6 +73,11 @@ import { ApiService } from '../../core/services/api.service';
             <div class="form-group">
               <label for="balance">{{ form.value.type === 'credit_card' ? 'Deuda Actual' : 'Saldo Inicial' }}</label>
               <input id="balance" type="number" formControlName="balance" placeholder="0" />
+            </div>
+
+            <div class="form-group" *ngIf="form.value.type === 'credit_card'">
+              <label for="credit_limit">Cupo de la Tarjeta</label>
+              <input id="credit_limit" type="number" formControlName="credit_limit" placeholder="0" />
             </div>
 
             <div class="modal-footer">
@@ -216,6 +224,12 @@ import { ApiService } from '../../core/services/api.service';
       margin: 0;
     }
     .account-balance.debt { color: #e53935; }
+    .account-available {
+      font-size: 0.9rem;
+      color: #2e7d32;
+      margin: 4px 0 0;
+      font-weight: 500;
+    }
     .account-actions-row {
       display: flex;
       gap: 8px;
@@ -375,6 +389,7 @@ export class AccountsComponent implements OnInit {
       name: ['', [Validators.required, Validators.maxLength(100)]],
       type: ['', [Validators.required]],
       balance: [0, [Validators.required]],
+      credit_limit: [0],
     });
     this.transferForm = this.fb.group({
       to_account_id: [null, [Validators.required]],
@@ -467,7 +482,7 @@ export class AccountsComponent implements OnInit {
 
   openModal(): void {
     this.editingId = null;
-    this.form.reset({ name: '', type: '', balance: 0 });
+    this.form.reset({ name: '', type: '', balance: 0, credit_limit: 0 });
     this.showModal = true;
   }
 
@@ -478,7 +493,7 @@ export class AccountsComponent implements OnInit {
 
   editAccount(account: any): void {
     this.editingId = account.id;
-    this.form.patchValue({ name: account.name, type: account.type, balance: account.balance });
+    this.form.patchValue({ name: account.name, type: account.type, balance: account.balance, credit_limit: account.credit_limit || 0 });
     this.showModal = true;
   }
 
@@ -511,6 +526,10 @@ export class AccountsComponent implements OnInit {
   getAccountTypeLabel(type: string): string {
     const labels: Record<string, string> = { savings: 'Ahorros', checking: 'Corriente', cash: 'Efectivo', investment: 'Inversión', credit_card: 'Tarjeta de Crédito', other: 'Otro' };
     return labels[type] || type;
+  }
+
+  availableCredit(account: any): number {
+    return (Number(account.credit_limit) || 0) - (Number(account.balance) || 0);
   }
 
   formatCurrency(value: number): string {

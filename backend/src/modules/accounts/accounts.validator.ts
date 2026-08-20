@@ -18,6 +18,10 @@ export const createAccountValidator = [
     .optional()
     .isNumeric()
     .withMessage('Balance must be a number'),
+  body('credit_limit')
+    .optional()
+    .isNumeric()
+    .withMessage('credit_limit must be a number'),
 ];
 
 export const updateAccountValidator = [
@@ -30,6 +34,14 @@ export const updateAccountValidator = [
     .optional()
     .isIn(ACCOUNT_TYPES)
     .withMessage('Type must be savings, checking, cash, investment, credit_card, or other'),
+  body('balance')
+    .optional()
+    .isNumeric()
+    .withMessage('Balance must be a number'),
+  body('credit_limit')
+    .optional()
+    .isNumeric()
+    .withMessage('credit_limit must be a number'),
   body('is_active')
     .optional()
     .isBoolean()
