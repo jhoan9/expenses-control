@@ -107,6 +107,32 @@ export class BudgetController {
     }
   }
 
+  async bulkItems(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const budgetId = parseInt(req.params.id);
+      const budget = await budgetService.bulkUpdateItems(budgetId, req.userId!, req.body);
+      res.json({
+        success: true,
+        data: budget,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async copyNext(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const budgetId = parseInt(req.params.id);
+      const budget = await budgetService.copyNext(budgetId, req.userId!);
+      res.status(201).json({
+        success: true,
+        data: budget,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getSummary(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = parseInt(req.params.id);

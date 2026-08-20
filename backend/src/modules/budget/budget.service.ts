@@ -223,6 +223,105 @@ export class BudgetService {
     await execute('UPDATE budget_items SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1', [id]);
   }
 
+  async bulkUpdateItems(
+    budgetId: number,
+    userId: number,
+    data: { total_income?: number; items: Array<Partial<CreateBudgetItemDTO> & { id?: number; status?: BudgetItem['status']; paid_date?: string | null }> }
+  ): Promise<BudgetWithItems> {
+    await this.findById(budgetId, userId);
+
+    if (data.total_income !== undefined) {
+      await execute(
+        'UPDATE budgets SET total_income = $1 WHERE id = $2 AND user_id = $3',
+        [data.total_income, budgetId, userId]
+      );
+    }
+
+    for (const item of data.items || []) {
+      if (item.id) {
+        const fields: string[] = [];
+        const values: any[] = [];
+
+        if (item.name !== undefined) {
+          fields.push(`name = $${fields.length + 1}`);
+          values.push(item.name);
+        }
+        if (item.amount !== undefined) {
+          fields.push(`amount = $${fields.length + 1}`);
+          values.push(item.amount);
+        }
+        if (item.due_date !== undefined) {
+          fields.push(`due_date = $${fields.length + 1}`);
+          values.push(item.due_date);
+        }
+        if (item.status !== undefined) {
+          fields.push(`status = $${fields.length + 1}`);
+          values.push(item.status);
+          if (item.status === 'completed' && item.paid_date === undefined) {
+            fields.push(`paid_date = $${fields.length + 1}`);
+            values.push(new Date().toISOString().split('T')[0]);
+          }
+          if (item.status !== 'completed') {
+            fields.push(`paid_date = $${fields.length + 1}`);
+            values.push(null);
+          }
+        }
+        if (item.is_recurrent !== undefined) {
+          fields.push(`is_recurrent = $${fields.length + 1}`);
+          values.push(item.is_recurrent);
+        }
+        if (item.notes !== undefined) {
+          fields.push(`notes = $${fields.length + 1}`);
+          values.push(item.notes);
+        }
+
+        if (fields.length > 0) {
+          fields.push(`updated_at = CURRENT_TIMESTAMP`);
+          values.push(item.id, budgetId);
+          await execute(
+            `UPDATE budget_items SET ${fields.join(', ')} WHERE id = $${values.length - 1} AND budget_id = $${values.length} AND deleted_at IS NULL`,
+            values
+          );
+        }
+      } else if (item.name && item.amount != null) {
+        await execute(
+          'INSERT INTO budget_items (budget_id, name, amount, due_date, is_recurrent, notes) VALUES ($1, $2, $3, $4, $5, $6)',
+          [budgetId, item.name, item.amount, item.due_date || new Date().toISOString().split('T')[0], item.is_recurrent || false, item.notes || null]
+        );
+      }
+    }
+
+    return this.findById(budgetId, userId);
+  }
+
+  async copyNext(budgetId: number, userId: number): Promise<BudgetWithItems> {
+    const budget = await this.findById(budgetId, userId);
+
+    const nextPeriodType: Budget['period_type'] = budget.period_type === 'first' ? 'second' : 'first';
+    const nextStart = new Date(budget.end_date);
+    nextStart.setDate(nextStart.getDate() + 1);
+    const nextEnd = new Date(nextStart);
+    nextEnd.setDate(nextEnd.getDate() + 14);
+
+    const formatDate = (d: Date) => d.toISOString().split('T')[0];
+
+    const result = await execute(
+      'INSERT INTO budgets (user_id, period_type, start_date, end_date, total_income) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+      [userId, nextPeriodType, formatDate(nextStart), formatDate(nextEnd), budget.total_income]
+    );
+    const newBudgetId = result.rows[0].id;
+
+    const activeItems = (budget.items || []).filter(i => i.status !== 'cancelled');
+    for (const item of activeItems) {
+      await execute(
+        'INSERT INTO budget_items (budget_id, name, amount, due_date, is_recurrent, notes) VALUES ($1, $2, $3, $4, $5, $6)',
+        [newBudgetId, item.name, item.amount, item.due_date, item.is_recurrent, item.notes]
+      );
+    }
+
+    return this.findById(newBudgetId, userId);
+  }
+
   async getSummary(id: number, userId: number): Promise<any> {
     const budget = await this.findById(id, userId);
 

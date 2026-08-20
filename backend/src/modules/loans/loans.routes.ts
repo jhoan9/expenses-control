@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { loansController } from './loans.controller';
-import { authenticate } from '../../shared/middleware/auth.middleware';
+import { authenticate, authorize } from '../../shared/middleware/auth.middleware';
 import { validate } from '../../shared/middleware/validate.middleware';
 import {
   createLoanValidator,
@@ -10,7 +10,7 @@ import {
 
 const router = Router();
 
-router.use(authenticate);
+router.use(authenticate, authorize('jh01', 'admin'));
 
 router.get('/summary', loansController.getSummary);
 router.get('/', loansController.getAll);

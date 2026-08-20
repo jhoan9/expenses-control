@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { thirdPartyController } from './third-party.controller';
-import { authenticate } from '../../shared/middleware/auth.middleware';
+import { authenticate, authorize } from '../../shared/middleware/auth.middleware';
 import { validate } from '../../shared/middleware/validate.middleware';
 import {
   createThirdPartyValidator,
@@ -10,7 +10,7 @@ import {
 
 const router = Router();
 
-router.use(authenticate);
+router.use(authenticate, authorize('jh01', 'admin'));
 
 router.get('/', thirdPartyController.getAll);
 router.get('/:id', thirdPartyController.getById);

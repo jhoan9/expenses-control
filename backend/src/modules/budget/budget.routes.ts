@@ -21,7 +21,9 @@ router.put('/:id', validate(updateBudgetValidator), budgetController.update);
 router.delete('/:id', budgetController.delete);
 
 router.post('/:id/items', validate(createBudgetItemValidator), budgetController.addItem);
+router.put('/:id/items/bulk', budgetController.bulkItems);
 router.put('/:id/items/:itemId', validate(updateBudgetItemValidator), budgetController.updateItem);
 router.delete('/:id/items/:itemId', budgetController.deleteItem);
+router.post('/:id/copy', budgetController.copyNext);
 
 export default router;

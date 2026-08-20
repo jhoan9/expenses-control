@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS accounts (
   id SERIAL PRIMARY KEY,
   user_id INT NOT NULL,
   name VARCHAR(100) NOT NULL,
-  type VARCHAR(20) CHECK (type IN ('savings', 'checking', 'cash', 'investment', 'other')) NOT NULL,
+  type VARCHAR(20) CHECK (type IN ('savings', 'checking', 'cash', 'investment', 'credit_card', 'other')) NOT NULL,
   currency VARCHAR(3) DEFAULT 'COP',
   balance DECIMAL(15,2) DEFAULT 0.00,
   is_active BOOLEAN DEFAULT TRUE,

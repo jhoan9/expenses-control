@@ -1,5 +1,7 @@
 import { body } from 'express-validator';
 
+const USER_ROLES = ['jh01', 'ji01', 'user', 'admin'];
+
 export const createUserValidator = [
   body('email')
     .isEmail()
@@ -18,8 +20,8 @@ export const createUserValidator = [
     .withMessage('Name must be between 2 and 100 characters'),
   body('role')
     .optional()
-    .isIn(['admin', 'user'])
-    .withMessage('Role must be admin or user'),
+    .isIn(USER_ROLES)
+    .withMessage('Role must be jh01, ji01, user, or admin'),
 ];
 
 export const updateUserValidator = [
@@ -35,6 +37,6 @@ export const updateUserValidator = [
     .normalizeEmail(),
   body('role')
     .optional()
-    .isIn(['admin', 'user'])
-    .withMessage('Role must be admin or user'),
+    .isIn(USER_ROLES)
+    .withMessage('Role must be jh01, ji01, user, or admin'),
 ];

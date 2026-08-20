@@ -285,6 +285,15 @@ export class InvestmentsService {
 
       const positionId = result.rows[0].id;
 
+      const remaining = totalOpenQuantity - data.quantity;
+      if (remaining <= 0) {
+        await execute(
+          'UPDATE positions SET status = $1, closed_at = CURRENT_TIMESTAMP WHERE investment_id = $2 AND user_id = $3 AND status = $4',
+          ['closed', investmentId, userId, 'open'],
+          client
+        );
+      }
+
       await execute(
         'UPDATE accounts SET balance = $1 WHERE id = $2',
         [newBalance, data.account_id],
@@ -333,6 +342,30 @@ export class InvestmentsService {
        HAVING COALESCE(SUM(CASE WHEN p.type = 'buy' THEN p.quantity ELSE 0 END), 0) -
               COALESCE(SUM(CASE WHEN p.type = 'sell' THEN p.quantity ELSE 0 END), 0) > 0
        ORDER BY i.name`,
+      [userId, userId]
+    );
+  }
+
+  async getClosedPositions(userId: number): Promise<any[]> {
+    return query(
+      `SELECT
+        i.id as investment_id,
+        i.name,
+        i.ticker,
+        i.type,
+        COALESCE(SUM(CASE WHEN p.type = 'buy' THEN p.quantity ELSE 0 END), 0) as bought_quantity,
+        COALESCE(SUM(CASE WHEN p.type = 'sell' THEN p.quantity ELSE 0 END), 0) as sold_quantity,
+        COALESCE(SUM(CASE WHEN p.type = 'buy' THEN p.total_cost ELSE 0 END), 0) as bought_value,
+        COALESCE(SUM(CASE WHEN p.type = 'sell' THEN p.total_cost ELSE 0 END), 0) as sold_value,
+        MAX(p.closed_at) as closed_at
+       FROM investments i
+       LEFT JOIN positions p ON i.id = p.investment_id AND p.user_id = $1
+       WHERE i.user_id = $2 AND i.deleted_at IS NULL
+       GROUP BY i.id, i.name, i.ticker, i.type
+       HAVING COALESCE(SUM(CASE WHEN p.type = 'buy' THEN p.quantity ELSE 0 END), 0) -
+              COALESCE(SUM(CASE WHEN p.type = 'sell' THEN p.quantity ELSE 0 END), 0) <= 0
+          AND COUNT(p.id) > 0
+       ORDER BY MAX(p.closed_at) DESC`,
       [userId, userId]
     );
   }

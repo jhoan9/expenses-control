@@ -103,6 +103,18 @@ export class InvestmentsController {
       next(error);
     }
   }
+
+  async getClosedPositions(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const positions = await investmentsService.getClosedPositions(req.userId!);
+      res.json({
+        success: true,
+        data: positions,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const investmentsController = new InvestmentsController();

@@ -1,11 +1,14 @@
-import { query, queryOne, execute } from '../../config/database';
+import { query, queryOne, execute, transaction } from '../../config/database';
 import { AppError } from '../../shared/errors/AppError';
+import { PoolClient } from 'pg';
+
+type AccountType = 'savings' | 'checking' | 'cash' | 'investment' | 'credit_card' | 'other';
 
 interface Account {
   id: number;
   user_id: number;
   name: string;
-  type: 'savings' | 'checking' | 'cash' | 'investment' | 'other';
+  type: AccountType;
   currency: string;
   balance: number;
   is_active: boolean;
@@ -15,17 +18,32 @@ interface Account {
 
 interface CreateAccountDTO {
   name: string;
-  type: 'savings' | 'checking' | 'cash' | 'investment' | 'other';
+  type: AccountType;
   currency?: string;
   balance?: number;
 }
 
 interface UpdateAccountDTO {
   name?: string;
-  type?: 'savings' | 'checking' | 'cash' | 'investment' | 'other';
+  type?: AccountType;
   balance?: number;
   is_active?: boolean;
 }
+
+interface TransferDTO {
+  to_account_id: number;
+  amount: number;
+  applies_four_x_thousand?: boolean;
+  description?: string;
+}
+
+interface CreditCardPaymentDTO {
+  from_account_id: number;
+  amount: number;
+  description?: string;
+}
+
+const FOUR_X_THOUSAND_RATE = 0.004;
 
 export class AccountsService {
   async findAllByUser(userId: number): Promise<Account[]> {
@@ -115,6 +133,103 @@ export class AccountsService {
     );
 
     return this.findById(id, userId);
+  }
+
+  async transfer(fromId: number, toId: number, userId: number, data: TransferDTO): Promise<Account> {
+    if (fromId === toId) {
+      throw AppError.badRequest('Cannot transfer to the same account');
+    }
+
+    const from = await this.findById(fromId, userId);
+    const to = await this.findById(toId, userId);
+
+    const amount = Number(data.amount);
+    const tax = data.applies_four_x_thousand ? Math.round(amount * FOUR_X_THOUSAND_RATE * 100) / 100 : 0;
+    const totalDebit = amount + tax;
+
+    if (Number(from.balance) < totalDebit) {
+      throw AppError.badRequest('Insufficient balance (including 4x1000 tax)');
+    }
+
+    return transaction(async (client: PoolClient) => {
+      const newFromBalance = Number(from.balance) - totalDebit;
+      const newToBalance = Number(to.balance) + amount;
+
+      await execute(
+        'UPDATE accounts SET balance = $1 WHERE id = $2 AND user_id = $3',
+        [newFromBalance, fromId, userId],
+        client
+      );
+      await execute(
+        'UPDATE accounts SET balance = $1 WHERE id = $2 AND user_id = $3',
+        [newToBalance, toId, userId],
+        client
+      );
+
+      const description = data.description || `Transfer to ${to.name}`;
+      await execute(
+        'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        [fromId, 'transfer', totalDebit, from.balance, newFromBalance, 'transfer', toId, description],
+        client
+      );
+      await execute(
+        'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        [toId, 'transfer', amount, to.balance, newToBalance, 'transfer', fromId, `Transfer from ${from.name}`],
+        client
+      );
+
+      return this.findById(fromId, userId);
+    });
+  }
+
+  async creditCardPayment(cardId: number, userId: number, data: CreditCardPaymentDTO): Promise<Account> {
+    const card = await this.findById(cardId, userId);
+
+    if (card.type !== 'credit_card') {
+      throw AppError.badRequest('Account is not a credit card');
+    }
+
+    const from = await this.findById(data.from_account_id, userId);
+    const amount = Number(data.amount);
+
+    if (amount <= 0) {
+      throw AppError.badRequest('Amount must be greater than zero');
+    }
+    if (Number(from.balance) < amount) {
+      throw AppError.badRequest('Insufficient balance');
+    }
+    if (Number(card.balance) < amount) {
+      throw AppError.badRequest('Payment exceeds current card debt');
+    }
+
+    return transaction(async (client: PoolClient) => {
+      const newFromBalance = Number(from.balance) - amount;
+      const newCardBalance = Number(card.balance) - amount;
+
+      await execute(
+        'UPDATE accounts SET balance = $1 WHERE id = $2 AND user_id = $3',
+        [newFromBalance, data.from_account_id, userId],
+        client
+      );
+      await execute(
+        'UPDATE accounts SET balance = $1 WHERE id = $2 AND user_id = $3',
+        [newCardBalance, cardId, userId],
+        client
+      );
+
+      await execute(
+        'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        [data.from_account_id, 'expense', amount, from.balance, newFromBalance, 'credit_card_payment', cardId, data.description || `Abono a ${card.name}`],
+        client
+      );
+      await execute(
+        'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        [cardId, 'credit_payment', amount, card.balance, newCardBalance, 'credit_card_payment', data.from_account_id, `Abono desde ${from.name}`],
+        client
+      );
+
+      return this.findById(cardId, userId);
+    });
   }
 }
 

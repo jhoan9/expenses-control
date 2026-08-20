@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { investmentsController } from './investments.controller';
-import { authenticate } from '../../shared/middleware/auth.middleware';
+import { authenticate, authorize } from '../../shared/middleware/auth.middleware';
 import { validate } from '../../shared/middleware/validate.middleware';
 import {
   createInvestmentValidator,
@@ -10,8 +10,9 @@ import {
 
 const router = Router();
 
-router.use(authenticate);
+router.use(authenticate, authorize('jh01', 'admin'));
 
+router.get('/positions/closed', investmentsController.getClosedPositions);
 router.get('/positions', investmentsController.getOpenPositions);
 router.get('/', investmentsController.getAll);
 router.get('/:id', investmentsController.getById);

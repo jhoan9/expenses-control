@@ -65,6 +65,32 @@ export class AccountsController {
       next(error);
     }
   }
+
+  async transfer(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const id = parseInt(req.params.id);
+      const account = await accountsService.transfer(id, req.body.to_account_id, req.userId!, req.body);
+      res.json({
+        success: true,
+        data: account,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async creditCardPayment(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const id = parseInt(req.params.id);
+      const account = await accountsService.creditCardPayment(id, req.userId!, req.body);
+      res.json({
+        success: true,
+        data: account,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const accountsController = new AccountsController();

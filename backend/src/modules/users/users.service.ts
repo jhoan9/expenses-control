@@ -2,12 +2,14 @@ import bcrypt from 'bcryptjs';
 import { query, queryOne, execute } from '../../config/database';
 import { AppError } from '../../shared/errors/AppError';
 
+type UserRole = 'jh01' | 'ji01' | 'user' | 'admin';
+
 interface User {
   id: number;
   email: string;
   password_hash: string;
   name: string;
-  role: 'admin' | 'user';
+  role: UserRole;
   is_active: boolean;
   created_at: Date;
   updated_at: Date;
@@ -17,13 +19,13 @@ interface CreateUserDTO {
   email: string;
   password: string;
   name: string;
-  role?: 'admin' | 'user';
+  role?: UserRole;
 }
 
 interface UpdateUserDTO {
   name?: string;
   email?: string;
-  role?: 'admin' | 'user';
+  role?: UserRole;
 }
 
 const SALT_ROUNDS = 12;
