@@ -15,7 +15,7 @@ import { ApiService } from '../../core/services/api.service';
       </div>
 
       <div class="cards-grid">
-        <div class="account-card" *ngFor="let account of accounts">
+        <div class="account-card" *ngFor="let account of accounts" [class.card-credit]="account.type === 'credit_card'">
           <div class="account-header">
             <span class="account-icon">{{ getAccountIcon(account.type) }}</span>
             <div class="account-actions">
@@ -25,7 +25,13 @@ import { ApiService } from '../../core/services/api.service';
           </div>
           <h3>{{ account.name }}</h3>
           <p class="account-type">{{ getAccountTypeLabel(account.type) }}</p>
-          <p class="account-balance">{{ formatCurrency(account.balance) }}</p>
+          <p class="account-balance" [class.debt]="account.type === 'credit_card'">
+            {{ account.type === 'credit_card' ? 'Debe: ' + formatCurrency(account.balance) : formatCurrency(account.balance) }}
+          </p>
+          <div class="account-actions-row">
+            <button class="btn-action" (click)="openTransfer(account)">⇄ Transferir</button>
+            <button class="btn-action btn-card" *ngIf="account.type === 'credit_card'" (click)="openAbono(account)">💳 Pagar Tarjeta</button>
+          </div>
         </div>
       </div>
 
@@ -56,12 +62,13 @@ import { ApiService } from '../../core/services/api.service';
                 <option value="checking">Corriente</option>
                 <option value="cash">Efectivo</option>
                 <option value="investment">Inversión</option>
+                <option value="credit_card">Tarjeta de Crédito</option>
                 <option value="other">Otro</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label for="balance">Saldo Inicial</label>
+              <label for="balance">{{ form.value.type === 'credit_card' ? 'Deuda Actual' : 'Saldo Inicial' }}</label>
               <input id="balance" type="number" formControlName="balance" placeholder="0" />
             </div>
 
@@ -69,6 +76,91 @@ import { ApiService } from '../../core/services/api.service';
               <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
               <button type="submit" class="btn-primary" [disabled]="form.invalid || saving">
                 {{ saving ? 'Guardando...' : 'Guardar' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Transfer Modal -->
+      <div class="modal-overlay" *ngIf="showTransferModal" (click)="closeTransferModal()">
+        <div class="modal" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h2>Transferir desde {{ transferFromName }}</h2>
+            <button class="btn-close" (click)="closeTransferModal()">&times;</button>
+          </div>
+
+          <form [formGroup]="transferForm" (ngSubmit)="submitTransfer()">
+            <div class="form-group">
+              <label for="to-account">Cuenta Destino</label>
+              <select id="to-account" formControlName="to_account_id">
+                <option value="">Seleccionar cuenta</option>
+                <option *ngFor="let acc of transferTargets" [value]="acc.id">{{ acc.name }}</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="transfer-amount">Valor a Enviar</label>
+              <input id="transfer-amount" type="number" formControlName="amount" placeholder="0" min="0" />
+            </div>
+
+            <div class="form-group tax-box">
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="applies_four_x_thousand" />
+                <span>Aplicar 4x1000</span>
+              </label>
+              <div class="tax-preview" *ngIf="fourXThousandTax > 0">
+                <span>Impuesto 4x1000: {{ formatCurrency(fourXThousandTax) }}</span>
+                <span class="tax-total">Total a debitar: {{ formatCurrency(fourXThousandTax + transferAmount) }}</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="transfer-desc">Descripción</label>
+              <input id="transfer-desc" formControlName="description" placeholder="Opcional" />
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" class="btn-secondary" (click)="closeTransferModal()">Cancelar</button>
+              <button type="submit" class="btn-primary" [disabled]="transferForm.invalid || saving">
+                {{ saving ? 'Procesando...' : 'Transferir' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Credit Card Payment Modal -->
+      <div class="modal-overlay" *ngIf="showAbonoModal" (click)="closeAbonoModal()">
+        <div class="modal" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h2>Abono a {{ abonoCardName }}</h2>
+            <button class="btn-close" (click)="closeAbonoModal()">&times;</button>
+          </div>
+
+          <form [formGroup]="abonoForm" (ngSubmit)="submitAbono()">
+            <div class="form-group">
+              <label for="abono-from">Desde la Cuenta</label>
+              <select id="abono-from" formControlName="from_account_id">
+                <option value="">Seleccionar cuenta</option>
+                <option *ngFor="let acc of abonoSources" [value]="acc.id">{{ acc.name }} ({{ formatCurrency(acc.balance) }})</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="abono-amount">Valor del Abono</label>
+              <input id="abono-amount" type="number" formControlName="amount" placeholder="0" min="0" />
+            </div>
+
+            <div class="form-group">
+              <label for="abono-desc">Descripción</label>
+              <input id="abono-desc" formControlName="description" placeholder="Opcional" />
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" class="btn-secondary" (click)="closeAbonoModal()">Cancelar</button>
+              <button type="submit" class="btn-primary" [disabled]="abonoForm.invalid || saving">
+                {{ saving ? 'Procesando...' : 'Realizar Abono' }}
               </button>
             </div>
           </form>
@@ -123,6 +215,51 @@ import { ApiService } from '../../core/services/api.service';
       color: #4caf50;
       margin: 0;
     }
+    .account-balance.debt { color: #e53935; }
+    .account-actions-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .btn-action {
+      flex: 1;
+      background: #f0f4ff;
+      color: #1565c0;
+      border: 1px solid #d0ddf5;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.85rem;
+    }
+    .btn-action:hover { background: #e3ecff; }
+    .btn-action.btn-card { background: #fff3e0; color: #e65100; border-color: #ffe0b2; }
+    .btn-action.btn-card:hover { background: #ffe8cc; }
+    .card-credit { border-left: 4px solid #ff9800; }
+    .tax-box {
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 12px 16px;
+    }
+    .tax-preview {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-top: 8px;
+      font-size: 0.85rem;
+      color: #666;
+    }
+    .tax-preview .tax-total { font-weight: 600; color: #333; }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      color: #333;
+      cursor: pointer;
+      margin: 0;
+    }
+    .checkbox-label input[type="checkbox"] { width: auto; }
     .btn-primary {
       background: #4caf50;
       color: white;
@@ -223,11 +360,32 @@ export class AccountsComponent implements OnInit {
   saving = false;
   form: FormGroup;
 
+  showTransferModal = false;
+  transferFromId: number | null = null;
+  transferFromName = '';
+  transferForm: FormGroup;
+
+  showAbonoModal = false;
+  abonoCardId: number | null = null;
+  abonoCardName = '';
+  abonoForm: FormGroup;
+
   constructor(private api: ApiService, private fb: FormBuilder) {
     this.form = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(100)]],
       type: ['', [Validators.required]],
       balance: [0, [Validators.required]],
+    });
+    this.transferForm = this.fb.group({
+      to_account_id: [null, [Validators.required]],
+      amount: [null, [Validators.required, Validators.min(0.01)]],
+      applies_four_x_thousand: [false],
+      description: [''],
+    });
+    this.abonoForm = this.fb.group({
+      from_account_id: [null, [Validators.required]],
+      amount: [null, [Validators.required, Validators.min(0.01)]],
+      description: [''],
     });
   }
 
@@ -240,6 +398,70 @@ export class AccountsComponent implements OnInit {
     this.api.get<any>('/accounts').subscribe({
       next: (res) => { this.accounts = res.data; this.loading = false; },
       error: () => { this.loading = false; },
+    });
+  }
+
+  get transferTargets(): any[] {
+    return this.accounts.filter(a => a.id !== this.transferFromId);
+  }
+
+  get abonoSources(): any[] {
+    return this.accounts.filter(a => a.id !== this.abonoCardId && a.type !== 'credit_card');
+  }
+
+  get transferAmount(): number {
+    return Number(this.transferForm.value.amount) || 0;
+  }
+
+  get fourXThousandTax(): number {
+    if (!this.transferForm.value.applies_four_x_thousand) return 0;
+    return Math.round(this.transferAmount * 0.004 * 100) / 100;
+  }
+
+  openTransfer(account: any): void {
+    this.transferFromId = account.id;
+    this.transferFromName = account.name;
+    this.transferForm.reset({
+      to_account_id: null,
+      amount: null,
+      applies_four_x_thousand: false,
+      description: '',
+    });
+    this.showTransferModal = true;
+  }
+
+  closeTransferModal(): void {
+    this.showTransferModal = false;
+    this.transferFromId = null;
+  }
+
+  submitTransfer(): void {
+    if (this.transferForm.invalid) return;
+    this.saving = true;
+    this.api.post(`/accounts/${this.transferFromId}/transfer`, this.transferForm.value).subscribe({
+      next: () => { this.loadAccounts(); this.closeTransferModal(); this.saving = false; },
+      error: () => { this.saving = false; },
+    });
+  }
+
+  openAbono(account: any): void {
+    this.abonoCardId = account.id;
+    this.abonoCardName = account.name;
+    this.abonoForm.reset({ from_account_id: null, amount: null, description: '' });
+    this.showAbonoModal = true;
+  }
+
+  closeAbonoModal(): void {
+    this.showAbonoModal = false;
+    this.abonoCardId = null;
+  }
+
+  submitAbono(): void {
+    if (this.abonoForm.invalid) return;
+    this.saving = true;
+    this.api.post(`/accounts/${this.abonoCardId}/abono`, this.abonoForm.value).subscribe({
+      next: () => { this.loadAccounts(); this.closeAbonoModal(); this.saving = false; },
+      error: () => { this.saving = false; },
     });
   }
 
@@ -282,12 +504,12 @@ export class AccountsComponent implements OnInit {
   }
 
   getAccountIcon(type: string): string {
-    const icons: Record<string, string> = { savings: '🏦', checking: '💳', cash: '💵', investment: '📈', other: '💰' };
+    const icons: Record<string, string> = { savings: '🏦', checking: '💳', cash: '💵', investment: '📈', credit_card: '💳', other: '💰' };
     return icons[type] || '💰';
   }
 
   getAccountTypeLabel(type: string): string {
-    const labels: Record<string, string> = { savings: 'Ahorros', checking: 'Corriente', cash: 'Efectivo', investment: 'Inversión', other: 'Otro' };
+    const labels: Record<string, string> = { savings: 'Ahorros', checking: 'Corriente', cash: 'Efectivo', investment: 'Inversión', credit_card: 'Tarjeta de Crédito', other: 'Otro' };
     return labels[type] || type;
   }
 

@@ -17,6 +17,7 @@ import { ApiService } from '../../core/services/api.service';
       <div class="tabs">
         <button class="tab" [class.active]="activeTab === 'investments'" (click)="activeTab = 'investments'">Inversiones</button>
         <button class="tab" [class.active]="activeTab === 'positions'" (click)="activeTab = 'positions'; loadOpenPositions()">Posiciones Abiertas</button>
+        <button class="tab" [class.active]="activeTab === 'closed'" (click)="activeTab = 'closed'; loadClosedPositions()">Cerradas</button>
       </div>
 
       <!-- Investments Tab -->
@@ -151,6 +152,65 @@ import { ApiService } from '../../core/services/api.service';
 
         <div class="empty-state" *ngIf="openPositions.length === 0 && !loadingPositions">
           <p>No hay posiciones abiertas</p>
+        </div>
+      </div>
+
+      <!-- Closed Positions Tab -->
+      <div *ngIf="activeTab === 'closed'">
+        <div class="summary-bar" *ngIf="closedPositions.length > 0">
+          <div class="summary-item">
+            <span>Total Invertido (cerrado)</span>
+            <strong>{{ formatCurrency(closedTotalInvested) }}</strong>
+          </div>
+          <div class="summary-item">
+            <span>Total Recibido</span>
+            <strong>{{ formatCurrency(closedTotalReceived) }}</strong>
+          </div>
+          <div class="summary-item">
+            <span>Resultado</span>
+            <strong [class.result-positive]="closedResult >= 0" [class.result-negative]="closedResult < 0">
+              {{ formatCurrency(closedResult) }}
+            </strong>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Ticker</th>
+                <th>Tipo</th>
+                <th>Comprado</th>
+                <th>Vendido</th>
+                <th>Valor Invertido</th>
+                <th>Valor Recibido</th>
+                <th>Resultado</th>
+                <th>Cerrada el</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let pos of closedPositions" (click)="goToInvestment(pos.investment_id)" class="clickable-row">
+                <td>{{ pos.name }}</td>
+                <td><span class="ticker">{{ pos.ticker || '-' }}</span></td>
+                <td><span class="type-badge" [class]="'type-' + pos.type">{{ getTypeLabel(pos.type) }}</span></td>
+                <td>{{ pos.bought_quantity }}</td>
+                <td>{{ pos.sold_quantity }}</td>
+                <td>{{ formatCurrency(pos.bought_value) }}</td>
+                <td>{{ formatCurrency(pos.sold_value) }}</td>
+                <td>
+                  <span class="result-badge" [class.result-positive]="positionResult(pos) >= 0" [class.result-negative]="positionResult(pos) < 0">
+                    {{ formatCurrency(positionResult(pos)) }}
+                  </span>
+                </td>
+                <td>{{ formatDate(pos.closed_at) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="empty-state" *ngIf="closedPositions.length === 0 && !loadingClosed">
+          <p>No hay posiciones cerradas</p>
         </div>
       </div>
 
@@ -425,6 +485,15 @@ import { ApiService } from '../../core/services/api.service';
     }
     tr:hover { background: #f9f9f9; }
     .clickable-row { cursor: pointer; }
+    .result-positive { color: #2e7d32 !important; }
+    .result-negative { color: #c62828 !important; }
+    .result-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
     .trade-badge {
       display: inline-block;
       padding: 2px 10px;
@@ -542,14 +611,16 @@ import { ApiService } from '../../core/services/api.service';
 export class InvestmentsComponent implements OnInit {
   investments: any[] = [];
   openPositions: any[] = [];
+  closedPositions: any[] = [];
   selectedInvestment: any = null;
   selectedPositions: any[] = [];
   accounts: any[] = [];
   loading = false;
   loadingDetail = false;
   loadingPositions = false;
+  loadingClosed = false;
   saving = false;
-  activeTab: 'investments' | 'positions' = 'investments';
+  activeTab: 'investments' | 'positions' | 'closed' = 'investments';
   showInvestmentModal = false;
   showTradeModal = false;
   editingInvestmentId: number | null = null;
@@ -599,6 +670,30 @@ export class InvestmentsComponent implements OnInit {
       next: (res) => { this.openPositions = res.data; this.loadingPositions = false; },
       error: () => { this.loadingPositions = false; },
     });
+  }
+
+  loadClosedPositions(): void {
+    this.loadingClosed = true;
+    this.api.get<any>('/investments/positions/closed').subscribe({
+      next: (res) => { this.closedPositions = res.data; this.loadingClosed = false; },
+      error: () => { this.loadingClosed = false; },
+    });
+  }
+
+  get closedTotalInvested(): number {
+    return this.closedPositions.reduce((sum: number, p: any) => sum + Number(p.bought_value), 0);
+  }
+
+  get closedTotalReceived(): number {
+    return this.closedPositions.reduce((sum: number, p: any) => sum + Number(p.sold_value), 0);
+  }
+
+  get closedResult(): number {
+    return this.closedTotalReceived - this.closedTotalInvested;
+  }
+
+  positionResult(pos: any): number {
+    return Number(pos.sold_value) - Number(pos.bought_value);
   }
 
   viewInvestment(inv: any): void {

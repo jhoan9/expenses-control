@@ -31,7 +31,6 @@ import { ApiService } from '../../core/services/api.service';
               <h3>{{ cat.name }}</h3>
             </div>
             <div class="card-actions">
-              <button class="btn-icon" (click)="openSubcategoryForm(cat, null)">+</button>
               <button class="btn-icon" (click)="openCategoryModal(cat)">✏️</button>
               <button class="btn-icon" (click)="deleteCategory(cat.id)">🗑️</button>
             </div>
@@ -40,7 +39,7 @@ import { ApiService } from '../../core/services/api.service';
             <span class="type-badge" [ngClass]="'type-' + cat.type">{{ getTypeLabel(cat.type) }}</span>
           </div>
 
-          <div class="subcategories-section" *ngIf="cat.subcategories && cat.subcategories.length > 0">
+          <div class="subcategories-section">
             <div class="subcategory-item" *ngFor="let sub of cat.subcategories">
               <div class="subcategory-info" *ngIf="editingSubId !== sub.id">
                 <span class="subcategory-name" [class.inactive]="!sub.is_active">{{ sub.name }}</span>
@@ -55,18 +54,11 @@ import { ApiService } from '../../core/services/api.service';
                 <button class="btn-icon-sm" *ngIf="editingSubId !== sub.id" (click)="deleteSubcategory(cat.id, sub.id)">🗑️</button>
               </div>
             </div>
-          </div>
 
-          <div class="subcategories-section" *ngIf="expandingCategoryId === cat.id">
             <div class="subcategory-form">
-              <input [(ngModel)]="newSubName" placeholder="Nombre subcategoría" class="sub-input" (keyup.enter)="addSubcategory(cat.id)" />
+              <input [(ngModel)]="newSubName" placeholder="Nueva subcategoría" class="sub-input" (keyup.enter)="addSubcategory(cat.id)" />
               <button class="btn-icon-sm btn-add" (click)="addSubcategory(cat.id)" [disabled]="!newSubName.trim()">✓</button>
-              <button class="btn-icon-sm" (click)="cancelAddSub()">✕</button>
             </div>
-          </div>
-
-          <div class="sub-hint" *ngIf="(!cat.subcategories || cat.subcategories.length === 0) && expandingCategoryId !== cat.id">
-            Sin subcategorías. Haz clic en + para agregar.
           </div>
         </div>
       </div>
@@ -376,7 +368,6 @@ export class CategoriesComponent implements OnInit {
 
   categoryForm: FormGroup;
 
-  expandingCategoryId: number | null = null;
   newSubName = '';
 
   editingSubId: number | null = null;
@@ -457,26 +448,12 @@ export class CategoriesComponent implements OnInit {
     this.api.delete(`/categories/${id}`).subscribe({ next: () => this.loadCategories() });
   }
 
-  openSubcategoryForm(cat: any, _sub: any): void {
-    if (this.expandingCategoryId === cat.id) {
-      this.cancelAddSub();
-    } else {
-      this.expandingCategoryId = cat.id;
-      this.newSubName = '';
-    }
-  }
-
   addSubcategory(categoryId: number): void {
     const name = this.newSubName.trim();
     if (!name) return;
     this.api.post(`/categories/${categoryId}/subcategories`, { name }).subscribe({
-      next: () => { this.loadCategories(); this.cancelAddSub(); },
+      next: () => { this.loadCategories(); this.newSubName = ''; },
     });
-  }
-
-  cancelAddSub(): void {
-    this.expandingCategoryId = null;
-    this.newSubName = '';
   }
 
   startEditSub(sub: any): void {

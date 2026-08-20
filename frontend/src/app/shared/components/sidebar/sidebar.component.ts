@@ -33,13 +33,13 @@ import { CommonModule } from '@angular/common';
         <a routerLink="/budget" routerLinkActive="active">
           <span class="icon">📅</span> Presupuesto
         </a>
-        <a routerLink="/investments" routerLinkActive="active">
+        <a routerLink="/investments" routerLinkActive="active" *ngIf="canAccess('investments')">
           <span class="icon">📈</span> Inversiones
         </a>
-        <a routerLink="/third-party" routerLinkActive="active">
+        <a routerLink="/third-party" routerLinkActive="active" *ngIf="canAccess('third-party')">
           <span class="icon">👥</span> Terceros
         </a>
-        <a routerLink="/loans" routerLinkActive="active">
+        <a routerLink="/loans" routerLinkActive="active" *ngIf="canAccess('loans')">
           <span class="icon">🤝</span> Préstamos
         </a>
         <a routerLink="/credits" routerLinkActive="active">
@@ -195,6 +195,11 @@ export class SidebarComponent {
 
   closeMenu(): void {
     this.isOpen = false;
+  }
+
+  canAccess(module: 'investments' | 'third-party' | 'loans'): boolean {
+    const role = this.authService.currentUser?.role;
+    return role === 'jh01' || role === 'admin';
   }
 
   logout(): void {

@@ -46,72 +46,66 @@ import { ApiService } from '../../core/services/api.service';
             <button class="btn-back" (click)="backToList()">← Volver</button>
             <h1>{{ selectedBudget.period_type === 'first' ? '1ra Quincena' : '2da Quincena' }}</h1>
           </div>
-          <button class="btn-primary" (click)="openItemModal()">+ Agregar Gasto</button>
+          <div class="header-actions">
+            <button class="btn-copy" (click)="copyNext()" title="Crear la siguiente quincena con los gastos activos">⏭ Siguiente Quincena</button>
+            <button class="btn-primary" (click)="saveDraft()" [disabled]="saving">
+              {{ saving ? 'Guardando...' : 'Guardar Cambios' }}
+            </button>
+          </div>
         </div>
 
         <p class="detail-dates">{{ selectedBudget.start_date }} — {{ selectedBudget.end_date }}</p>
 
-        <!-- Summary Bar -->
-        <div class="summary-bar" *ngIf="summary">
-          <div class="summary-item">
-            <span class="summary-label">Ingresos</span>
-            <span class="summary-value positive">{{ formatCurrency(summary.total_income) }}</span>
+        <!-- Total Income -->
+        <div class="income-box">
+          <div class="form-group income-input">
+            <label for="total_income">Ingreso de la Quincena</label>
+            <input id="total_income" type="number" [(ngModel)]="totalIncome" placeholder="0" />
           </div>
-          <div class="summary-item">
-            <span class="summary-label">Pagado</span>
-            <span class="summary-value negative">{{ formatCurrency(summary.total_paid) }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">Pendiente</span>
-            <span class="summary-value warning">{{ formatCurrency(summary.total_pending) }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">Disponible</span>
-            <span class="summary-value" [class.positive]="summary.remaining >= 0" [class.negative]="summary.remaining < 0">
-              {{ formatCurrency(summary.remaining) }}
-            </span>
+          <div class="income-summary">
+            <div class="summary-item">
+              <span class="summary-label">Asignado</span>
+              <span class="summary-value warning">{{ formatCurrency(assignedTotal) }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Libre</span>
+              <span class="summary-value" [class.positive]="freeAmount >= 0" [class.negative]="freeAmount < 0">
+                {{ formatCurrency(freeAmount) }}
+              </span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Asignado</span>
+              <span class="summary-value">{{ assignedPercent }}%</span>
+            </div>
           </div>
         </div>
 
-        <!-- Items Table -->
-        <div class="table-container" *ngIf="items.length > 0">
-          <table>
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Monto</th>
-                <th>Fecha Límite</th>
-                <th>Estado</th>
-                <th>Recurrente</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let item of items">
-                <td>
-                  {{ item.name }}
-                  <p class="item-notes" *ngIf="item.notes">{{ item.notes }}</p>
-                </td>
-                <td class="amount negative">{{ formatCurrency(item.amount) }}</td>
-                <td>{{ item.due_date }}</td>
-                <td>
-                  <span class="status-badge" [class]="'status-' + item.status">
-                    {{ getStatusLabel(item.status) }}
-                  </span>
-                </td>
-                <td>{{ item.is_recurrent ? 'Sí' : 'No' }}</td>
-                <td class="actions-cell">
-                  <button class="btn-icon btn-pay" *ngIf="item.status === 'pending'" (click)="payItem(item)" title="Marcar pagado">✅</button>
-                  <button class="btn-icon" (click)="editItem(item)" title="Editar">✏️</button>
-                  <button class="btn-icon" (click)="deleteItem(item)" title="Eliminar">🗑️</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <!-- Items Form -->
+        <div class="form-table" *ngIf="draftItems.length > 0">
+          <div class="form-row header-row">
+            <span>Gasto</span>
+            <span>Monto</span>
+            <span>%</span>
+            <span>Pagado</span>
+            <span>Inactivo</span>
+            <span></span>
+          </div>
+          <div class="form-row" *ngFor="let item of draftItems" [class.row-cancelled]="item.status === 'cancelled'">
+            <input type="text" [(ngModel)]="item.name" placeholder="Nombre del gasto" />
+            <input type="number" [(ngModel)]="item.amount" placeholder="0" min="0" />
+            <span class="pct-cell">{{ itemPercent(item) }}%</span>
+            <input class="check-cell" type="checkbox" [checked]="item.status === 'completed'"
+              (change)="toggleCompleted(item, $event)" />
+            <input class="check-cell" type="checkbox" [checked]="item.status === 'cancelled'"
+              (change)="toggleCancelled(item, $event)" />
+            <button class="btn-icon" (click)="removeDraftItem(item)" title="Eliminar">🗑️</button>
+          </div>
+          <button class="btn-add-row" (click)="addDraftItem()">+ Agregar Gasto</button>
         </div>
 
-        <div class="empty-state" *ngIf="items.length === 0 && !loading">
+        <div class="empty-state" *ngIf="draftItems.length === 0 && !loading">
           <p>No hay gastos en este presupuesto</p>
+          <button class="btn-primary" (click)="addDraftItem()">+ Agregar primer gasto</button>
         </div>
       </ng-container>
 
@@ -155,59 +149,7 @@ import { ApiService } from '../../core/services/api.service';
         </div>
       </div>
 
-      <!-- Item Modal -->
-      <div class="modal-overlay" *ngIf="showItemModal" (click)="closeItemModal()">
-        <div class="modal" (click)="$event.stopPropagation()">
-          <div class="modal-header">
-            <h2>{{ editingItemId ? 'Editar Gasto' : 'Nuevo Gasto' }}</h2>
-            <button class="btn-close" (click)="closeItemModal()">&times;</button>
-          </div>
-
-          <div class="form-group">
-            <label for="item_name">Nombre</label>
-            <input id="item_name" type="text" [(ngModel)]="itemForm.name" placeholder="Nombre del gasto" />
-          </div>
-
-          <div class="form-group">
-            <label for="item_amount">Monto</label>
-            <input id="item_amount" type="number" [(ngModel)]="itemForm.amount" placeholder="0" />
-          </div>
-
-          <div class="form-group">
-            <label for="item_due_date">Fecha Límite</label>
-            <input id="item_due_date" type="date" [(ngModel)]="itemForm.due_date" />
-          </div>
-
-          <div class="form-group" *ngIf="editingItemId">
-            <label for="item_status">Estado</label>
-            <select id="item_status" [(ngModel)]="itemForm.status">
-              <option value="pending">Pendiente</option>
-              <option value="completed">Completado</option>
-              <option value="cancelled">Cancelado</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label class="checkbox-label">
-              <input type="checkbox" [(ngModel)]="itemForm.is_recurrent" />
-              Recurrente
-            </label>
-          </div>
-
-          <div class="form-group">
-            <label for="item_notes">Notas</label>
-            <input id="item_notes" type="text" [(ngModel)]="itemForm.notes" placeholder="Notas opcionales" />
-          </div>
-
-          <div class="modal-footer">
-            <button class="btn-secondary" (click)="closeItemModal()">Cancelar</button>
-            <button class="btn-primary" [disabled]="saving" (click)="submitItem()">
-              {{ saving ? 'Guardando...' : 'Guardar' }}
-            </button>
-          </div>
-        </div>
       </div>
-    </div>
   `,
   styles: [`
     .page { padding: 0; }
@@ -233,11 +175,104 @@ import { ApiService } from '../../core/services/api.service';
       font-size: 0.9rem;
     }
     .btn-back:hover { background: #f5f5f5; }
-    .detail-dates {
-      color: #777;
-      margin-bottom: 16px;
-      font-size: 0.95rem;
-    }
+.detail-dates {
+          color: #777;
+          margin-bottom: 16px;
+          font-size: 0.95rem;
+        }
+        .header-actions {
+          display: flex;
+          gap: 8px;
+        }
+        .btn-copy {
+          background: #2196f3;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-weight: 500;
+        }
+        .btn-copy:hover { background: #1976d2; }
+
+        /* Income box */
+        .income-box {
+          display: flex;
+          align-items: flex-end;
+          gap: 32px;
+          background: white;
+          border-radius: 10px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+          padding: 20px 24px;
+          margin-bottom: 20px;
+          flex-wrap: wrap;
+        }
+        .income-box .form-group { padding: 0; margin: 0; flex: 1; min-width: 200px; }
+        .income-summary {
+          display: flex;
+          gap: 28px;
+          flex-wrap: wrap;
+        }
+
+        /* Items form */
+        .form-table {
+          background: white;
+          border-radius: 10px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+          padding: 8px 24px 24px;
+        }
+        .form-row {
+          display: grid;
+          grid-template-columns: 2fr 1fr 70px 60px 60px 40px;
+          gap: 12px;
+          align-items: center;
+          padding: 10px 0;
+          border-bottom: 1px solid #f0f0f0;
+        }
+        .form-row input[type="text"], .form-row input[type="number"] {
+          width: 100%;
+          padding: 8px 10px;
+          border: 1px solid #ddd;
+          border-radius: 6px;
+          font-size: 0.95rem;
+          box-sizing: border-box;
+        }
+        .form-row input:focus {
+          outline: none;
+          border-color: #4caf50;
+        }
+        .form-row .check-cell {
+          width: 20px;
+          height: 20px;
+          justify-self: center;
+        }
+        .pct-cell {
+          text-align: right;
+          font-weight: 600;
+          color: #555;
+        }
+        .header-row {
+          font-size: 0.8rem;
+          text-transform: uppercase;
+          color: #888;
+          font-weight: 600;
+          border-bottom: 2px solid #eee;
+        }
+        .row-cancelled {
+          opacity: 0.5;
+        }
+        .btn-add-row {
+          margin-top: 14px;
+          background: #f0f4ff;
+          border: 1px dashed #b3c6e5;
+          color: #1565c0;
+          padding: 10px;
+          width: 100%;
+          border-radius: 8px;
+          cursor: pointer;
+          font-weight: 500;
+        }
+        .btn-add-row:hover { background: #e3ecff; }
 
     /* Cards */
     .cards-grid {
@@ -485,17 +520,13 @@ import { ApiService } from '../../core/services/api.service';
 export class BudgetComponent implements OnInit {
   budgets: any[] = [];
   selectedBudget: any = null;
-  items: any[] = [];
-  summary: any = null;
+  draftItems: any[] = [];
+  totalIncome: number | null = null;
   loading = false;
 
   showBudgetModal = false;
   editingBudgetId: number | null = null;
   budgetForm = { period_type: 'first', start_date: '', end_date: '', total_income: null as number | null };
-
-  showItemModal = false;
-  editingItemId: number | null = null;
-  itemForm = { name: '', amount: null as number | null, due_date: '', status: 'pending', is_recurrent: false, notes: '' };
 
   saving = false;
 
@@ -522,21 +553,113 @@ export class BudgetComponent implements OnInit {
     this.loading = true;
     this.api.get<any>(`/budgets/${id}`).subscribe({
       next: (res) => {
-        this.items = res.data?.items || res.items || [];
+        const budget = res.data?.budget || res.data || res;
+        const items = res.data?.items || budget.items || [];
+        this.totalIncome = Number(budget.total_income) || null;
+        this.draftItems = (items || []).map((i: any) => ({ ...i, amount: Number(i.amount) }));
         this.loading = false;
       },
       error: () => { this.loading = false; },
-    });
-    this.api.get<any>(`/budgets/${id}/summary`).subscribe({
-      next: (res) => { this.summary = res.data?.summary || res.summary || res; },
     });
   }
 
   backToList(): void {
     this.selectedBudget = null;
-    this.items = [];
-    this.summary = null;
+    this.draftItems = [];
+    this.totalIncome = null;
     this.loadBudgets();
+  }
+
+  addDraftItem(): void {
+    this.draftItems.push({ id: null, name: '', amount: null, status: 'pending', is_recurrent: false, notes: '' });
+  }
+
+  removeDraftItem(item: any): void {
+    if (item.id) {
+      if (!confirm('¿Eliminar este gasto?')) return;
+      this.api.delete(`/budgets/${this.selectedBudget.id}/items/${item.id}`).subscribe({
+        next: () => this.loadBudgetDetail(this.selectedBudget.id),
+      });
+    } else {
+      this.draftItems = this.draftItems.filter(i => i !== item);
+    }
+  }
+
+  toggleCompleted(item: any, event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    if (checked) {
+      item.status = 'completed';
+    } else if (item.status === 'completed') {
+      item.status = 'pending';
+    }
+  }
+
+  toggleCancelled(item: any, event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    if (checked) {
+      item.status = 'cancelled';
+    } else if (item.status === 'cancelled') {
+      item.status = 'pending';
+    }
+  }
+
+  get activeItems(): any[] {
+    return this.draftItems.filter(i => i.status !== 'cancelled');
+  }
+
+  get assignedTotal(): number {
+    return this.activeItems.reduce((sum: number, i: any) => sum + (Number(i.amount) || 0), 0);
+  }
+
+  get freeAmount(): number {
+    return (Number(this.totalIncome) || 0) - this.assignedTotal;
+  }
+
+  get assignedPercent(): number {
+    const total = Number(this.totalIncome) || 0;
+    if (total <= 0) return 0;
+    return Math.round((this.assignedTotal / total) * 100);
+  }
+
+  itemPercent(item: any): number {
+    const total = Number(this.totalIncome) || 0;
+    if (total <= 0) return 0;
+    return Math.round(((Number(item.amount) || 0) / total) * 100);
+  }
+
+  saveDraft(): void {
+    this.saving = true;
+    const payload: any = { items: this.draftItems.map((i: any) => ({
+      id: i.id ?? undefined,
+      name: i.name,
+      amount: Number(i.amount) || null,
+      status: i.status,
+    })) };
+    if (this.totalIncome != null) {
+      payload.total_income = this.totalIncome;
+    }
+    this.api.put(`/budgets/${this.selectedBudget.id}/items/bulk`, payload).subscribe({
+      next: () => {
+        this.saving = false;
+        this.loadBudgetDetail(this.selectedBudget.id);
+      },
+      error: () => { this.saving = false; },
+    });
+  }
+
+  copyNext(): void {
+    if (!confirm('¿Crear la siguiente quincena con los gastos activos?')) return;
+    this.saving = true;
+    this.api.post(`/budgets/${this.selectedBudget.id}/copy`, {}).subscribe({
+      next: (res: any) => {
+        this.saving = false;
+        const newBudget = res.data || res;
+        this.budgets = [...this.budgets, newBudget];
+        this.selectedBudget = newBudget;
+        this.loadBudgetDetail(newBudget.id);
+      },
+      error: () => { this.saving = false; },
+    });
   }
 
   // Budget CRUD
@@ -596,75 +719,6 @@ export class BudgetComponent implements OnInit {
     event.stopPropagation();
     if (!confirm('¿Eliminar este presupuesto y todos sus gastos?')) return;
     this.api.delete(`/budgets/${id}`).subscribe({ next: () => this.loadBudgets() });
-  }
-
-  // Item CRUD
-  openItemModal(): void {
-    this.editingItemId = null;
-    this.itemForm = { name: '', amount: null, due_date: '', status: 'pending', is_recurrent: false, notes: '' };
-    this.showItemModal = true;
-  }
-
-  editItem(item: any): void {
-    this.editingItemId = item.id;
-    this.itemForm = {
-      name: item.name,
-      amount: item.amount,
-      due_date: item.due_date,
-      status: item.status,
-      is_recurrent: item.is_recurrent || false,
-      notes: item.notes || '',
-    };
-    this.showItemModal = true;
-  }
-
-  closeItemModal(): void {
-    this.showItemModal = false;
-    this.editingItemId = null;
-  }
-
-  submitItem(): void {
-    this.saving = true;
-    const data: any = {
-      name: this.itemForm.name,
-      amount: this.itemForm.amount,
-      due_date: this.itemForm.due_date,
-      is_recurrent: this.itemForm.is_recurrent,
-      notes: this.itemForm.notes,
-    };
-    if (this.editingItemId) {
-      data.status = this.itemForm.status;
-    }
-
-    const request = this.editingItemId
-      ? this.api.put(`/budgets/${this.selectedBudget.id}/items/${this.editingItemId}`, data)
-      : this.api.post(`/budgets/${this.selectedBudget.id}/items`, data);
-
-    request.subscribe({
-      next: () => {
-        this.closeItemModal();
-        this.loadBudgetDetail(this.selectedBudget.id);
-        this.saving = false;
-      },
-      error: () => { this.saving = false; },
-    });
-  }
-
-  deleteItem(item: any): void {
-    if (!confirm('¿Eliminar este gasto?')) return;
-    this.api.delete(`/budgets/${this.selectedBudget.id}/items/${item.id}`).subscribe({
-      next: () => this.loadBudgetDetail(this.selectedBudget.id),
-    });
-  }
-
-  payItem(item: any): void {
-    const today = new Date().toISOString().split('T')[0];
-    this.api.put(`/budgets/${this.selectedBudget.id}/items/${item.id}`, {
-      status: 'completed',
-      paid_date: today,
-    }).subscribe({
-      next: () => this.loadBudgetDetail(this.selectedBudget.id),
-    });
   }
 
   getStatusLabel(status: string): string {
