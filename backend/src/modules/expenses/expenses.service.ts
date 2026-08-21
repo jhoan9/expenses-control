@@ -128,7 +128,7 @@ export class ExpensesService {
         throw AppError.notFound('Account not found');
       }
 
-      if (data.status !== 'pending' && account.balance < data.amount) {
+      if (data.status !== 'pending' && Number(account.balance) < Number(data.amount)) {
         throw AppError.badRequest('Insufficient balance');
       }
 
@@ -151,7 +151,7 @@ export class ExpensesService {
       const insertId = result.rows[0].id;
 
       if (data.status !== 'pending') {
-        const newBalance = account.balance - data.amount;
+        const newBalance = Number(account.balance) - Number(data.amount);
 
         await execute(
           'UPDATE accounts SET balance = $1 WHERE id = $2',
@@ -161,7 +161,7 @@ export class ExpensesService {
 
         await execute(
           'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-          [data.account_id, 'expense', data.amount, account.balance, newBalance, 'expense', insertId, data.description || null],
+          [data.account_id, 'expense', data.amount, Number(account.balance), newBalance, 'expense', insertId, data.description || null],
           client
         );
       }
@@ -225,9 +225,13 @@ export class ExpensesService {
           client
         );
 
+        if (!oldAccount) {
+          throw AppError.notFound('Account not found');
+        }
+
         await execute(
           'UPDATE accounts SET balance = $1 WHERE id = $2',
-          [Number(oldAccount.balance) + existing.amount, existing.account_id],
+          [Number(oldAccount.balance) + Number(existing.amount), existing.account_id],
           client
         );
       }
@@ -239,13 +243,17 @@ export class ExpensesService {
           client
         );
 
-        if (newAccount.balance < newAmount) {
+        if (!newAccount) {
+          throw AppError.notFound('Account not found');
+        }
+
+        if (Number(newAccount.balance) < Number(newAmount)) {
           throw AppError.badRequest('Insufficient balance');
         }
 
         await execute(
           'UPDATE accounts SET balance = $1 WHERE id = $2',
-          [newAccount.balance - newAmount, newAccountId],
+          [Number(newAccount.balance) - Number(newAmount), newAccountId],
           client
         );
       }
@@ -272,9 +280,13 @@ export class ExpensesService {
           client
         );
 
+        if (!account) {
+          throw AppError.notFound('Account not found');
+        }
+
         await execute(
           'UPDATE accounts SET balance = $1 WHERE id = $2',
-          [account.balance + existing.amount, existing.account_id],
+          [Number(account.balance) + Number(existing.amount), existing.account_id],
           client
         );
       }

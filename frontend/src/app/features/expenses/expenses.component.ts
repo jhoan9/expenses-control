@@ -426,8 +426,8 @@ export class ExpensesComponent implements OnInit {
   editItem(item: any): void {
     this.editingId = item.id;
     this.form.patchValue({
-      amount: item.amount,
-      date: item.date,
+      amount: Number(item.amount),
+      date: String(item.date).split('T')[0],
       account_id: item.account_id,
       category_id: item.category_id,
       subcategory_id: item.subcategory_id,
@@ -442,7 +442,11 @@ export class ExpensesComponent implements OnInit {
     if (this.form.invalid) return;
     this.saving = true;
 
-    const data = { ...this.form.value };
+    const data = {
+      ...this.form.value,
+      amount: Number(this.form.value.amount),
+      date: String(this.form.value.date).split('T')[0],
+    };
     if (!data.category_id) delete data.category_id;
     if (!data.subcategory_id) delete data.subcategory_id;
     if (!data.payment_method_id) delete data.payment_method_id;
