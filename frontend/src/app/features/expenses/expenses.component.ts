@@ -3,11 +3,17 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
+import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
+
+interface ExpenseItem {
+  name: string;
+  amount: number | null;
+}
 
 @Component({
   selector: 'app-expenses',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, CurrencyInputComponent],
   template: `
     <div class="page">
       <div class="page-header">
@@ -45,7 +51,7 @@ import { ApiService } from '../../core/services/api.service';
           </thead>
           <tbody>
             <tr *ngFor="let item of expenses">
-              <td>{{ item.date }}</td>
+              <td>{{ item.date | date: 'yyyy-MM-dd' }}</td>
               <td>{{ item.description || '-' }}</td>
               <td>
                 <span class="category-badge" [style.background]="getCategoryColor(item.category_id)">
@@ -54,7 +60,10 @@ import { ApiService } from '../../core/services/api.service';
               </td>
               <td>{{ getPaymentMethodName(item.payment_method_id) }}</td>
               <td>{{ getAccountName(item.account_id) }}</td>
-              <td class="amount negative">{{ formatCurrency(item.amount) }}</td>
+              <td class="amount negative">
+                {{ formatCurrency(item.amount) }}
+                <span class="items-count" *ngIf="item.item_count > 0" [title]="item.item_count + ' ítems'">🧾{{ item.item_count }}</span>
+              </td>
               <td>
                 <span class="status-badge" [class]="'status-' + item.status">
                   {{ getStatusLabel(item.status) }}
@@ -85,7 +94,8 @@ import { ApiService } from '../../core/services/api.service';
             <div class="form-row">
               <div class="form-group">
                 <label for="amount">Monto</label>
-                <input id="amount" type="number" formControlName="amount" placeholder="0" />
+                <app-currency-input id="amount" formControlName="amount" placeholder="0" />
+                <small class="hint" *ngIf="items.length > 0">Monto = suma de ítems ($ {{ formatNumber(itemsTotal()) }})</small>
               </div>
               <div class="form-group">
                 <label for="date">Fecha</label>
@@ -127,6 +137,25 @@ import { ApiService } from '../../core/services/api.service';
               </div>
             </div>
 
+            <!-- Items -->
+            <div class="form-group items-section">
+              <div class="items-header">
+                <label>Ítems <span class="hint">(opcional, ej: arroz, lenteja, carne)</span></label>
+                <div class="items-actions">
+                  <button type="button" class="btn-mini" *ngIf="hasTemplate()" (click)="applyTemplate()">📋 Usar plantilla</button>
+                  <button type="button" class="btn-mini" (click)="saveAsTemplate()" [disabled]="templateNames().length === 0">💾 Guardar plantilla</button>
+                </div>
+              </div>
+
+              <div class="item-row" *ngFor="let it of items; let i = index">
+                <input type="text" [(ngModel)]="it.name" [ngModelOptions]="{ standalone: true }" placeholder="Nombre del ítem" class="item-name" />
+                <app-currency-input [(ngModel)]="it.amount" [ngModelOptions]="{ standalone: true }" placeholder="0" class="item-amount"></app-currency-input>
+                <button type="button" class="btn-icon" (click)="removeItem(i)">✖</button>
+              </div>
+
+              <button type="button" class="btn-add-item" (click)="addItem()">+ Agregar ítem</button>
+            </div>
+
             <div class="form-group">
               <label for="description">Descripción</label>
               <input id="description" formControlName="description" placeholder="Descripción del gasto" />
@@ -152,7 +181,8 @@ import { ApiService } from '../../core/services/api.service';
       </div>
     </div>
   `,
-  styles: [`
+  styles: [
+    `
     .page { padding: 0; }
     .page-header {
       display: flex;
@@ -202,7 +232,8 @@ import { ApiService } from '../../core/services/api.service';
       text-transform: uppercase;
     }
     tr:hover { background: #f9f9f9; }
-    .amount { font-weight: 600; }
+    .amount { font-weight: 600; white-space: nowrap; }
+    .items-count { font-size: 0.75rem; margin-left: 4px; opacity: 0.8; }
     .category-badge {
       display: inline-block;
       padding: 2px 8px;
@@ -306,6 +337,46 @@ import { ApiService } from '../../core/services/api.service';
       outline: none;
       border-color: #4caf50;
     }
+    .hint { font-weight: 400; color: #888; font-size: 0.8rem; }
+    .items-section { border-top: 1px dashed #ddd; padding-top: 14px; }
+    .items-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .items-actions { display: flex; gap: 6px; }
+    .btn-mini {
+      background: #f0f7f0;
+      border: 1px solid #cde5cd;
+      color: #2e7d32;
+      font-size: 0.78rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .btn-mini:hover { background: #e0f0e0; }
+    .btn-mini:disabled { opacity: 0.5; cursor: not-allowed; }
+    .item-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .item-name { flex: 1.4; }
+    .item-amount { flex: 1; }
+    .btn-add-item {
+      width: 100%;
+      background: #fafafa;
+      border: 1px dashed #bbb;
+      color: #666;
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .btn-add-item:hover { background: #f0f0f0; }
     .modal-footer {
       display: flex;
       justify-content: flex-end;
@@ -333,6 +404,10 @@ export class ExpensesComponent implements OnInit {
   showModal = false;
   editingId: number | null = null;
   saving = false;
+
+  items: ExpenseItem[] = [];
+  private templates: any[] = [];
+  private templatesLoadedFor: number | null = null;
 
   filters: any = {
     date_from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
@@ -399,12 +474,122 @@ export class ExpensesComponent implements OnInit {
     return this.expenses.reduce((sum, e) => sum + Number(e.amount), 0);
   }
 
+  itemsTotal(): number {
+    return Math.round(this.items.reduce((sum, it) => sum + (Number(it.amount) || 0), 0) * 100) / 100;
+  }
+
+  formatNumber(value: number): string {
+    return new Intl.NumberFormat('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value || 0);
+  }
+
   onCategoryChange(): void {
     this.form.patchValue({ subcategory_id: null });
+    this.syncWithCategory();
+  }
+
+  syncWithCategory(): void {
+    const catId = Number(this.form.get('category_id')?.value) || null;
+    if (!catId) {
+      this.templates = [];
+      this.templatesLoadedFor = null;
+      return;
+    }
+    if (this.templatesLoadedFor === catId) {
+      this.prefillFromTemplateIfEmpty();
+      return;
+    }
+    this.api.get<any>(`/expenses/templates`, { category_id: catId }).subscribe({
+      next: (res) => {
+        this.templates = res.data || [];
+        this.templatesLoadedFor = catId;
+        this.prefillFromTemplateIfEmpty();
+      },
+      error: () => { this.templates = []; this.templatesLoadedFor = catId; },
+    });
+  }
+
+  currentTemplateKeySubcategoryId(): number | null {
+    const sub = this.form.get('subcategory_id')?.value;
+    return sub ? Number(sub) : null;
+  }
+
+  templateNames(): string[] {
+    const subId = this.currentTemplateKeySubcategoryId();
+    const exact = this.templates.filter(t =>
+      t.subcategory_id === subId ||
+      (t.subcategory_id === null && subId === null)
+    );
+    const source = exact.length > 0 ? exact : this.templates.filter(t => t.subcategory_id === null);
+    return source.map(t => t.name);
+  }
+
+  hasTemplate(): boolean {
+    return this.templateNames().length > 0;
+  }
+
+  prefillFromTemplateIfEmpty(): void {
+    if (this.editingId) return;
+    if (this.items.length > 0) return;
+    this.applyTemplate();
+  }
+
+  applyTemplate(): void {
+    const names = this.templateNames();
+    if (names.length === 0) return;
+    this.items = names.map(n => ({ name: n, amount: null }));
+    this.recalcAmount();
+  }
+
+  saveAsTemplate(): void {
+    const names = this.items.map(i => i.name.trim()).filter(n => n.length > 0);
+    if (names.length === 0) {
+      alert('Agrega al menos un ítem con nombre antes de guardar la plantilla');
+      return;
+    }
+    const catId = Number(this.form.get('category_id')?.value);
+    if (!catId) {
+      alert('Selecciona una categoría primero');
+      return;
+    }
+    const subId = this.currentTemplateKeySubcategoryId();
+    const label = subId
+      ? `${this.getCategoryName(catId)} / ${this.filteredSubcategories.find(s => s.id == subId)?.name || ''}`
+      : this.getCategoryName(catId);
+    if (!confirm(`¿Guardar estos ${names.length} ítems como plantilla para "${label}"?`)) return;
+
+    const body: any = { category_id: catId, names };
+    if (subId) body.subcategory_id = subId;
+
+    this.api.post('/expenses/templates', body).subscribe({
+      next: () => {
+        this.api.get<any>(`/expenses/templates`, { category_id: catId }).subscribe({
+          next: (res) => { this.templates = res.data || []; this.templatesLoadedFor = catId; },
+        });
+      },
+      error: () => alert('No se pudo guardar la plantilla'),
+    });
+  }
+
+  addItem(): void {
+    this.items.push({ name: '', amount: null });
+  }
+
+  removeItem(index: number): void {
+    this.items.splice(index, 1);
+    this.recalcAmount();
+  }
+
+  recalcAmount(): void {
+    if (this.items.length > 0) {
+      this.form.patchValue({ amount: this.itemsTotal() });
+    }
   }
 
   openModal(): void {
     this.editingId = null;
+    this.items = [];
+    this.templates = [];
+    this.templatesLoadedFor = null;
     this.form.reset({
       amount: null,
       date: new Date().toISOString().split('T')[0],
@@ -423,18 +608,35 @@ export class ExpensesComponent implements OnInit {
     this.editingId = null;
   }
 
-  editItem(item: any): void {
-    this.editingId = item.id;
+  editItem(row: any): void {
+    this.editingId = row.id;
+    this.items = [];
+    this.templates = [];
+    this.templatesLoadedFor = null;
+
     this.form.patchValue({
-      amount: Number(item.amount),
-      date: String(item.date).split('T')[0],
-      account_id: item.account_id,
-      category_id: item.category_id,
-      subcategory_id: item.subcategory_id,
-      payment_method_id: item.payment_method_id,
-      description: item.description,
-      status: item.status,
+      amount: Number(row.amount),
+      date: String(row.date).split('T')[0],
+      account_id: row.account_id,
+      category_id: row.category_id,
+      subcategory_id: row.subcategory_id,
+      payment_method_id: row.payment_method_id,
+      description: row.description,
+      status: row.status,
     });
+
+    this.api.get<any>(`/expenses/${row.id}`).subscribe({
+      next: (res) => {
+        this.items = (res.data.items || []).map((i: any) => ({ name: i.name, amount: Number(i.amount) }));
+      },
+    });
+
+    if (row.category_id) {
+      this.api.get<any>(`/expenses/templates`, { category_id: row.category_id }).subscribe({
+        next: (res) => { this.templates = res.data || []; this.templatesLoadedFor = row.category_id; },
+      });
+    }
+
     this.showModal = true;
   }
 
@@ -442,11 +644,18 @@ export class ExpensesComponent implements OnInit {
     if (this.form.invalid) return;
     this.saving = true;
 
-    const data = {
+    const cleanedItems: ExpenseItem[] = this.items
+      .map(i => ({ name: (i.name || '').trim(), amount: Number(i.amount) || 0 }))
+      .filter(i => i.name.length > 0);
+
+    const amount = cleanedItems.length > 0 ? this.itemsTotal() : Number(this.form.value.amount);
+
+    const data: any = {
       ...this.form.value,
-      amount: Number(this.form.value.amount),
+      amount,
       date: String(this.form.value.date).split('T')[0],
     };
+    if (cleanedItems.length > 0) data.items = cleanedItems; else delete data.items;
     if (!data.category_id) delete data.category_id;
     if (!data.subcategory_id) delete data.subcategory_id;
     if (!data.payment_method_id) delete data.payment_method_id;

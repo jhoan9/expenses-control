@@ -26,6 +26,7 @@ interface CreateExpenseDTO {
   description?: string;
   date: string;
   status?: 'pending' | 'completed' | 'cancelled';
+  items?: ExpenseItemDTO[];
 }
 
 interface UpdateExpenseDTO {
@@ -37,6 +38,12 @@ interface UpdateExpenseDTO {
   description?: string;
   date?: string;
   status?: 'pending' | 'completed' | 'cancelled';
+  items?: ExpenseItemDTO[];
+}
+
+export interface ExpenseItemDTO {
+  name: string;
+  amount: number;
 }
 
 interface ExpenseFilters {
@@ -57,7 +64,7 @@ export class ExpensesService {
     limit: number = 20
   ): Promise<{ expenses: Expense[]; total: number }> {
     const offset = (page - 1) * limit;
-    let sql = 'SELECT * FROM expenses WHERE user_id = $1 AND deleted_at IS NULL';
+    let sql = 'SELECT e.*, (SELECT COUNT(*) FROM expense_items ei WHERE ei.expense_id = e.id) as item_count FROM expenses e WHERE e.user_id = $1 AND e.deleted_at IS NULL';
     const params: any[] = [userId];
     let paramIndex = 2;
 
@@ -90,7 +97,7 @@ export class ExpensesService {
       params.push(filters.status);
     }
 
-    const countSql = sql.replace('SELECT *', 'SELECT COUNT(*) as total');
+    const countSql = sql.replace(/SELECT e\.\*, \(SELECT COUNT\(\*\) FROM expense_items ei WHERE ei\.expense_id = e\.id\) as item_count/, "SELECT COUNT(*) as total");
     const countResult = await queryOne<{ total: number }>(countSql, params);
     const total = countResult?.total || 0;
 
@@ -102,7 +109,7 @@ export class ExpensesService {
     return { expenses, total };
   }
 
-  async findById(id: number, userId: number, client?: PoolClient): Promise<Expense> {
+  async findById(id: number, userId: number, client?: PoolClient): Promise<Expense & { items: any[] }> {
     const expense = await queryOne<Expense>(
       'SELECT * FROM expenses WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL',
       [id, userId],
@@ -113,7 +120,13 @@ export class ExpensesService {
       throw AppError.notFound('Expense not found');
     }
 
-    return expense;
+    const items = await query<{ id: number; name: string; amount: number }>(
+      'SELECT id, name, amount FROM expense_items WHERE expense_id = $1 ORDER BY id',
+      [id],
+      client
+    );
+
+    return { ...expense, items };
   }
 
   async create(userId: number, data: CreateExpenseDTO): Promise<Expense> {
@@ -149,6 +162,16 @@ export class ExpensesService {
       );
 
       const insertId = result.rows[0].id;
+
+      if (data.items && data.items.length > 0) {
+        for (const item of data.items) {
+          await execute(
+            'INSERT INTO expense_items (expense_id, name, amount) VALUES ($1, $2, $3)',
+            [insertId, item.name, Number(item.amount)],
+            client
+          );
+        }
+      }
 
       if (data.status !== 'pending') {
         const newBalance = Number(account.balance) - Number(data.amount);
@@ -265,6 +288,17 @@ export class ExpensesService {
         client
       );
 
+      if (data.items !== undefined) {
+        await execute('DELETE FROM expense_items WHERE expense_id = $1', [id], client);
+        for (const item of data.items) {
+          await execute(
+            'INSERT INTO expense_items (expense_id, name, amount) VALUES ($1, $2, $3)',
+            [id, item.name, Number(item.amount)],
+            client
+          );
+        }
+      }
+
       return this.findById(id, userId, client);
     });
   }
@@ -321,6 +355,60 @@ export class ExpensesService {
        ORDER BY total DESC`,
       [userId, dateFrom, dateTo]
     );
+  }
+
+  async getTemplates(userId: number, categoryId?: number, subcategoryId?: number | null): Promise<any[]> {
+    const conditions: string[] = ['user_id = $1', 'deleted_at IS NULL'];
+    const params: any[] = [userId];
+    let idx = 2;
+
+    if (categoryId) {
+      conditions.push(`category_id = $${idx++}`);
+      params.push(categoryId);
+    }
+    if (subcategoryId !== undefined) {
+      conditions.push(`subcategory_id = $${idx++}`);
+      params.push(subcategoryId);
+    }
+
+    return query(
+      `SELECT id, category_id, subcategory_id, name, position
+       FROM item_templates
+       WHERE ${conditions.join(' AND ')}
+       ORDER BY position, id`,
+      params
+    );
+  }
+
+  async saveTemplates(
+    userId: number,
+    data: { category_id: number; subcategory_id?: number | null; names: string[] }
+  ): Promise<void> {
+    return transaction(async (client: PoolClient) => {
+      await execute(
+        'DELETE FROM item_templates WHERE user_id = $1 AND category_id = $2 AND subcategory_id IS NOT DISTINCT FROM $3',
+        [userId, data.category_id, data.subcategory_id ?? null],
+        client
+      );
+
+      for (let i = 0; i < data.names.length; i++) {
+        await execute(
+          'INSERT INTO item_templates (user_id, category_id, subcategory_id, name, position) VALUES ($1, $2, $3, $4, $5)',
+          [userId, data.category_id, data.subcategory_id ?? null, data.names[i], i],
+          client
+        );
+      }
+    });
+  }
+
+  async deleteTemplate(userId: number, templateId: number): Promise<void> {
+    const result = await execute(
+      'DELETE FROM item_templates WHERE id = $1 AND user_id = $2',
+      [templateId, userId]
+    );
+    if (result.rowCount === 0) {
+      throw AppError.notFound('Template not found');
+    }
   }
 }
 

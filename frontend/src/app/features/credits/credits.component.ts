@@ -2,11 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
+import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
 
 @Component({
   selector: 'app-credits',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, CurrencyInputComponent],
   template: `
     <div class="page">
       <!-- List View -->
@@ -159,11 +160,11 @@ import { ApiService } from '../../core/services/api.service';
             </div>
             <div class="form-group">
               <label for="credit_limit">Límite de crédito</label>
-              <input id="credit_limit" type="number" formControlName="credit_limit" placeholder="0" min="1" step="any" />
+              <app-currency-input id="credit_limit" formControlName="credit_limit" placeholder="0" />
             </div>
             <div class="form-group">
               <label for="balance">Saldo actual</label>
-              <input id="balance" type="number" formControlName="balance" placeholder="0" min="0" step="any" />
+              <app-currency-input id="balance" formControlName="balance" placeholder="0" />
             </div>
             <div class="form-group">
               <label for="due_date">Fecha de pago (opcional)</label>
@@ -196,11 +197,11 @@ import { ApiService } from '../../core/services/api.service';
           <form [formGroup]="paymentForm" (ngSubmit)="onSubmitPayment()">
             <div class="form-group">
               <label for="pay-amount">Monto</label>
-              <input id="pay-amount" type="number" formControlName="amount" placeholder="0" min="0.01" step="any" />
+              <app-currency-input id="pay-amount" formControlName="amount" placeholder="0" />
             </div>
             <div class="form-group">
               <label for="pay-minimum">Pago mínimo (opcional)</label>
-              <input id="pay-minimum" type="number" formControlName="minimum_payment" placeholder="0" min="0" step="any" />
+              <app-currency-input id="pay-minimum" formControlName="minimum_payment" placeholder="0" />
             </div>
             <div class="form-group">
               <label for="pay-date">Fecha</label>

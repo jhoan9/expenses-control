@@ -1,6 +1,6 @@
 import { body } from 'express-validator';
 
-export const createExpenseValidator = [
+const baseCreateValidator = [
   body('account_id')
     .isInt({ min: 1 })
     .withMessage('Account ID is required'),
@@ -33,7 +33,7 @@ export const createExpenseValidator = [
     .withMessage('Status must be pending, completed, or cancelled'),
 ];
 
-export const updateExpenseValidator = [
+const baseUpdateValidator = [
   body('account_id')
     .optional()
     .isInt({ min: 1 })
@@ -67,4 +67,45 @@ export const updateExpenseValidator = [
     .optional()
     .isIn(['pending', 'completed', 'cancelled'])
     .withMessage('Status must be pending, completed, or cancelled'),
+];
+
+const itemsArrayValidator = [
+  body('items')
+    .optional()
+    .isArray()
+    .withMessage('Items must be an array'),
+  body('items.*.name')
+    .if(body('items').exists())
+    .trim()
+    .notEmpty()
+    .withMessage('Item name is required')
+    .isLength({ max: 200 })
+    .withMessage('Item name must be less than 200 characters'),
+  body('items.*.amount')
+    .if(body('items').exists())
+    .isFloat({ min: 0 })
+    .withMessage('Item amount must be a non-negative number'),
+];
+
+export const createExpenseValidator = [...baseCreateValidator, ...itemsArrayValidator];
+
+export const updateExpenseValidator = [...baseUpdateValidator, ...itemsArrayValidator];
+
+export const templateValidator = [
+  body('category_id')
+    .isInt({ min: 1 })
+    .withMessage('Category ID is required'),
+  body('subcategory_id')
+    .optional({ nullable: true })
+    .isInt({ min: 1 })
+    .withMessage('Subcategory ID must be a positive integer'),
+  body('names')
+    .isArray({ min: 1 })
+    .withMessage('Names must be a non-empty array'),
+  body('names.*')
+    .trim()
+    .notEmpty()
+    .withMessage('Template name is required')
+    .isLength({ max: 200 })
+    .withMessage('Template name must be less than 200 characters'),
 ];

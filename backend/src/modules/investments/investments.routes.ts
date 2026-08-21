@@ -16,6 +16,7 @@ router.get('/positions/closed', investmentsController.getClosedPositions);
 router.get('/positions', investmentsController.getOpenPositions);
 router.get('/', investmentsController.getAll);
 router.get('/:id', investmentsController.getById);
+router.get('/:id/operations', investmentsController.getOperations);
 router.post('/', validate(createInvestmentValidator), investmentsController.create);
 router.put('/:id', validate(updateInvestmentValidator), investmentsController.update);
 router.delete('/:id', investmentsController.delete);

@@ -31,8 +31,11 @@ export class ReportsService {
     );
 
     const investmentsSummary = await queryOne<{ total_invested: number }>(
-      `SELECT COALESCE(SUM(CASE WHEN type = 'buy' THEN total_cost ELSE -total_cost END), 0) as total_invested
-       FROM positions WHERE user_id = $1 AND status = 'open'`,
+      `SELECT COALESCE(SUM(p.unit_price * COALESCE(p.remaining_quantity, p.quantity)
+        + p.commission * (COALESCE(p.remaining_quantity, p.quantity) / NULLIF(p.quantity, 0))), 0) as total_invested
+       FROM positions p
+       JOIN investments i ON i.id = p.investment_id
+       WHERE i.user_id = $1 AND i.deleted_at IS NULL AND p.type = 'buy'`,
       [userId]
     );
 
@@ -261,10 +264,8 @@ export class ReportsService {
         i.name,
         i.ticker,
         i.type,
-        COALESCE(SUM(CASE WHEN p.type = 'buy' THEN p.quantity ELSE 0 END), 0) -
-        COALESCE(SUM(CASE WHEN p.type = 'sell' THEN p.quantity ELSE 0 END), 0) as quantity,
-        COALESCE(SUM(CASE WHEN p.type = 'buy' THEN p.total_cost ELSE 0 END), 0) -
-        COALESCE(SUM(CASE WHEN p.type = 'sell' THEN p.total_cost ELSE 0 END), 0) as total_cost,
+        COALESCE(SUM(CASE WHEN p.type = 'buy' THEN COALESCE(p.remaining_quantity, p.quantity) ELSE 0 END), 0) as quantity,
+        COALESCE(SUM(CASE WHEN p.type = 'buy' THEN p.unit_price * COALESCE(p.remaining_quantity, p.quantity) + p.commission * (COALESCE(p.remaining_quantity, p.quantity) / NULLIF(p.quantity, 0)) ELSE 0 END), 0) as total_cost,
         COUNT(CASE WHEN p.type = 'buy' THEN 1 END) as buys,
         COUNT(CASE WHEN p.type = 'sell' THEN 1 END) as sells
        FROM investments i

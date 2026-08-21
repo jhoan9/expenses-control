@@ -2,11 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
+import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
 
 @Component({
   selector: 'app-budget',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CurrencyInputComponent],
   template: `
     <div class="page">
       <!-- LIST VIEW -->
@@ -60,7 +61,7 @@ import { ApiService } from '../../core/services/api.service';
         <div class="income-box">
           <div class="form-group income-input">
             <label for="total_income">Ingreso de la Quincena</label>
-            <input id="total_income" type="number" [(ngModel)]="totalIncome" placeholder="0" />
+            <app-currency-input id="total_income" [(ngModel)]="totalIncome" placeholder="0" />
           </div>
           <div class="income-summary">
             <div class="summary-item">
@@ -92,7 +93,7 @@ import { ApiService } from '../../core/services/api.service';
           </div>
           <div class="form-row" *ngFor="let item of draftItems" [class.row-cancelled]="item.status === 'cancelled'">
             <input type="text" [(ngModel)]="item.name" placeholder="Nombre del gasto" />
-            <input type="number" [(ngModel)]="item.amount" placeholder="0" min="0" />
+            <app-currency-input [(ngModel)]="item.amount" placeholder="0" />
             <span class="pct-cell">{{ itemPercent(item) }}%</span>
             <input class="check-cell" type="checkbox" [checked]="item.status === 'completed'"
               (change)="toggleCompleted(item, $event)" />
@@ -137,7 +138,7 @@ import { ApiService } from '../../core/services/api.service';
 
           <div class="form-group">
             <label for="total_income">Ingreso Total</label>
-            <input id="total_income" type="number" [(ngModel)]="budgetForm.total_income" placeholder="0" />
+            <app-currency-input id="total_income" [(ngModel)]="budgetForm.total_income" placeholder="0" />
           </div>
 
           <div class="modal-footer">

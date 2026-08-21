@@ -71,6 +71,38 @@ export class ExpensesController {
     }
   }
 
+  async getTemplates(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const categoryId = req.query.category_id ? parseInt(req.query.category_id as string) : undefined;
+      const subcategoryId = req.query.subcategory_id !== undefined
+        ? (req.query.subcategory_id === '' || req.query.subcategory_id === null ? null : parseInt(req.query.subcategory_id as string))
+        : undefined;
+      const templates = await expensesService.getTemplates(req.userId!, categoryId, subcategoryId);
+      res.json({ success: true, data: templates });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async saveTemplates(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      await expensesService.saveTemplates(req.userId!, req.body);
+      res.json({ success: true, message: 'Template saved successfully' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteTemplate(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const id = parseInt(req.params.id);
+      await expensesService.deleteTemplate(req.userId!, id);
+      res.json({ success: true, message: 'Template deleted successfully' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async delete(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = parseInt(req.params.id);

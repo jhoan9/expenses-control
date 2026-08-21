@@ -115,6 +115,19 @@ export class InvestmentsController {
       next(error);
     }
   }
+
+  async getOperations(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const id = parseInt(req.params.id);
+      const operations = await investmentsService.getOperations(req.userId!, id);
+      res.json({
+        success: true,
+        data: operations,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const investmentsController = new InvestmentsController();

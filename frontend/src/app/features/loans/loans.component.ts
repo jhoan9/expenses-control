@@ -2,11 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
+import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
 
 @Component({
   selector: 'app-loans',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, CurrencyInputComponent],
   template: `
     <div class="page">
       <!-- List View -->
@@ -168,7 +169,7 @@ import { ApiService } from '../../core/services/api.service';
             </div>
             <div class="form-group">
               <label for="amount">Monto</label>
-              <input id="amount" type="number" formControlName="amount" placeholder="0" min="0.01" step="any" />
+              <app-currency-input id="amount" formControlName="amount" placeholder="0" />
             </div>
             <div class="form-group">
               <label for="date">Fecha</label>
@@ -201,7 +202,7 @@ import { ApiService } from '../../core/services/api.service';
           <form [formGroup]="paymentForm" (ngSubmit)="onSubmitPayment()">
             <div class="form-group">
               <label for="pay-amount">Monto</label>
-              <input id="pay-amount" type="number" formControlName="amount" placeholder="0" min="0.01" [max]="loanDetail?.remaining || undefined" step="any" />
+              <app-currency-input id="pay-amount" formControlName="amount" placeholder="0" />
             </div>
             <div class="form-group">
               <label for="pay-date">Fecha</label>

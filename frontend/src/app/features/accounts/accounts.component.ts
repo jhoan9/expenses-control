@@ -2,11 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
+import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
 
 @Component({
   selector: 'app-accounts',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, CurrencyInputComponent],
   template: `
     <div class="page">
       <div class="page-header">
@@ -72,12 +73,12 @@ import { ApiService } from '../../core/services/api.service';
 
             <div class="form-group">
               <label for="balance">{{ form.value.type === 'credit_card' ? 'Deuda Actual' : 'Saldo Inicial' }}</label>
-              <input id="balance" type="number" formControlName="balance" placeholder="0" />
+              <app-currency-input id="balance" formControlName="balance" placeholder="0" />
             </div>
 
             <div class="form-group" *ngIf="form.value.type === 'credit_card'">
               <label for="credit_limit">Cupo de la Tarjeta</label>
-              <input id="credit_limit" type="number" formControlName="credit_limit" placeholder="0" />
+              <app-currency-input id="credit_limit" formControlName="credit_limit" placeholder="0" />
             </div>
 
             <div class="modal-footer">
@@ -109,7 +110,7 @@ import { ApiService } from '../../core/services/api.service';
 
             <div class="form-group">
               <label for="transfer-amount">Valor a Enviar</label>
-              <input id="transfer-amount" type="number" formControlName="amount" placeholder="0" min="0" />
+              <app-currency-input id="transfer-amount" formControlName="amount" placeholder="0" />
             </div>
 
             <div class="form-group tax-box">
@@ -157,7 +158,7 @@ import { ApiService } from '../../core/services/api.service';
 
             <div class="form-group">
               <label for="abono-amount">Valor del Abono</label>
-              <input id="abono-amount" type="number" formControlName="amount" placeholder="0" min="0" />
+              <app-currency-input id="abono-amount" formControlName="amount" placeholder="0" />
             </div>
 
             <div class="form-group">

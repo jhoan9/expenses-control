@@ -2,11 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
+import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
 
 @Component({
   selector: 'app-third-party',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, CurrencyInputComponent],
   template: `
     <div class="page">
       <!-- List View -->
@@ -190,7 +191,7 @@ import { ApiService } from '../../core/services/api.service';
             </div>
             <div class="form-group">
               <label for="mov-amount">Monto</label>
-              <input id="mov-amount" type="number" formControlName="amount" placeholder="0" min="0.01" step="any" />
+              <app-currency-input id="mov-amount" formControlName="amount" placeholder="0" />
             </div>
             <div class="form-group">
               <label for="mov-date">Fecha</label>

@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
+import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
 
 @Component({
   selector: 'app-income',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, CurrencyInputComponent],
   template: `
     <div class="page">
       <div class="page-header">
@@ -70,7 +71,7 @@ import { ApiService } from '../../core/services/api.service';
           <form [formGroup]="form" (ngSubmit)="onSubmit()">
             <div class="form-group">
               <label for="amount">Monto</label>
-              <input id="amount" type="number" formControlName="amount" placeholder="0" />
+              <app-currency-input id="amount" formControlName="amount" placeholder="0" />
             </div>
 
             <div class="form-group">

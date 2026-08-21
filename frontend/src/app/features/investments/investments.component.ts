@@ -2,11 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
+import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
 
 @Component({
   selector: 'app-investments',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, CurrencyInputComponent],
   template: `
     <div class="page">
       <div class="page-header">
@@ -66,40 +67,53 @@ import { ApiService } from '../../core/services/api.service';
             </div>
             <div class="summary-item">
               <span>Operaciones</span>
-              <strong>{{ selectedPositions.length }}</strong>
+              <strong>{{ operations.length }}</strong>
+            </div>
+            <div class="summary-item">
+              <span>Ganancia Realizada</span>
+              <strong [class.result-positive]="operationsPnl() >= 0" [class.result-negative]="operationsPnl() < 0">
+                {{ operationsPnl() >= 0 ? '+' : '' }}{{ formatCurrency(operationsPnl()) }}
+              </strong>
             </div>
           </div>
 
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Tipo</th>
-                  <th>Cantidad</th>
-                  <th>Precio Unit.</th>
-                  <th>Comisión</th>
-                  <th>Costo Total</th>
-                  <th>Notas</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let pos of selectedPositions">
-                  <td>{{ formatDate(pos.opened_at) }}</td>
-                  <td>
-                    <span class="trade-badge" [class]="'trade-' + pos.type">{{ pos.type === 'buy' ? 'Compra' : 'Venta' }}</span>
-                  </td>
-                  <td>{{ formatQuantity(pos.quantity) }}</td>
-                  <td>{{ formatCurrency(pos.unit_price) }}</td>
-                  <td>{{ formatCurrency(pos.commission) }}</td>
-                  <td>{{ formatCurrency(pos.total_cost) }}</td>
-                  <td>{{ pos.notes || '-' }}</td>
-                </tr>
-              </tbody>
-            </table>
+          <!-- Operaciones (compra + sus ventas) -->
+          <div class="operations-list" *ngIf="operations.length > 0">
+            <div class="operation-card" *ngFor="let op of operations" [class.op-closed]="op.status === 'closed'">
+              <div class="op-header">
+                <span class="trade-badge trade-buy">COMPRA</span>
+                <span class="op-date">{{ formatDate(op.opened_at) }}</span>
+                <strong class="op-main">{{ formatQuantity(op.quantity) }} @ {{ formatCurrency(op.unit_price) }}</strong>
+                <span class="op-total">{{ formatCurrency(op.total_cost) }}</span>
+                <span class="status-badge-op" [class.closed]="op.status === 'closed'">{{ op.status === 'closed' ? 'Cerrada' : 'Abierta' }}</span>
+              </div>
+
+              <div class="op-sells" *ngIf="op.sells.length > 0">
+                <div class="op-sell-row" *ngFor="let s of op.sells">
+                  <span class="trade-badge trade-sell">VENTA</span>
+                  <span class="op-date">{{ formatDate(s.opened_at) }}</span>
+                  <span class="op-main">{{ formatQuantity(s.quantity) }} @ {{ formatCurrency(s.unit_price) }}</span>
+                  <span class="op-total">{{ formatCurrency(s.total_value) }}</span>
+                  <span class="op-pnl" [class.result-positive]="s.realized_pnl >= 0" [class.result-negative]="s.realized_pnl < 0">
+                    {{ s.realized_pnl >= 0 ? '+' : '' }}{{ formatCurrency(s.realized_pnl) }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="op-footer">
+                <span>Vendido: <strong>{{ formatQuantity(op.sold_quantity) }} / {{ formatQuantity(op.quantity) }}</strong></span>
+                <span *ngIf="op.remaining_quantity > 0">Restante: <strong>{{ formatQuantity(op.remaining_quantity) }}</strong></span>
+                <span *ngIf="op.avg_sell_price > 0">Prom. venta: <strong>{{ formatCurrency(op.avg_sell_price) }}</strong></span>
+                <span *ngIf="op.sells.length > 0">
+                  P&L: <strong [class.result-positive]="op.realized_pnl >= 0" [class.result-negative]="op.realized_pnl < 0">
+                    {{ op.realized_pnl >= 0 ? '+' : '' }}{{ formatCurrency(op.realized_pnl) }}
+                  </strong>
+                </span>
+              </div>
+            </div>
           </div>
 
-          <div class="empty-state" *ngIf="selectedPositions.length === 0 && !loadingDetail">
+          <div class="empty-state" *ngIf="operations.length === 0 && !loadingDetail">
             <p>No hay operaciones registradas para esta inversión</p>
           </div>
         </div>
@@ -279,13 +293,13 @@ import { ApiService } from '../../core/services/api.service';
               </div>
               <div class="form-group">
                 <label for="trade-price">Precio Unitario</label>
-                <input id="trade-price" type="number" formControlName="unit_price" placeholder="0" min="0" step="any" />
+                <app-currency-input id="trade-price" formControlName="unit_price" placeholder="0" />
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label for="trade-commission">Comisión</label>
-                <input id="trade-commission" type="number" formControlName="commission" placeholder="0" min="0" step="any" />
+                <app-currency-input id="trade-commission" formControlName="commission" placeholder="0" />
               </div>
               <div class="form-group">
                 <label for="trade-date">Fecha</label>
@@ -503,6 +517,53 @@ import { ApiService } from '../../core/services/api.service';
     }
     .trade-buy { background: #e8f5e9; color: #2e7d32; }
     .trade-sell { background: #ffebee; color: #c62828; }
+    .operations-list { display: flex; flex-direction: column; gap: 12px; }
+    .operation-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      padding: 14px 16px;
+      border-left: 4px solid #4caf50;
+    }
+    .operation-card.op-closed { border-left-color: #9e9e9e; opacity: 0.85; }
+    .op-header, .op-sell-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .op-header { margin-bottom: 6px; }
+    .op-sells {
+      border-top: 1px dashed #eee;
+      margin-top: 6px;
+      padding-top: 6px;
+    }
+    .op-sell-row { margin-bottom: 4px; font-size: 0.92rem; }
+    .op-date { color: #888; font-size: 0.85rem; min-width: 80px; }
+    .op-main { font-weight: 600; color: #333; flex: 1; }
+    .op-total { color: #555; font-weight: 500; }
+    .op-pnl { font-weight: 600; min-width: 90px; text-align: right; }
+    .status-badge-op {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: #fff3e0;
+      color: #e65100;
+    }
+    .status-badge-op.closed { background: #eeeeee; color: #757575; }
+    .op-footer {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #f0f0f0;
+      font-size: 0.85rem;
+      color: #666;
+    }
+    .op-footer strong { color: #333; }
     .btn-primary {
       background: #4caf50;
       color: white;
@@ -614,6 +675,7 @@ export class InvestmentsComponent implements OnInit {
   closedPositions: any[] = [];
   selectedInvestment: any = null;
   selectedPositions: any[] = [];
+  operations: any[] = [];
   accounts: any[] = [];
   loading = false;
   loadingDetail = false;
@@ -697,7 +759,9 @@ export class InvestmentsComponent implements OnInit {
   }
 
   formatQuantity(quantity: number): string {
-    return Math.round(Number(quantity)).toLocaleString('es-CO');
+    const q = Number(quantity) || 0;
+    const isInteger = Number.isInteger(q);
+    return q.toLocaleString('es-CO', { maximumFractionDigits: isInteger ? 0 : 4 });
   }
 
   positionResult(pos: any): number {
@@ -714,6 +778,28 @@ export class InvestmentsComponent implements OnInit {
       },
       error: () => { this.loadingDetail = false; },
     });
+    this.loadOperations(inv.id);
+  }
+
+  loadOperations(investmentId: number): void {
+    this.api.get<any>(`/investments/${investmentId}/operations`).subscribe({
+      next: (res) => { this.operations = res.data || []; },
+      error: () => { this.operations = []; },
+    });
+  }
+
+  refreshDetail(): void {
+    if (!this.selectedInvestment) return;
+    const id = this.selectedInvestment.id;
+    this.api.get<any>(`/investments/${id}`).subscribe({
+      next: (res) => { this.selectedInvestment = res.data; this.selectedPositions = res.data.positions || []; },
+    });
+    this.loadOperations(id);
+    this.loadInvestments();
+  }
+
+  operationsPnl(): number {
+    return Math.round(this.operations.reduce((sum, op) => sum + (Number(op.realized_pnl) || 0), 0) * 100) / 100;
   }
 
   goToInvestment(id: number): void {
@@ -725,7 +811,7 @@ export class InvestmentsComponent implements OnInit {
   }
 
   get totalInvested(): number {
-    return this.openPositions.reduce((sum: number, p: any) => sum + Number(p.total_cost), 0);
+    return this.openPositions.reduce((sum: number, p: any) => sum + (Number(p.cost_basis ?? p.total_cost) || 0), 0);
   }
 
   openInvestmentModal(): void {
@@ -806,7 +892,7 @@ export class InvestmentsComponent implements OnInit {
       : `/investments/${this.selectedInvestment.id}/sell`;
     this.api.post(endpoint, this.tradeForm.value).subscribe({
       next: () => {
-        this.viewInvestment(this.selectedInvestment);
+        this.refreshDetail();
         this.closeTradeModal();
         this.saving = false;
       },
