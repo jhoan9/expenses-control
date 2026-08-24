@@ -73,6 +73,49 @@ export interface Operation {
 }
 
 export class InvestmentsService {
+  private lastSellAt(sells: OperationSellAllocation[]): Date | null {
+    if (sells.length === 0) return null;
+    return sells[sells.length - 1].opened_at;
+  }
+
+  private buildLots(
+    positions: Position[]
+  ): { buy: Position; remaining: number; sells: OperationSellAllocation[] }[] {
+    const lots: { buy: Position; remaining: number; sells: OperationSellAllocation[] }[] = [];
+
+    for (const p of positions) {
+      if (p.type === 'buy') {
+        lots.push({ buy: p, remaining: Number(p.quantity), sells: [] });
+      } else {
+        let pending = Number(p.quantity);
+        for (const lot of lots) {
+          if (pending <= 0) break;
+          if (lot.remaining <= 0) continue;
+          const take = Math.min(lot.remaining, pending);
+          const buyQty = Number(lot.buy.quantity);
+          const buyFrac = buyQty > 0 ? take / buyQty : 0;
+          const sellQty = Number(p.quantity);
+          const sellFrac = sellQty > 0 ? take / sellQty : 0;
+          const buyCostPortion = Number(lot.buy.unit_price) * take + Number(lot.buy.commission) * buyFrac;
+          const sellValuePortion = Number(p.unit_price) * take - Number(p.commission) * sellFrac;
+          lot.sells.push({
+            sell_position_id: p.id,
+            quantity: take,
+            unit_price: Number(p.unit_price),
+            commission: Math.round(Number(p.commission) * sellFrac * 100) / 100,
+            opened_at: p.opened_at,
+            total_value: Math.round(sellValuePortion * 100) / 100,
+            realized_pnl: Math.round((sellValuePortion - buyCostPortion) * 100) / 100,
+          });
+          lot.remaining = Math.round((lot.remaining - take) * 1e8) / 1e8;
+          pending -= take;
+        }
+      }
+    }
+
+    return lots;
+  }
+
   async findAll(userId: number): Promise<Investment[]> {
     return query<Investment>(
       'SELECT * FROM investments WHERE user_id = $1 AND deleted_at IS NULL ORDER BY name',
@@ -95,14 +138,17 @@ export class InvestmentsService {
       [id, userId]
     );
 
-    const openBuys = positions.filter(p => p.type === 'buy' && Number(p.remaining_quantity) > 0);
-    const open_quantity = Math.round(openBuys.reduce((sum, p) => sum + Number(p.remaining_quantity), 0) * 1e8) / 1e8;
+    // El saldo abierto se calcula reproduciendo el historial FIFO completo,
+    // no con el campo almacenado (puede estar desactualizado en datos viejos)
+    const lots = this.buildLots(positions);
+    const openLots = lots.filter(l => l.remaining > 0);
 
-    const costBasis = openBuys.reduce((sum, p) => {
-      const qty = Number(p.quantity);
-      const rem = Number(p.remaining_quantity);
-      const frac = qty > 0 ? rem / qty : 0;
-      return sum + Number(p.unit_price) * rem + Number(p.commission) * frac;
+    const open_quantity = Math.round(openLots.reduce((sum, l) => sum + l.remaining, 0) * 1e8) / 1e8;
+
+    const costBasis = openLots.reduce((sum, l) => {
+      const qty = Number(l.buy.quantity);
+      const frac = qty > 0 ? l.remaining / qty : 0;
+      return sum + Number(l.buy.unit_price) * l.remaining + Number(l.buy.commission) * frac;
     }, 0);
 
     const avg_cost = open_quantity > 0 ? Math.round((costBasis / open_quantity) * 100) / 100 : 0;
@@ -263,16 +309,15 @@ export class InvestmentsService {
         throw AppError.notFound('Investment not found');
       }
 
-      const openBuysResult = await execute(
-        "SELECT * FROM positions WHERE investment_id = $1 AND user_id = $2 AND type = 'buy' AND COALESCE(remaining_quantity, quantity) > 0 ORDER BY opened_at ASC, id ASC",
+      // Lotes abiertos calculados reproduciendo el historial FIFO completo
+      const allPositions = await query<Position>(
+        'SELECT * FROM positions WHERE investment_id = $1 AND user_id = $2 ORDER BY opened_at ASC, id ASC',
         [investmentId, userId],
         client
       );
-      const lots = openBuysResult.rows.map((r: any) => ({
-        id: r.id,
-        quantity: Number(r.quantity),
-        remaining: Number(r.remaining_quantity ?? r.quantity),
-      }));
+      const lots = this.buildLots(allPositions)
+        .filter(l => l.remaining > 0)
+        .map(l => ({ id: l.buy.id, quantity: Number(l.buy.quantity), remaining: l.remaining }));
 
       const totalOpenQuantity = lots.reduce((sum: number, l: any) => sum + l.remaining, 0);
       if (totalOpenQuantity < data.quantity) {
@@ -379,48 +424,15 @@ export class InvestmentsService {
       [investmentId, userId]
     );
 
-    interface Lot {
-      buy: Position;
-      remaining: number;
-      sells: OperationSellAllocation[];
-    }
-    const lots: Lot[] = [];
-
-    for (const p of positions) {
-      if (p.type === 'buy') {
-        lots.push({ buy: p, remaining: Number(p.remaining_quantity ?? p.quantity), sells: [] });
-      } else {
-        let pending = Number(p.quantity);
-        for (const lot of lots) {
-          if (pending <= 0) break;
-          if (lot.remaining <= 0) continue;
-          const take = Math.min(lot.remaining, pending);
-          const buyQty = Number(lot.buy.quantity);
-          const buyFrac = buyQty > 0 ? take / buyQty : 0;
-          const sellQty = Number(p.quantity);
-          const sellFrac = sellQty > 0 ? take / sellQty : 0;
-          const buyCostPortion = Number(lot.buy.unit_price) * take + Number(lot.buy.commission) * buyFrac;
-          const sellValuePortion = Number(p.unit_price) * take - Number(p.commission) * sellFrac;
-          lot.sells.push({
-            sell_position_id: p.id,
-            quantity: take,
-            unit_price: Number(p.unit_price),
-            commission: Math.round(Number(p.commission) * sellFrac * 100) / 100,
-            opened_at: p.opened_at,
-            total_value: Math.round(sellValuePortion * 100) / 100,
-            realized_pnl: Math.round((sellValuePortion - buyCostPortion) * 100) / 100,
-          });
-          lot.remaining = Math.round((lot.remaining - take) * 1e8) / 1e8;
-          pending -= take;
-        }
-      }
-    }
+    const lots = this.buildLots(positions);
 
     return lots.map(lot => {
       const sold_quantity = Math.round(lot.sells.reduce((s, a) => s + a.quantity, 0) * 1e8) / 1e8;
       const realized_pnl = Math.round(lot.sells.reduce((s, a) => s + a.realized_pnl, 0) * 100) / 100;
       const totalSoldValue = lot.sells.reduce((s, a) => s + a.total_value, 0);
-      const isClosed = Number(lot.buy.remaining_quantity) <= 0;
+      // El estado se determina por el replay del historial, no por el valor almacenado,
+      // para ser consistente incluso si hay datos previos al sistema FIFO
+      const isClosed = lot.remaining <= 0;
       return {
         buy_position_id: lot.buy.id,
         opened_at: lot.buy.opened_at,
@@ -434,7 +446,7 @@ export class InvestmentsService {
         avg_sell_price: sold_quantity > 0 ? Math.round((totalSoldValue / sold_quantity) * 100) / 100 : 0,
         realized_pnl,
         status: isClosed ? ('closed' as const) : ('open' as const),
-        closed_at: isClosed ? lot.buy.closed_at : null,
+        closed_at: isClosed ? (lot.buy.closed_at ?? this.lastSellAt(lot.sells)) : null,
         notes: lot.buy.notes,
       };
     }).sort((a, b) => new Date(b.opened_at).getTime() - new Date(a.opened_at).getTime());
