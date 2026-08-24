@@ -1,8 +1,20 @@
 import { query, queryOne } from '../../config/database';
+import { buildFifoLots, Position } from '../investments/investments.service';
 
 interface DateRange {
   date_from?: string;
   date_to?: string;
+}
+
+function computeOpenCostBasis(positions: Position[]): number {
+  const openLots = buildFifoLots(positions).filter(l => l.remaining > 0);
+  return Math.round(
+    openLots.reduce((sum, l) => {
+      const qty = Number(l.buy.quantity);
+      const frac = qty > 0 ? l.remaining / qty : 0;
+      return sum + Number(l.buy.unit_price) * l.remaining + Number(l.buy.commission) * frac;
+    }, 0) * 100
+  ) / 100;
 }
 
 export class ReportsService {
@@ -30,14 +42,11 @@ export class ReportsService {
       'SELECT COALESCE(SUM(total_available), 0) as total FROM third_party_accounts WHERE deleted_at IS NULL'
     );
 
-    const investmentsSummary = await queryOne<{ total_invested: number }>(
-      `SELECT COALESCE(SUM(p.unit_price * COALESCE(p.remaining_quantity, p.quantity)
-        + p.commission * (COALESCE(p.remaining_quantity, p.quantity) / NULLIF(p.quantity, 0))), 0) as total_invested
-       FROM positions p
-       JOIN investments i ON i.id = p.investment_id
-       WHERE i.user_id = $1 AND i.deleted_at IS NULL AND p.type = 'buy'`,
+    const userPositions = await query<Position>(
+      'SELECT p.* FROM positions p JOIN investments i ON i.id = p.investment_id WHERE i.user_id = $1 AND i.deleted_at IS NULL',
       [userId]
     );
+    const investmentsSummary = { total_invested: computeOpenCostBasis(userPositions) };
 
     const loansSummary = await queryOne<{ total_remaining: number }>(
       `SELECT COALESCE(SUM(l.amount - COALESCE(p.total_paid, 0)), 0) as total_remaining
@@ -258,28 +267,38 @@ export class ReportsService {
   }
 
   async getInvestmentsSummary(userId: number): Promise<any> {
-    const positions = await query(
-      `SELECT
-        i.id,
-        i.name,
-        i.ticker,
-        i.type,
-        COALESCE(SUM(CASE WHEN p.type = 'buy' THEN COALESCE(p.remaining_quantity, p.quantity) ELSE 0 END), 0) as quantity,
-        COALESCE(SUM(CASE WHEN p.type = 'buy' THEN p.unit_price * COALESCE(p.remaining_quantity, p.quantity) + p.commission * (COALESCE(p.remaining_quantity, p.quantity) / NULLIF(p.quantity, 0)) ELSE 0 END), 0) as total_cost,
-        COUNT(CASE WHEN p.type = 'buy' THEN 1 END) as buys,
-        COUNT(CASE WHEN p.type = 'sell' THEN 1 END) as sells
-       FROM investments i
-       LEFT JOIN positions p ON i.id = p.investment_id AND p.user_id = $1
-       WHERE i.user_id = $2 AND i.deleted_at IS NULL
-       GROUP BY i.id, i.name, i.ticker, i.type
-       ORDER BY i.name`,
-      [userId, userId]
+    const investments = await query<any>(
+      'SELECT * FROM investments WHERE user_id = $1 AND deleted_at IS NULL ORDER BY name',
+      [userId]
+    );
+    const positions = await query<Position>(
+      'SELECT p.* FROM positions p JOIN investments i ON i.id = p.investment_id WHERE i.user_id = $1 AND i.deleted_at IS NULL ORDER BY p.opened_at ASC, p.id ASC',
+      [userId]
     );
 
-    const totalInvested = positions.reduce((sum: number, p: any) => sum + (p.total_cost > 0 ? Number(p.total_cost) : 0), 0);
+    const rows = investments
+      .map((inv: any) => {
+        const invPositions = positions.filter(p => p.investment_id === inv.id);
+        if (invPositions.length === 0) return null;
+        const lots = buildFifoLots(invPositions);
+        const open_quantity = Math.round(lots.reduce((s, l) => s + Math.max(l.remaining, 0), 0) * 1e8) / 1e8;
+        return {
+          id: inv.id,
+          name: inv.name,
+          ticker: inv.ticker,
+          type: inv.type,
+          quantity: open_quantity,
+          total_cost: computeOpenCostBasis(invPositions),
+          buys: invPositions.filter(p => p.type === 'buy').length,
+          sells: invPositions.filter(p => p.type === 'sell').length,
+        };
+      })
+      .filter((r: any) => r !== null);
+
+    const totalInvested = rows.reduce((sum: number, p: any) => sum + (p.total_cost > 0 ? Number(p.total_cost) : 0), 0);
 
     return {
-      positions,
+      positions: rows,
       total_invested: totalInvested,
     };
   }

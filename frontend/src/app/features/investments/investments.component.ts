@@ -157,7 +157,7 @@ import { CurrencyInputComponent } from '../../shared/components/currency-input/c
                 <td><span class="type-badge" [class]="'type-' + pos.type">{{ getTypeLabel(pos.type) }}</span></td>
                 <td>{{ formatQuantity(pos.open_quantity) }}</td>
                 <td>{{ formatCurrency(pos.total_cost) }}</td>
-                <td>{{ formatCurrency(pos.total_cost / pos.open_quantity) }}</td>
+                <td>{{ formatCurrency(pos.avg_cost) }}</td>
                 <td>{{ pos.position_count }}</td>
               </tr>
             </tbody>
@@ -911,6 +911,8 @@ export class InvestmentsComponent implements OnInit {
   }
 
   formatCurrency(value: number): string {
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value);
+    const num = Number(value);
+    if (value === undefined || value === null || isNaN(num)) return '$0';
+    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(num);
   }
 }

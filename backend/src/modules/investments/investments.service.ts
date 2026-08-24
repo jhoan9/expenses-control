@@ -13,7 +13,7 @@ interface Investment {
   updated_at: Date;
 }
 
-interface Position {
+export interface Position {
   id: number;
   investment_id: number;
   user_id: number;
@@ -55,6 +55,54 @@ export interface OperationSellAllocation {
   realized_pnl: number;
 }
 
+export interface FifoLot {
+  buy: Position;
+  remaining: number;
+  sells: OperationSellAllocation[];
+}
+
+// Reproduce el historial completo de posiciones en orden FIFO y devuelve
+// los lotes de compra con su cantidad restante y las ventas asignadas.
+// Es la fuente de verdad para saldos abiertos: no depende de campos almacenados.
+export function buildFifoLots(positions: Position[]): FifoLot[] {
+  const sorted = [...positions].sort(
+    (a, b) => new Date(a.opened_at).getTime() - new Date(b.opened_at).getTime() || a.id - b.id
+  );
+  const lots: FifoLot[] = [];
+
+  for (const p of sorted) {
+    if (p.type === 'buy') {
+      lots.push({ buy: p, remaining: Number(p.quantity), sells: [] });
+    } else {
+      let pending = Number(p.quantity);
+      for (const lot of lots) {
+        if (pending <= 0) break;
+        if (lot.remaining <= 0) continue;
+        const take = Math.min(lot.remaining, pending);
+        const buyQty = Number(lot.buy.quantity);
+        const buyFrac = buyQty > 0 ? take / buyQty : 0;
+        const sellQty = Number(p.quantity);
+        const sellFrac = sellQty > 0 ? take / sellQty : 0;
+        const buyCostPortion = Number(lot.buy.unit_price) * take + Number(lot.buy.commission) * buyFrac;
+        const sellValuePortion = Number(p.unit_price) * take - Number(p.commission) * sellFrac;
+        lot.sells.push({
+          sell_position_id: p.id,
+          quantity: take,
+          unit_price: Number(p.unit_price),
+          commission: Math.round(Number(p.commission) * sellFrac * 100) / 100,
+          opened_at: p.opened_at,
+          total_value: Math.round(sellValuePortion * 100) / 100,
+          realized_pnl: Math.round((sellValuePortion - buyCostPortion) * 100) / 100,
+        });
+        lot.remaining = Math.round((lot.remaining - take) * 1e8) / 1e8;
+        pending -= take;
+      }
+    }
+  }
+
+  return lots;
+}
+
 export interface Operation {
   buy_position_id: number;
   opened_at: Date;
@@ -78,42 +126,8 @@ export class InvestmentsService {
     return sells[sells.length - 1].opened_at;
   }
 
-  private buildLots(
-    positions: Position[]
-  ): { buy: Position; remaining: number; sells: OperationSellAllocation[] }[] {
-    const lots: { buy: Position; remaining: number; sells: OperationSellAllocation[] }[] = [];
-
-    for (const p of positions) {
-      if (p.type === 'buy') {
-        lots.push({ buy: p, remaining: Number(p.quantity), sells: [] });
-      } else {
-        let pending = Number(p.quantity);
-        for (const lot of lots) {
-          if (pending <= 0) break;
-          if (lot.remaining <= 0) continue;
-          const take = Math.min(lot.remaining, pending);
-          const buyQty = Number(lot.buy.quantity);
-          const buyFrac = buyQty > 0 ? take / buyQty : 0;
-          const sellQty = Number(p.quantity);
-          const sellFrac = sellQty > 0 ? take / sellQty : 0;
-          const buyCostPortion = Number(lot.buy.unit_price) * take + Number(lot.buy.commission) * buyFrac;
-          const sellValuePortion = Number(p.unit_price) * take - Number(p.commission) * sellFrac;
-          lot.sells.push({
-            sell_position_id: p.id,
-            quantity: take,
-            unit_price: Number(p.unit_price),
-            commission: Math.round(Number(p.commission) * sellFrac * 100) / 100,
-            opened_at: p.opened_at,
-            total_value: Math.round(sellValuePortion * 100) / 100,
-            realized_pnl: Math.round((sellValuePortion - buyCostPortion) * 100) / 100,
-          });
-          lot.remaining = Math.round((lot.remaining - take) * 1e8) / 1e8;
-          pending -= take;
-        }
-      }
-    }
-
-    return lots;
+  private buildLots(positions: Position[]): FifoLot[] {
+    return buildFifoLots(positions);
   }
 
   async findAll(userId: number): Promise<Investment[]> {
@@ -453,46 +467,92 @@ export class InvestmentsService {
   }
 
   async getOpenPositions(userId: number): Promise<any[]> {
-    return query(
-      `SELECT
-        i.id as investment_id,
-        i.name,
-        i.ticker,
-        i.type,
-        COALESCE(SUM(CASE WHEN p.type = 'buy' THEN COALESCE(p.remaining_quantity, p.quantity) ELSE 0 END), 0) as open_quantity,
-        COALESCE(SUM(CASE WHEN p.type = 'buy' THEN p.unit_price * COALESCE(p.remaining_quantity, p.quantity) + p.commission * (COALESCE(p.remaining_quantity, p.quantity) / NULLIF(p.quantity, 0)) ELSE 0 END), 0) as cost_basis,
-        COUNT(CASE WHEN p.type = 'buy' AND p.status = 'open' THEN 1 END) as position_count
-       FROM investments i
-       LEFT JOIN positions p ON i.id = p.investment_id AND p.user_id = $1
-       WHERE i.user_id = $2 AND i.deleted_at IS NULL
-       GROUP BY i.id, i.name, i.ticker, i.type
-       HAVING COALESCE(SUM(CASE WHEN p.type = 'buy' THEN COALESCE(p.remaining_quantity, p.quantity) ELSE 0 END), 0) > 0
-       ORDER BY i.name`,
-      [userId, userId]
+    const investments = await query<any>(
+      'SELECT * FROM investments WHERE user_id = $1 AND deleted_at IS NULL ORDER BY name',
+      [userId]
     );
+    const positions = await query<Position>(
+      'SELECT p.* FROM positions p JOIN investments i ON i.id = p.investment_id WHERE i.user_id = $1 AND i.deleted_at IS NULL ORDER BY p.opened_at ASC, p.id ASC',
+      [userId]
+    );
+
+    const result: any[] = [];
+    for (const inv of investments) {
+      const invPositions = positions.filter(p => p.investment_id === inv.id);
+      if (invPositions.length === 0) continue;
+
+      const openLots = this.buildLots(invPositions).filter(l => l.remaining > 0);
+      if (openLots.length === 0) continue;
+
+      const open_quantity = Math.round(openLots.reduce((s, l) => s + l.remaining, 0) * 1e8) / 1e8;
+      const cost_basis = Math.round(
+        openLots.reduce((s, l) => {
+          const qty = Number(l.buy.quantity);
+          const frac = qty > 0 ? l.remaining / qty : 0;
+          return s + Number(l.buy.unit_price) * l.remaining + Number(l.buy.commission) * frac;
+        }, 0) * 100
+      ) / 100;
+      const avg_cost = open_quantity > 0 ? Math.round((cost_basis / open_quantity) * 100) / 100 : 0;
+
+      result.push({
+        investment_id: inv.id,
+        name: inv.name,
+        ticker: inv.ticker,
+        type: inv.type,
+        open_quantity,
+        total_cost: cost_basis,
+        avg_cost,
+        position_count: openLots.length,
+      });
+    }
+
+    return result;
   }
 
   async getClosedPositions(userId: number): Promise<any[]> {
-    return query(
-      `SELECT
-        i.id as investment_id,
-        i.name,
-        i.ticker,
-        i.type,
-        COALESCE(SUM(CASE WHEN p.type = 'buy' THEN p.quantity ELSE 0 END), 0) as bought_quantity,
-        COALESCE(SUM(CASE WHEN p.type = 'sell' THEN p.quantity ELSE 0 END), 0) as sold_quantity,
-        COALESCE(SUM(CASE WHEN p.type = 'buy' THEN p.total_cost ELSE 0 END), 0) as bought_value,
-        COALESCE(SUM(CASE WHEN p.type = 'sell' THEN p.total_cost ELSE 0 END), 0) as sold_value,
-        MAX(p.closed_at) as closed_at
-       FROM investments i
-       LEFT JOIN positions p ON i.id = p.investment_id AND p.user_id = $1
-       WHERE i.user_id = $2 AND i.deleted_at IS NULL
-       GROUP BY i.id, i.name, i.ticker, i.type
-       HAVING COALESCE(SUM(CASE WHEN p.type = 'buy' THEN COALESCE(p.remaining_quantity, p.quantity) ELSE 0 END), 0) <= 0
-         AND COUNT(p.id) > 0
-       ORDER BY MAX(p.closed_at) DESC`,
-      [userId, userId]
+    const investments = await query<any>(
+      'SELECT * FROM investments WHERE user_id = $1 AND deleted_at IS NULL ORDER BY name',
+      [userId]
     );
+    const positions = await query<Position>(
+      'SELECT p.* FROM positions p JOIN investments i ON i.id = p.investment_id WHERE i.user_id = $1 AND i.deleted_at IS NULL ORDER BY p.opened_at ASC, p.id ASC',
+      [userId]
+    );
+
+    const result: any[] = [];
+    for (const inv of investments) {
+      const invPositions = positions.filter(p => p.investment_id === inv.id);
+      if (invPositions.length === 0) continue;
+
+      const lots = this.buildLots(invPositions);
+      // Cerrada solo si hubo ventas y no queda cantidad abierta en ningún lote
+      const hasSells = lots.some(l => l.sells.length > 0);
+      const openRemaining = lots.reduce((s, l) => s + Math.max(l.remaining, 0), 0);
+      if (!hasSells || openRemaining > 0) continue;
+
+      const bought_quantity = Math.round(invPositions.filter(p => p.type === 'buy').reduce((s, p) => s + Number(p.quantity), 0) * 1e8) / 1e8;
+      const sold_quantity = Math.round(invPositions.filter(p => p.type === 'sell').reduce((s, p) => s + Number(p.quantity), 0) * 1e8) / 1e8;
+      const bought_value = Math.round(invPositions.filter(p => p.type === 'buy').reduce((s, p) => s + Number(p.total_cost), 0) * 100) / 100;
+      const sold_value = Math.round(invPositions.filter(p => p.type === 'sell').reduce((s, p) => s + Number(p.total_cost), 0) * 100) / 100;
+
+      const sellDates = lots.flatMap(l => l.sells.map(s => new Date(s.opened_at).getTime()));
+      const closed_at = sellDates.length > 0 ? new Date(Math.max(...sellDates)) : null;
+
+      result.push({
+        investment_id: inv.id,
+        name: inv.name,
+        ticker: inv.ticker,
+        type: inv.type,
+        bought_quantity,
+        sold_quantity,
+        bought_value,
+        sold_value,
+        closed_at,
+      });
+    }
+
+    result.sort((a, b) => new Date(b.closed_at).getTime() - new Date(a.closed_at).getTime());
+    return result;
   }
 }
 
