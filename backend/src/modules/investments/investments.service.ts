@@ -41,8 +41,9 @@ interface CreatePositionDTO {
   quantity: number;
   unit_price: number;
   commission?: number;
-  date?: string;
   notes?: string;
+  date?: string;
+  position_id?: number;
 }
 
 export interface OperationSellAllocation {
@@ -137,7 +138,7 @@ export class InvestmentsService {
     );
   }
 
-  async findById(id: number, userId: number): Promise<Investment & { positions: Position[]; open_quantity: number; avg_cost: number }> {
+  async findById(id: number, userId: number): Promise<Investment & { positions: Position[]; open_quantity: number; avg_cost: number; lots: any[] }> {
     const investment = await queryOne<Investment>(
       'SELECT * FROM investments WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL',
       [id, userId]
@@ -167,7 +168,15 @@ export class InvestmentsService {
 
     const avg_cost = open_quantity > 0 ? Math.round((costBasis / open_quantity) * 100) / 100 : 0;
 
-    return { ...investment, positions, open_quantity, avg_cost };
+    const openLotList = openLots.map(l => ({
+      id: l.buy.id,
+      quantity: Number(l.buy.quantity),
+      remaining: l.remaining,
+      unit_price: Number(l.buy.unit_price),
+      opened_at: l.buy.opened_at,
+    }));
+
+    return { ...investment, positions, open_quantity, avg_cost, lots: openLotList };
   }
 
   async create(userId: number, data: CreateInvestmentDTO): Promise<Investment> {
@@ -329,9 +338,23 @@ export class InvestmentsService {
         [investmentId, userId],
         client
       );
-      const lots = this.buildLots(allPositions)
+      let lots = this.buildLots(allPositions)
         .filter(l => l.remaining > 0)
         .map(l => ({ id: l.buy.id, quantity: Number(l.buy.quantity), remaining: l.remaining }));
+
+      // Venta dirigida: si se especifica position_id, solo se descuenta de ese lote
+      if (data.position_id !== undefined && data.position_id !== null) {
+        const target = lots.find(l => l.id === Number(data.position_id));
+        if (!target) {
+          throw AppError.badRequest('La posicion especificada no existe o ya esta cerrada');
+        }
+        if (target.remaining < data.quantity) {
+          throw AppError.badRequest(
+            `La posicion #${target.id} solo tiene ${target.remaining} unidades disponibles`
+          );
+        }
+        lots = [target];
+      }
 
       const totalOpenQuantity = lots.reduce((sum: number, l: any) => sum + l.remaining, 0);
       if (totalOpenQuantity < data.quantity) {

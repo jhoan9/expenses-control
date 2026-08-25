@@ -61,4 +61,8 @@ export const createPositionValidator = [
     .trim()
     .isLength({ max: 500 })
     .withMessage('Notes must be less than 500 characters'),
+  body('position_id')
+    .optional({ nullable: true })
+    .isInt({ min: 1 })
+    .withMessage('Position ID must be a positive integer'),
 ];

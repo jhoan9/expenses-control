@@ -286,6 +286,18 @@ import { CurrencyInputComponent } from '../../shared/components/currency-input/c
                 <option *ngFor="let acc of accounts" [value]="acc.id">{{ acc.name }}</option>
               </select>
             </div>
+            <div class="form-group" *ngIf="tradeType === 'sell' && sellLots.length > 1">
+              <label for="trade-position">Posición a vender</label>
+              <select id="trade-position" formControlName="position_id">
+                <option value="">Automático (FIFO - primera abierta)</option>
+                <option *ngFor="let lot of sellLots" [value]="lot.id">
+                  #{{ lot.id }} · {{ formatQuantity(lot.remaining) }} disp. · {{ formatCurrency(lot.unit_price) }}
+                </option>
+              </select>
+              <small class="field-hint" *ngIf="selectedLot()">
+                Vendiendo desde la posición #{{ selectedLot().id }} (comprada a {{ formatCurrency(selectedLot().unit_price) }}). Máximo: {{ formatQuantity(selectedLot().remaining) }}.
+              </small>
+            </div>
             <div class="form-row">
               <div class="form-group">
                 <label for="trade-qty">Cantidad</label>
@@ -312,7 +324,7 @@ import { CurrencyInputComponent } from '../../shared/components/currency-input/c
             </div>
             <div class="trade-total" *ngIf="tradeForm.value.quantity && tradeForm.value.unit_price">
               <span>Total:</span>
-              <strong>{{ formatCurrency((tradeForm.value.quantity * tradeForm.value.unit_price) + (tradeForm.value.commission || 0)) }}</strong>
+              <strong>{{ formatCurrency((tradeForm.value.quantity * tradeForm.value.unit_price) + (tradeType === 'buy' ? (tradeForm.value.commission || 0) : -(tradeForm.value.commission || 0))) }}</strong>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn-secondary" (click)="closeTradeModal()">Cancelar</button>
@@ -658,6 +670,12 @@ import { CurrencyInputComponent } from '../../shared/components/currency-input/c
       cursor: pointer;
     }
     .btn-secondary:hover { background: #e0e0e0; }
+    .field-hint {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
     .trade-total {
       display: flex;
       justify-content: flex-end;
@@ -704,6 +722,7 @@ export class InvestmentsComponent implements OnInit {
       commission: [0],
       date: [new Date().toISOString().split('T')[0]],
       notes: [''],
+      position_id: [''],
     });
   }
 
@@ -876,8 +895,25 @@ export class InvestmentsComponent implements OnInit {
       commission: 0,
       date: new Date().toISOString().split('T')[0],
       notes: '',
+      position_id: '',
     });
     this.showTradeModal = true;
+  }
+
+  get sellLots(): any[] {
+    return this.selectedInvestment?.lots || [];
+  }
+
+  selectedLot(): any {
+    const id = Number(this.tradeForm.get('position_id')?.value);
+    if (!id) return null;
+    return this.sellLots.find(l => l.id === id) || null;
+  }
+
+  maxSellQuantity(): number | null {
+    const lot = this.selectedLot();
+    if (lot) return lot.remaining;
+    return null;
   }
 
   closeTradeModal(): void {
@@ -890,7 +926,13 @@ export class InvestmentsComponent implements OnInit {
     const endpoint = this.tradeType === 'buy'
       ? `/investments/${this.selectedInvestment.id}/buy`
       : `/investments/${this.selectedInvestment.id}/sell`;
-    this.api.post(endpoint, this.tradeForm.value).subscribe({
+    const payload: any = { ...this.tradeForm.value };
+    if (payload.position_id) {
+      payload.position_id = Number(payload.position_id);
+    } else {
+      delete payload.position_id;
+    }
+    this.api.post(endpoint, payload).subscribe({
       next: () => {
         this.refreshDetail();
         this.closeTradeModal();
