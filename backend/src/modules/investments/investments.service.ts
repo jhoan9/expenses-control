@@ -27,6 +27,7 @@ export interface Position {
   opened_at: Date;
   closed_at: Date | null;
   notes: string | null;
+  buy_position_id: number | null;
 }
 
 interface CreateInvestmentDTO {
@@ -64,7 +65,7 @@ export interface FifoLot {
 
 // Reproduce el historial completo de posiciones en orden FIFO y devuelve
 // los lotes de compra con su cantidad restante y las ventas asignadas.
-// Es la fuente de verdad para saldos abiertos: no depende de campos almacenados.
+// Si un sell tiene buy_position_id, se asigna solo a ese lote (venta dirigida).
 export function buildFifoLots(positions: Position[]): FifoLot[] {
   const sorted = [...positions].sort(
     (a, b) => new Date(a.opened_at).getTime() - new Date(b.opened_at).getTime() || a.id - b.id
@@ -75,16 +76,40 @@ export function buildFifoLots(positions: Position[]): FifoLot[] {
     if (p.type === 'buy') {
       lots.push({ buy: p, remaining: Number(p.quantity), sells: [] });
     } else {
-      let pending = Number(p.quantity);
+      const buyQty = Number(p.quantity);
+
+      // Venta dirigida: asignar SOLO al lote referenciado
+      if (p.buy_position_id) {
+        const lot = lots.find(l => l.buy.id === p.buy_position_id);
+        if (lot && lot.remaining > 0) {
+          const take = Math.min(lot.remaining, buyQty);
+          const lotBuyQty = Number(lot.buy.quantity);
+          const lotFrac = lotBuyQty > 0 ? take / lotBuyQty : 0;
+          const sellFrac = buyQty > 0 ? take / buyQty : 0;
+          lot.sells.push({
+            sell_position_id: p.id,
+            quantity: take,
+            unit_price: Number(p.unit_price),
+            commission: Math.round(Number(p.commission) * sellFrac * 100) / 100,
+            opened_at: p.opened_at,
+            total_value: Math.round((Number(p.unit_price) * take - Number(p.commission) * sellFrac) * 100) / 100,
+            realized_pnl: Math.round((Number(p.unit_price) * take - Number(p.commission) * sellFrac - (Number(lot.buy.unit_price) * take + Number(lot.buy.commission) * lotFrac)) * 100) / 100,
+          });
+          lot.remaining = Math.round((lot.remaining - take) * 1e8) / 1e8;
+        }
+        continue;
+      }
+
+      // Venta FIFO: asignar desde el lote más antiguo
+      let pending = buyQty;
       for (const lot of lots) {
         if (pending <= 0) break;
         if (lot.remaining <= 0) continue;
         const take = Math.min(lot.remaining, pending);
-        const buyQty = Number(lot.buy.quantity);
-        const buyFrac = buyQty > 0 ? take / buyQty : 0;
-        const sellQty = Number(p.quantity);
-        const sellFrac = sellQty > 0 ? take / sellQty : 0;
-        const buyCostPortion = Number(lot.buy.unit_price) * take + Number(lot.buy.commission) * buyFrac;
+        const lotBuyQty = Number(lot.buy.quantity);
+        const lotFrac = lotBuyQty > 0 ? take / lotBuyQty : 0;
+        const sellFrac = buyQty > 0 ? take / buyQty : 0;
+        const buyCostPortion = Number(lot.buy.unit_price) * take + Number(lot.buy.commission) * lotFrac;
         const sellValuePortion = Number(p.unit_price) * take - Number(p.commission) * sellFrac;
         lot.sells.push({
           sell_position_id: p.id,
@@ -408,7 +433,7 @@ export class InvestmentsService {
       }
 
       const result = await execute(
-        'INSERT INTO positions (investment_id, user_id, type, quantity, remaining_quantity, unit_price, commission, total_cost, status, closed_at, notes) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP, $10) RETURNING id',
+        'INSERT INTO positions (investment_id, user_id, type, quantity, remaining_quantity, unit_price, commission, total_cost, status, closed_at, notes, buy_position_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP, $10, $11) RETURNING id',
         [
           investmentId,
           userId,
@@ -420,6 +445,7 @@ export class InvestmentsService {
           totalRevenue,
           'closed',
           data.notes || null,
+          data.position_id || null,
         ],
         client
       );
