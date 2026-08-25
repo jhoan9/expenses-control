@@ -41,6 +41,29 @@ import { ApiService } from '../../core/services/api.service';
           </div>
         </div>
 
+        <div class="report-section" *ngIf="dashboard?.balanceByType?.length">
+          <h3>Desglose del Balance</h3>
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Tipo</th><th>Balance</th><th>Porcentaje</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let b of dashboard.balanceByType">
+                  <td>{{ getTypeLabel(b.type) }}</td>
+                  <td class="amount">{{ formatCurrency(b.total) }}</td>
+                  <td>
+                    <div class="progress-row">
+                      <div class="progress-bar">
+                        <div class="progress-fill account-fill" [style.width.%]="b.percentage"></div>
+                      </div>
+                      <span class="progress-text">{{ b.percentage }}%</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         <div class="lists-grid">
           <div class="list-card">
             <h3>Gastos Recientes</h3>
@@ -88,19 +111,10 @@ import { ApiService } from '../../core/services/api.service';
           <h3>Por Categoría</h3>
           <div class="table-container" *ngIf="expensesData.byCategory?.length; else noExpCat">
             <table>
-              <thead>
-                <tr>
-                  <th>Categoría</th>
-                  <th>Total</th>
-                  <th>Porcentaje</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Categoría</th><th>Total</th><th>Porcentaje</th></tr></thead>
               <tbody>
                 <tr *ngFor="let c of expensesData.byCategory">
-                  <td>
-                    <span class="category-dot" [style.background]="c.color"></span>
-                    {{ c.category_name }}
-                  </td>
+                  <td><span class="category-dot" [style.background]="c.color"></span>{{ c.category_name }}</td>
                   <td class="amount negative">{{ formatCurrency(c.total) }}</td>
                   <td>
                     <div class="progress-row">
@@ -121,13 +135,7 @@ import { ApiService } from '../../core/services/api.service';
           <h3>Por Mes</h3>
           <div class="table-container">
             <table>
-              <thead>
-                <tr>
-                  <th>Mes</th>
-                  <th>Total</th>
-                  <th>Porcentaje</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Mes</th><th>Total</th><th>Porcentaje</th></tr></thead>
               <tbody>
                 <tr *ngFor="let m of expensesData.byMonth">
                   <td>{{ m.month }}</td>
@@ -135,9 +143,32 @@ import { ApiService } from '../../core/services/api.service';
                   <td>
                     <div class="progress-row">
                       <div class="progress-bar">
-                        <div class="progress-fill expense-fill" [style.width.%]="getMonthPercentage(m.total, expensesData.total)"></div>
+                        <div class="progress-fill expense-fill" [style.width.%]="getPercentage(m.total, expensesData.total)"></div>
                       </div>
-                      <span class="progress-text">{{ getMonthPercentage(m.total, expensesData.total) }}%</span>
+                      <span class="progress-text">{{ getPercentage(m.total, expensesData.total) }}%</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="report-section" *ngIf="expensesData?.byPaymentMethod?.length">
+          <h3>Por Método de Pago</h3>
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Método</th><th>Total</th><th>Porcentaje</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let pm of expensesData.byPaymentMethod">
+                  <td>{{ pm.name }}</td>
+                  <td class="amount negative">{{ formatCurrency(pm.total) }}</td>
+                  <td>
+                    <div class="progress-row">
+                      <div class="progress-bar">
+                        <div class="progress-fill expense-fill" [style.width.%]="getPercentage(pm.total, expensesData.total)"></div>
+                      </div>
+                      <span class="progress-text">{{ getPercentage(pm.total, expensesData.total) }}%</span>
                     </div>
                   </td>
                 </tr>
@@ -163,13 +194,7 @@ import { ApiService } from '../../core/services/api.service';
           <h3>Por Categoría</h3>
           <div class="table-container" *ngIf="incomeData.byCategory?.length; else noIncCat">
             <table>
-              <thead>
-                <tr>
-                  <th>Categoría</th>
-                  <th>Total</th>
-                  <th>Porcentaje</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Categoría</th><th>Total</th><th>Porcentaje</th></tr></thead>
               <tbody>
                 <tr *ngFor="let c of incomeData.byCategory">
                   <td>{{ c.category_name }}</td>
@@ -193,13 +218,7 @@ import { ApiService } from '../../core/services/api.service';
           <h3>Por Mes</h3>
           <div class="table-container">
             <table>
-              <thead>
-                <tr>
-                  <th>Mes</th>
-                  <th>Total</th>
-                  <th>Porcentaje</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Mes</th><th>Total</th><th>Porcentaje</th></tr></thead>
               <tbody>
                 <tr *ngFor="let m of incomeData.byMonth">
                   <td>{{ m.month }}</td>
@@ -207,9 +226,9 @@ import { ApiService } from '../../core/services/api.service';
                   <td>
                     <div class="progress-row">
                       <div class="progress-bar">
-                        <div class="progress-fill income-fill" [style.width.%]="getMonthPercentage(m.total, incomeData.total)"></div>
+                        <div class="progress-fill income-fill" [style.width.%]="getPercentage(m.total, incomeData.total)"></div>
                       </div>
-                      <span class="progress-text">{{ getMonthPercentage(m.total, incomeData.total) }}%</span>
+                      <span class="progress-text">{{ getPercentage(m.total, incomeData.total) }}%</span>
                     </div>
                   </td>
                 </tr>
@@ -223,35 +242,55 @@ import { ApiService } from '../../core/services/api.service';
       <div *ngIf="activeTab === 'inversiones'">
         <div class="stats-grid" *ngIf="investmentsData">
           <div class="stat-card">
-            <h3>Total Invertido</h3>
+            <h3>Total Invertido (Abierto)</h3>
             <p class="stat-value">{{ formatCurrency(investmentsData.totalInvested) }}</p>
           </div>
           <div class="stat-card">
+            <h3>Ganancia Realizada</h3>
+            <p class="stat-value" [class.positive]="investmentsData.totalRealizedPnl >= 0" [class.negative]="investmentsData.totalRealizedPnl < 0">
+              {{ formatCurrency(investmentsData.totalRealizedPnl) }}
+            </p>
+          </div>
+          <div class="stat-card">
             <h3>Posiciones</h3>
-            <p class="stat-value">{{ investmentsData.totalPositions }}</p>
+            <p class="stat-value">{{ investmentsData.positions?.length }}</p>
           </div>
         </div>
 
-        <div class="report-section" *ngIf="investmentsData?.byType?.length">
-          <h3>Por Tipo</h3>
+        <div class="report-section" *ngIf="investmentsData?.positions?.length">
+          <h3>Detalle por Inversión</h3>
           <div class="table-container">
             <table>
               <thead>
                 <tr>
-                  <th>Tipo</th>
-                  <th>Cantidad</th>
-                  <th>Costo Total</th>
+                  <th>Nombre</th>
+                  <th>Ticker</th>
+                  <th>Estado</th>
+                  <th>Cant. Abierta</th>
+                  <th>Costo</th>
+                  <th>Precio Prom.</th>
+                  <th>P&L Realizado</th>
+                  <th>Operaciones</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let t of investmentsData.byType">
-                  <td><span class="type-badge" [class]="'type-' + t.type">{{ getTypeLabel(t.type) }}</span></td>
-                  <td>{{ t.count }}</td>
-                  <td class="amount">{{ formatCurrency(t.total_cost) }}</td>
+                <tr *ngFor="let p of investmentsData.positions">
+                  <td>{{ p.name }}</td>
+                  <td><span class="ticker">{{ p.ticker || '-' }}</span></td>
+                  <td><span class="status-badge" [class.status-open]="!p.is_closed" [class.status-closed]="p.is_closed">{{ p.is_closed ? 'Cerrada' : 'Abierta' }}</span></td>
+                  <td>{{ p.open_quantity > 0 ? formatQuantity(p.open_quantity) : '-' }}</td>
+                  <td class="amount">{{ formatCurrency(p.cost_basis) }}</td>
+                  <td class="amount">{{ p.open_quantity > 0 ? formatCurrency(p.avg_cost) : '-' }}</td>
+                  <td class="amount" [class.positive]="p.realized_pnl >= 0" [class.negative]="p.realized_pnl < 0">{{ formatCurrency(p.realized_pnl) }}</td>
+                  <td>{{ p.total_operations }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
+        </div>
+
+        <div class="empty-state" *ngIf="investmentsData?.positions?.length === 0">
+          <p>No hay inversiones registradas</p>
         </div>
       </div>
 
@@ -271,13 +310,17 @@ import { ApiService } from '../../core/services/api.service';
               <thead>
                 <tr>
                   <th>Cuenta</th>
+                  <th>Tipo</th>
                   <th>Balance</th>
-                  <th>Porcentaje</th>
+                  <th>% del Total</th>
+                  <th>Movimientos</th>
+                  <th>Último Movimiento</th>
                 </tr>
               </thead>
               <tbody>
                 <tr *ngFor="let a of accountsData.accounts">
                   <td>{{ a.name }}</td>
+                  <td><span class="type-badge" [class]="'type-' + a.type">{{ getTypeLabel(a.type) }}</span></td>
                   <td class="amount">{{ formatCurrency(a.balance) }}</td>
                   <td>
                     <div class="progress-row">
@@ -286,6 +329,13 @@ import { ApiService } from '../../core/services/api.service';
                       </div>
                       <span class="progress-text">{{ a.percentage }}%</span>
                     </div>
+                  </td>
+                  <td>{{ a.movement_count }}</td>
+                  <td class="last-mov">
+                    <span *ngIf="a.last_movement_type" class="mov-type" [class.mov-income]="isIncomeType(a.last_movement_type)" [class.mov-expense]="isExpenseType(a.last_movement_type)">
+                      {{ getMovLabel(a.last_movement_type) }}
+                    </span>
+                    <small *ngIf="a.last_movement_date">{{ formatDate(a.last_movement_date) }}</small>
                   </td>
                 </tr>
               </tbody>
@@ -299,12 +349,12 @@ import { ApiService } from '../../core/services/api.service';
       <div *ngIf="activeTab === 'presupuesto'">
         <div class="stats-grid" *ngIf="budgetData">
           <div class="stat-card">
-            <h3>Presupuestos</h3>
-            <p class="stat-value">{{ budgetData.totalBudgets }}</p>
+            <h3>Presupuesto Actual</h3>
+            <p class="stat-value">{{ budgetData.budgetName || 'Sin presupuesto' }}</p>
           </div>
           <div class="stat-card income">
-            <h3>Total Planificado</h3>
-            <p class="stat-value">{{ formatCurrency(budgetData.totalPlanned) }}</p>
+            <h3>Ingreso Total</h3>
+            <p class="stat-value">{{ formatCurrency(budgetData.totalIncome) }}</p>
           </div>
           <div class="stat-card" [class.income]="budgetData.totalPaid <= budgetData.totalPlanned" [class.expense]="budgetData.totalPaid > budgetData.totalPlanned">
             <h3>Total Pagado</h3>
@@ -316,24 +366,33 @@ import { ApiService } from '../../core/services/api.service';
           </div>
         </div>
 
-        <div class="report-section" *ngIf="budgetData?.byBudget?.length; else noBudget">
-          <h3>Por Presupuesto</h3>
+        <div class="report-section" *ngIf="budgetData?.items?.length; else noBudget">
+          <h3>Detalle por Ítem</h3>
           <div class="table-container">
             <table>
               <thead>
                 <tr>
                   <th>Nombre</th>
-                  <th>Ingreso</th>
-                  <th>Pagado</th>
-                  <th>Pendiente</th>
+                  <th>Monto</th>
+                  <th>Estado</th>
+                  <th>Progreso</th>
+                  <th>Fecha</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let b of budgetData.byBudget">
-                  <td>{{ b.name }}</td>
-                  <td class="amount">{{ formatCurrency(b.total_income) }}</td>
-                  <td class="amount positive">{{ formatCurrency(b.total_paid) }}</td>
-                  <td class="amount negative">{{ formatCurrency(b.total_pending) }}</td>
+                <tr *ngFor="let item of budgetData.items">
+                  <td>{{ item.name }}</td>
+                  <td class="amount">{{ formatCurrency(item.amount) }}</td>
+                  <td><span class="status-badge" [class.status-open]="item.status === 'pending'" [class.status-closed]="item.status === 'completed'">{{ item.status === 'completed' ? 'Pagado' : 'Pendiente' }}</span></td>
+                  <td>
+                    <div class="progress-row">
+                      <div class="progress-bar">
+                        <div class="progress-fill" [class.income-fill]="item.status === 'completed'" [class.expense-fill]="item.status === 'pending'" [style.width.%]="item.status === 'completed' ? 100 : 0"></div>
+                      </div>
+                      <span class="progress-text">{{ item.status === 'completed' ? '100%' : '0%' }}</span>
+                    </div>
+                  </td>
+                  <td>{{ item.due_date ? formatDate(item.due_date) : '-' }}</td>
                 </tr>
               </tbody>
             </table>
@@ -369,10 +428,7 @@ import { ApiService } from '../../core/services/api.service';
       white-space: nowrap;
     }
     .tab:hover { color: #333; }
-    .tab.active {
-      color: #4caf50;
-      border-bottom-color: #4caf50;
-    }
+    .tab.active { color: #4caf50; border-bottom-color: #4caf50; }
 
     .filters {
       display: flex;
@@ -399,17 +455,8 @@ import { ApiService } from '../../core/services/api.service';
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    .stat-card h3 {
-      margin: 0 0 8px 0;
-      font-size: 0.9rem;
-      color: #666;
-    }
-    .stat-value {
-      margin: 0;
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #333;
-    }
+    .stat-card h3 { margin: 0 0 8px 0; font-size: 0.9rem; color: #666; }
+    .stat-value { margin: 0; font-size: 1.5rem; font-weight: 700; color: #333; }
     .stat-card.income .stat-value { color: #4caf50; }
     .stat-card.expense .stat-value { color: #e53935; }
     .stat-card.net.positive .stat-value { color: #4caf50; }
@@ -455,9 +502,7 @@ import { ApiService } from '../../core/services/api.service';
     .positive { color: #4caf50; }
     .negative { color: #e53935; }
 
-    .report-section {
-      margin-bottom: 24px;
-    }
+    .report-section { margin-bottom: 24px; }
 
     .table-container {
       background: white;
@@ -466,18 +511,8 @@ import { ApiService } from '../../core/services/api.service';
       overflow-x: auto;
     }
     table { width: 100%; border-collapse: collapse; }
-    th, td {
-      padding: 12px 16px;
-      text-align: left;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    th {
-      background: #fafafa;
-      font-weight: 600;
-      color: #555;
-      font-size: 0.85rem;
-      text-transform: uppercase;
-    }
+    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+    th { background: #fafafa; font-weight: 600; color: #555; font-size: 0.85rem; text-transform: uppercase; }
     tr:hover { background: #f9f9f9; }
     .amount { font-weight: 600; }
 
@@ -490,33 +525,13 @@ import { ApiService } from '../../core/services/api.service';
       vertical-align: middle;
     }
 
-    .progress-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .progress-bar {
-      flex: 1;
-      height: 8px;
-      background: #eee;
-      border-radius: 4px;
-      overflow: hidden;
-    }
-    .progress-fill {
-      height: 100%;
-      border-radius: 4px;
-      transition: width 0.3s;
-    }
+    .progress-row { display: flex; align-items: center; gap: 8px; }
+    .progress-bar { flex: 1; height: 8px; background: #eee; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
     .expense-fill { background: #e53935; }
     .income-fill { background: #4caf50; }
     .account-fill { background: #1976d2; }
-    .progress-text {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: #555;
-      min-width: 45px;
-      text-align: right;
-    }
+    .progress-text { font-size: 0.85rem; font-weight: 600; color: #555; min-width: 45px; text-align: right; }
 
     .type-badge {
       display: inline-block;
@@ -530,14 +545,30 @@ import { ApiService } from '../../core/services/api.service';
     .type-etf { background: #e8f5e9; color: #2e7d32; }
     .type-crypto { background: #fff3e0; color: #e65100; }
     .type-other { background: #f5f5f5; color: #616161; }
+    .type-cash { background: #e8f5e9; color: #2e7d32; }
+    .type-savings { background: #e3f2fd; color: #1565c0; }
+    .type-investment { background: #fff3e0; color: #e65100; }
+    .type-credit_card { background: #fce4ec; color: #c62828; }
 
-    .no-data {
-      color: #888;
-      text-align: center;
-      padding: 40px 20px;
-      background: white;
-      border-radius: 8px;
+    .status-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 500;
     }
+    .status-open { background: #e8f5e9; color: #2e7d32; }
+    .status-closed { background: #f5f5f5; color: #616161; }
+
+    .ticker { font-weight: 600; color: #1976d2; font-size: 0.85rem; }
+
+    .last-mov { text-align: right; }
+    .mov-type { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 500; margin-right: 4px; }
+    .mov-income { background: #e8f5e9; color: #2e7d32; }
+    .mov-expense { background: #fce4ec; color: #c62828; }
+
+    .empty-state { color: #888; text-align: center; padding: 40px 20px; background: white; border-radius: 8px; }
+    .no-data { color: #888; text-align: center; padding: 40px 20px; background: white; border-radius: 8px; }
   `]
 })
 export class ReportsComponent implements OnInit {
@@ -577,11 +608,18 @@ export class ReportsComponent implements OnInit {
     this.api.get<any>('/reports/dashboard').subscribe({
       next: (res) => {
         const d = res.data;
+        const totalBalance = Number(d.balance || 0);
+        const balanceByType = Object.entries(d.balance_by_type || {}).map(([type, total]) => ({
+          type,
+          total: Number(total),
+          percentage: totalBalance > 0 ? Math.round((Math.abs(Number(total)) / Math.abs(totalBalance)) * 100) : 0,
+        }));
         this.dashboard = {
-          totalBalance: Number(d.balance || 0),
+          totalBalance,
           monthlyIncome: Number(d.monthly?.income || 0),
           monthlyExpenses: Number(d.monthly?.expenses || 0),
           netFlow: Number(d.monthly?.net || 0),
+          balanceByType,
           recentExpenses: d.recent_expenses || [],
           recentIncome: d.recent_income || [],
         };
@@ -600,9 +638,10 @@ export class ReportsComponent implements OnInit {
           byCategory: (d.by_category || []).map((c: any) => ({
             ...c,
             category_name: c.name,
-            percentage: this.getMonthPercentage(Number(c.total), total),
+            percentage: this.getPercentage(Number(c.total), total),
           })),
           byMonth: d.by_month || [],
+          byPaymentMethod: d.by_payment_method || [],
         };
       },
       error: (err) => console.error('Error loading expenses report', err),
@@ -619,7 +658,7 @@ export class ReportsComponent implements OnInit {
           byCategory: (d.by_category || []).map((c: any) => ({
             ...c,
             category_name: c.name,
-            percentage: this.getMonthPercentage(Number(c.total), total),
+            percentage: this.getPercentage(Number(c.total), total),
           })),
           byMonth: d.by_month || [],
         };
@@ -632,18 +671,10 @@ export class ReportsComponent implements OnInit {
     this.api.get<any>('/reports/investments').subscribe({
       next: (res) => {
         const d = res.data;
-        const positions = d.positions || [];
-        const byTypeMap = new Map<string, { count: number; total_cost: number }>();
-        for (const p of positions) {
-          const cur = byTypeMap.get(p.type) || { count: 0, total_cost: 0 };
-          cur.count += 1;
-          cur.total_cost += Number(p.total_cost || 0);
-          byTypeMap.set(p.type, cur);
-        }
         this.investmentsData = {
           totalInvested: Number(d.total_invested || 0),
-          totalPositions: positions.length,
-          byType: Array.from(byTypeMap, ([type, v]) => ({ type, ...v })),
+          totalRealizedPnl: Number(d.total_realized_pnl || 0),
+          positions: d.positions || [],
         };
       },
       error: (err) => console.error('Error loading investments report', err),
@@ -659,7 +690,7 @@ export class ReportsComponent implements OnInit {
           totalBalance,
           accounts: (d.accounts || []).map((a: any) => ({
             ...a,
-            percentage: totalBalance > 0 ? Math.round((Number(a.balance) / totalBalance) * 100) : 0,
+            percentage: totalBalance > 0 ? Math.round((Math.abs(Number(a.balance)) / Math.abs(totalBalance)) * 100) : 0,
           })),
         };
       },
@@ -674,30 +705,56 @@ export class ReportsComponent implements OnInit {
         const summary = d.summary || {};
         const budget = d.budget;
         this.budgetData = {
-          totalBudgets: budget ? 1 : 0,
+          budgetName: budget?.name || null,
+          totalIncome: Number(summary.total_income || 0),
           totalPlanned: Number(summary.total_planned || 0),
           totalPaid: Number(summary.total_paid || 0),
           totalPending: Number(summary.total_pending || 0),
-          byBudget: budget ? [{
-            name: budget.name,
-            total_income: Number(budget.total_income || 0),
-            total_paid: Number(summary.total_paid || 0),
-            total_pending: Number(summary.total_pending || 0),
-          }] : [],
+          items: d.items || [],
         };
       },
       error: (err) => console.error('Error loading budget report', err),
     });
   }
 
-  getMonthPercentage(monthTotal: number, grandTotal: number): number {
-    if (!grandTotal) return 0;
-    return Math.round((monthTotal / grandTotal) * 100);
+  getPercentage(part: number, total: number): number {
+    if (!total) return 0;
+    return Math.round((part / total) * 100);
   }
 
   getTypeLabel(type: string): string {
-    const labels: Record<string, string> = { stock: 'Acción', bond: 'Bono', etf: 'ETF', crypto: 'Crypto', other: 'Otro' };
+    const labels: Record<string, string> = {
+      stock: 'Acción', bond: 'Bono', etf: 'ETF', crypto: 'Crypto', other: 'Otro',
+      cash: 'Efectivo', savings: 'Ahorro', investment: 'Inversión', credit_card: 'Crédito',
+    };
     return labels[type] || type;
+  }
+
+  getMovLabel(type: string): string {
+    const labels: Record<string, string> = {
+      income: 'Ingreso', expense: 'Gasto', transfer: 'Transferencia',
+      investment_buy: 'Compra', investment_sell: 'Venta', credit_payment: 'Abono',
+    };
+    return labels[type] || type;
+  }
+
+  isIncomeType(type: string): boolean {
+    return ['income', 'investment_sell', 'transfer'].includes(type);
+  }
+
+  isExpenseType(type: string): boolean {
+    return ['expense', 'investment_buy', 'credit_payment'].includes(type);
+  }
+
+  formatQuantity(value: number): string {
+    const num = Number(value);
+    if (isNaN(num)) return '0';
+    return num % 1 === 0 ? num.toLocaleString('es-CO') : num.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 8 });
+  }
+
+  formatDate(date: string): string {
+    if (!date) return '-';
+    return new Date(date).toLocaleDateString('es-CO');
   }
 
   formatCurrency(value: number): string {

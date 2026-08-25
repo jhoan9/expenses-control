@@ -17,16 +17,59 @@ function computeOpenCostBasis(positions: Position[]): number {
   ) / 100;
 }
 
+function computeInvestmentDetail(positions: Position[], investment: any): any {
+  const invPositions = positions.filter(p => p.investment_id === investment.id);
+  if (invPositions.length === 0) return null;
+
+  const lots = buildFifoLots(invPositions);
+  const openLots = lots.filter(l => l.remaining > 0);
+  const closedLots = lots.filter(l => l.remaining <= 0 && l.sells.length > 0);
+
+  const open_quantity = Math.round(openLots.reduce((s, l) => s + l.remaining, 0) * 1e8) / 1e8;
+  const costBasis = openLots.reduce((sum, l) => {
+    const qty = Number(l.buy.quantity);
+    const frac = qty > 0 ? l.remaining / qty : 0;
+    return sum + Number(l.buy.unit_price) * l.remaining + Number(l.buy.commission) * frac;
+  }, 0);
+
+  const realizedPnl = closedLots.reduce((sum, l) => sum + l.sells.reduce((s, sell) => s + sell.realized_pnl, 0), 0);
+  const totalBought = invPositions.filter(p => p.type === 'buy').reduce((s, p) => s + Number(p.quantity), 0);
+  const totalSold = invPositions.filter(p => p.type === 'sell').reduce((s, p) => s + Number(p.quantity), 0);
+
+  return {
+    id: investment.id,
+    name: investment.name,
+    ticker: investment.ticker,
+    type: investment.type,
+    open_quantity,
+    cost_basis: Math.round(costBasis * 100) / 100,
+    avg_cost: open_quantity > 0 ? Math.round((costBasis / open_quantity) * 100) / 100 : 0,
+    realized_pnl: Math.round(realizedPnl * 100) / 100,
+    total_bought: totalBought,
+    total_sold: totalSold,
+    total_operations: invPositions.length,
+    is_closed: open_quantity <= 0 && closedLots.length > 0,
+  };
+}
+
 export class ReportsService {
   async getDashboard(userId: number): Promise<any> {
     const now = new Date();
     const firstDayMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
     const lastDayMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
 
-    const totalBalance = await queryOne<{ total: number }>(
-      'SELECT COALESCE(SUM(CASE WHEN type = \'credit_card\' THEN -balance ELSE balance END), 0) as total FROM accounts WHERE user_id = $1 AND deleted_at IS NULL',
+    const accounts = await query<any>(
+      'SELECT id, name, type, balance FROM accounts WHERE user_id = $1 AND deleted_at IS NULL ORDER BY name',
       [userId]
     );
+
+    const balanceByType: Record<string, number> = {};
+    let totalBalance = 0;
+    for (const a of accounts) {
+      const val = a.type === 'credit_card' ? -Number(a.balance) : Number(a.balance);
+      totalBalance += val;
+      balanceByType[a.type] = (balanceByType[a.type] || 0) + val;
+    }
 
     const monthlyIncome = await queryOne<{ total: number }>(
       'SELECT COALESCE(SUM(amount), 0) as total FROM income WHERE user_id = $1 AND deleted_at IS NULL AND date >= $2 AND date <= $3',
@@ -39,7 +82,8 @@ export class ReportsService {
     );
 
     const thirdPartyTotal = await queryOne<{ total: number }>(
-      'SELECT COALESCE(SUM(total_available), 0) as total FROM third_party_accounts WHERE deleted_at IS NULL'
+      'SELECT COALESCE(SUM(total_available), 0) as total FROM third_party_accounts WHERE user_id = $1 AND deleted_at IS NULL',
+      [userId]
     );
 
     const userPositions = await query<Position>(
@@ -82,7 +126,8 @@ export class ReportsService {
     );
 
     return {
-      balance: Number(totalBalance?.total) || 0,
+      balance: Number(totalBalance) || 0,
+      balance_by_type: balanceByType,
       monthly: {
         income: Number(monthlyIncome?.total) || 0,
         expenses: Number(monthlyExpenses?.total) || 0,
@@ -276,47 +321,69 @@ export class ReportsService {
       [userId]
     );
 
-    const rows = investments
-      .map((inv: any) => {
-        const invPositions = positions.filter(p => p.investment_id === inv.id);
-        if (invPositions.length === 0) return null;
-        const lots = buildFifoLots(invPositions);
-        const open_quantity = Math.round(lots.reduce((s, l) => s + Math.max(l.remaining, 0), 0) * 1e8) / 1e8;
-        return {
-          id: inv.id,
-          name: inv.name,
-          ticker: inv.ticker,
-          type: inv.type,
-          quantity: open_quantity,
-          total_cost: computeOpenCostBasis(invPositions),
-          buys: invPositions.filter(p => p.type === 'buy').length,
-          sells: invPositions.filter(p => p.type === 'sell').length,
-        };
-      })
+    const details = investments
+      .map((inv: any) => computeInvestmentDetail(positions, inv))
       .filter((r: any) => r !== null);
 
-    const totalInvested = rows.reduce((sum: number, p: any) => sum + (p.total_cost > 0 ? Number(p.total_cost) : 0), 0);
+    const totalInvested = details.reduce((sum: number, p: any) => sum + (p.cost_basis > 0 ? Number(p.cost_basis) : 0), 0);
+    const totalRealizedPnl = details.reduce((sum: number, p: any) => sum + Number(p.realized_pnl || 0), 0);
 
     return {
-      positions: rows,
+      positions: details,
       total_invested: totalInvested,
+      total_realized_pnl: Math.round(totalRealizedPnl * 100) / 100,
     };
   }
 
   async getAccountsSummary(userId: number): Promise<any> {
-    const accounts = await query(
-      `SELECT id, name, type, balance
-       FROM accounts
-       WHERE user_id = $1 AND deleted_at IS NULL
-       ORDER BY name`,
+    const now = new Date();
+    const firstDayMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const lastDayMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+
+    const accounts = await query<any>(
+      `SELECT id, name, type, balance FROM accounts WHERE user_id = $1 AND deleted_at IS NULL ORDER BY name`,
       [userId]
     );
 
     const totalBalance = accounts.reduce((sum: number, a: any) =>
       sum + (a.type === 'credit_card' ? -Number(a.balance) : Number(a.balance)), 0);
 
+    const accountDetails = await Promise.all(accounts.map(async (a: any) => {
+      const lastMov = await queryOne<any>(
+        `SELECT type, amount, description, created_at
+         FROM account_movements WHERE account_id = $1 ORDER BY created_at DESC LIMIT 1`,
+        [a.id]
+      );
+      const monthlyIncome = await queryOne<{ total: number }>(
+        `SELECT COALESCE(SUM(amount), 0) as total FROM account_movements
+         WHERE account_id = $1 AND type IN ('income', 'investment_sell', 'transfer')
+         AND description LIKE 'Transfer from%' AND created_at >= $2 AND created_at <= $3`,
+        [a.id, firstDayMonth, lastDayMonth + ' 23:59:59']
+      );
+      const monthlyExpenses = await queryOne<{ total: number }>(
+        `SELECT COALESCE(SUM(amount), 0) as total FROM account_movements
+         WHERE account_id = $1 AND type IN ('expense', 'investment_buy')
+         AND created_at >= $2 AND created_at <= $3`,
+        [a.id, firstDayMonth, lastDayMonth + ' 23:59:59']
+      );
+      const movCount = await queryOne<{ count: number }>(
+        'SELECT COUNT(*) as count FROM account_movements WHERE account_id = $1',
+        [a.id]
+      );
+
+      return {
+        ...a,
+        last_movement_type: lastMov?.type || null,
+        last_movement_description: lastMov?.description || null,
+        last_movement_date: lastMov?.created_at || null,
+        monthly_income: Number(monthlyIncome?.total) || 0,
+        monthly_expenses: Number(monthlyExpenses?.total) || 0,
+        movement_count: Number(movCount?.count) || 0,
+      };
+    }));
+
     return {
-      accounts,
+      accounts: accountDetails,
       total_balance: totalBalance,
     };
   }
