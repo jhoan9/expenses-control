@@ -73,7 +73,7 @@ import { CurrencyInputComponent } from '../../shared/components/currency-input/c
             </div>
 
             <div class="form-group">
-              <label for="balance">{{ form.value.type === 'credit_card' ? 'Deuda Actual' : 'Saldo Inicial' }}</label>
+              <label for="balance">{{ editingId ? 'Saldo Actual' : (form.value.type === 'credit_card' ? 'Deuda Actual' : 'Saldo Inicial') }}</label>
               <app-currency-input id="balance" formControlName="balance" placeholder="0" />
             </div>
 
@@ -574,9 +574,7 @@ export class AccountsComponent implements OnInit {
     this.originalType = account.type;
     this.form.get('balance')?.enable();
     this.form.patchValue({ name: account.name, type: account.type, balance: account.balance, credit_limit: account.credit_limit || 0 });
-    if (account.type === 'credit_card') {
-      this.form.get('balance')?.disable();
-    }
+    this.form.get('balance')?.disable();
     this.showModal = true;
   }
 
