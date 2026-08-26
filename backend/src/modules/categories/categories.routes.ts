@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { categoriesController } from './categories.controller';
-import { authenticate, authorize } from '../../shared/middleware/auth.middleware';
+import { authenticate } from '../../shared/middleware/auth.middleware';
 import { validate } from '../../shared/middleware/validate.middleware';
 import {
   createCategoryValidator,
@@ -10,14 +10,14 @@ import {
 
 const router = Router();
 
-router.get('/', categoriesController.getAll);
-router.get('/:id', categoriesController.getById);
-router.post('/', authenticate, authorize('jh01', 'admin'), validate(createCategoryValidator), categoriesController.create);
-router.put('/:id', authenticate, authorize('jh01', 'admin'), validate(updateCategoryValidator), categoriesController.update);
-router.delete('/:id', authenticate, authorize('jh01', 'admin'), categoriesController.delete);
+router.get('/', authenticate, categoriesController.getAll);
+router.get('/:id', authenticate, categoriesController.getById);
+router.post('/', authenticate, validate(createCategoryValidator), categoriesController.create);
+router.put('/:id', authenticate, validate(updateCategoryValidator), categoriesController.update);
+router.delete('/:id', authenticate, categoriesController.delete);
 
-router.post('/:id/subcategories', authenticate, authorize('jh01', 'admin'), validate(createSubcategoryValidator), categoriesController.addSubcategory);
-router.put('/:id/subcategories/:subcategoryId', authenticate, authorize('jh01', 'admin'), validate(createSubcategoryValidator), categoriesController.updateSubcategory);
-router.delete('/:id/subcategories/:subcategoryId', authenticate, authorize('jh01', 'admin'), categoriesController.deleteSubcategory);
+router.post('/:id/subcategories', authenticate, validate(createSubcategoryValidator), categoriesController.addSubcategory);
+router.put('/:id/subcategories/:subcategoryId', authenticate, validate(createSubcategoryValidator), categoriesController.updateSubcategory);
+router.delete('/:id/subcategories/:subcategoryId', authenticate, categoriesController.deleteSubcategory);
 
 export default router;

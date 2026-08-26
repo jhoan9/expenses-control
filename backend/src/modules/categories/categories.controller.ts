@@ -1,11 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { categoriesService } from './categories.service';
+import { AuthRequest } from '../../shared/middleware/auth.middleware';
 
 export class CategoriesController {
-  async getAll(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getAll(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const type = req.query.type as string;
-      const categories = await categoriesService.findAll(type);
+      const categories = await categoriesService.findAll(type, req.userId);
       res.json({
         success: true,
         data: categories,
@@ -28,9 +29,9 @@ export class CategoriesController {
     }
   }
 
-  async create(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async create(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const category = await categoriesService.create(req.body);
+      const category = await categoriesService.create({ ...req.body, user_id: req.userId });
       res.status(201).json({
         success: true,
         data: category,
@@ -40,10 +41,10 @@ export class CategoriesController {
     }
   }
 
-  async update(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async update(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = parseInt(req.params.id);
-      const category = await categoriesService.update(id, req.body);
+      const category = await categoriesService.update(id, req.body, req.userId);
       res.json({
         success: true,
         data: category,
@@ -53,10 +54,10 @@ export class CategoriesController {
     }
   }
 
-  async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async delete(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = parseInt(req.params.id);
-      await categoriesService.delete(id);
+      await categoriesService.delete(id, req.userId);
       res.json({
         success: true,
         message: 'Category deleted successfully',

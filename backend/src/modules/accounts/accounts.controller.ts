@@ -91,6 +91,19 @@ export class AccountsController {
       next(error);
     }
   }
+
+  async getMovements(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const id = parseInt(req.params.id);
+      const movements = await accountsService.getMovements(id, req.userId!);
+      res.json({
+        success: true,
+        data: movements,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const accountsController = new AccountsController();

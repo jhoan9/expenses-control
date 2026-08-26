@@ -8,6 +8,7 @@ interface Category {
   icon: string | null;
   color: string | null;
   is_active: boolean;
+  user_id: number | null;
   created_at: Date;
 }
 
@@ -28,6 +29,7 @@ interface CreateCategoryDTO {
   type?: 'expense' | 'income' | 'both';
   icon?: string;
   color?: string;
+  user_id?: number | null;
 }
 
 interface UpdateCategoryDTO {
@@ -43,12 +45,18 @@ interface CreateSubcategoryDTO {
 }
 
 export class CategoriesService {
-  async findAll(type?: string): Promise<CategoryWithSubcategories[]> {
+  async findAll(type?: string, userId?: number): Promise<CategoryWithSubcategories[]> {
     let sql = 'SELECT * FROM categories WHERE deleted_at IS NULL';
     const params: any[] = [];
 
+    // Filter by user: show global (user_id IS NULL) + user's personal categories
+    if (userId) {
+      sql += ' AND (user_id IS NULL OR user_id = $' + (params.length + 1) + ')';
+      params.push(userId);
+    }
+
     if (type) {
-      sql += ' AND (type = $1 OR type = \'both\')';
+      sql += ' AND (type = $' + (params.length + 1) + ' OR type = \'both\')';
       params.push(type);
     }
 
@@ -86,8 +94,8 @@ export class CategoriesService {
 
   async create(data: CreateCategoryDTO): Promise<Category> {
     const result = await execute(
-      'INSERT INTO categories (name, type, icon, color) VALUES ($1, $2, $3, $4) RETURNING id',
-      [data.name, data.type || 'both', data.icon || null, data.color || null]
+      'INSERT INTO categories (name, type, icon, color, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+      [data.name, data.type || 'both', data.icon || null, data.color || null, data.user_id || null]
     );
 
     return queryOne<Category>(
@@ -96,8 +104,13 @@ export class CategoriesService {
     ) as Promise<Category>;
   }
 
-  async update(id: number, data: UpdateCategoryDTO): Promise<Category> {
-    await this.findById(id);
+  async update(id: number, data: UpdateCategoryDTO, userId?: number): Promise<Category> {
+    const category = await this.findById(id);
+
+    // Only allow editing global categories or user's own categories
+    if (userId && category.user_id !== null && category.user_id !== userId) {
+      throw AppError.forbidden('Cannot edit categories created by other users');
+    }
 
     const fields: string[] = [];
     const values: any[] = [];
@@ -136,8 +149,14 @@ export class CategoriesService {
     return this.findById(id);
   }
 
-  async delete(id: number): Promise<void> {
-    await this.findById(id);
+  async delete(id: number, userId?: number): Promise<void> {
+    const category = await this.findById(id);
+
+    // Only allow deleting global categories or user's own categories
+    if (userId && category.user_id !== null && category.user_id !== userId) {
+      throw AppError.forbidden('Cannot delete categories created by other users');
+    }
+
     await execute('UPDATE categories SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1', [id]);
   }
 

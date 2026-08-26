@@ -7,14 +7,25 @@ interface DateRange {
 }
 
 function computeOpenCostBasis(positions: Position[]): number {
-  const openLots = buildFifoLots(positions).filter(l => l.remaining > 0);
-  return Math.round(
-    openLots.reduce((sum, l) => {
+  // Group positions by investment to avoid FIFO mixing across different investments
+  const byInvestment = new Map<number, Position[]>();
+  for (const p of positions) {
+    const arr = byInvestment.get(p.investment_id) || [];
+    arr.push(p);
+    byInvestment.set(p.investment_id, arr);
+  }
+
+  let total = 0;
+  for (const invPositions of byInvestment.values()) {
+    const openLots = buildFifoLots(invPositions).filter(l => l.remaining > 0);
+    total += openLots.reduce((sum, l) => {
       const qty = Number(l.buy.quantity);
       const frac = qty > 0 ? l.remaining / qty : 0;
       return sum + Number(l.buy.unit_price) * l.remaining + Number(l.buy.commission) * frac;
-    }, 0) * 100
-  ) / 100;
+    }, 0);
+  }
+
+  return Math.round(total * 100) / 100;
 }
 
 function computeInvestmentDetail(positions: Position[], investment: any): any {

@@ -238,6 +238,15 @@ export class AccountsService {
       return this.findById(cardId, userId);
     });
   }
+
+  async getMovements(id: number, userId: number): Promise<any[]> {
+    await this.findById(id, userId);
+    return query<any>(
+      `SELECT id, type, amount, balance_before, balance_after, reference_type, reference_id, description, created_at
+       FROM account_movements WHERE account_id = $1 ORDER BY created_at DESC`,
+      [id]
+    );
+  }
 }
 
 export const accountsService = new AccountsService();

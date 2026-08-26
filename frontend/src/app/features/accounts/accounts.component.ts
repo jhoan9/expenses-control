@@ -33,6 +33,7 @@ import { CurrencyInputComponent } from '../../shared/components/currency-input/c
             Disponible: {{ formatCurrency(availableCredit(account)) }} de {{ formatCurrency(account.credit_limit) }}
           </p>
           <div class="account-actions-row">
+            <button class="btn-action" (click)="openMovements(account)">📋 Movimientos</button>
             <button class="btn-action" (click)="openTransfer(account)">⇄ Transferir</button>
             <button class="btn-action btn-card" *ngIf="account.type === 'credit_card'" (click)="openAbono(account)">💳 Pagar Tarjeta</button>
           </div>
@@ -88,6 +89,36 @@ import { CurrencyInputComponent } from '../../shared/components/currency-input/c
               </button>
             </div>
           </form>
+        </div>
+      </div>
+
+      <!-- Movements Modal -->
+      <div class="modal-overlay" *ngIf="showMovementsModal" (click)="closeMovementsModal()">
+        <div class="modal modal-wide" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h2>Movimientos - {{ movementsAccountName }}</h2>
+            <button class="btn-close" (click)="closeMovementsModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="movements-list" *ngIf="movements.length > 0; else noMovements">
+              <div class="movement-item" *ngFor="let mov of movements" [class.movement-income]="isIncomeType(mov.type)" [class.movement-expense]="isExpenseType(mov.type)">
+                <div class="movement-info">
+                  <span class="movement-type-badge" [class]="'type-' + mov.type">{{ getTypeLabel(mov.type) }}</span>
+                  <span class="movement-desc">{{ mov.description || 'Sin descripción' }}</span>
+                  <small class="movement-date">{{ mov.created_at | date:'dd/MM/yy HH:mm' }}</small>
+                </div>
+                <div class="movement-amounts">
+                  <span class="movement-amount" [class.positive]="isIncomeType(mov.type)" [class.negative]="isExpenseType(mov.type)">
+                    {{ isIncomeType(mov.type) ? '+' : '-' }}{{ formatCurrency(mov.amount) }}
+                  </span>
+                  <small class="movement-balance">Saldo: {{ formatCurrency(mov.balance_after) }}</small>
+                </div>
+              </div>
+            </div>
+            <ng-template #noMovements>
+              <p class="no-data">No hay movimientos en esta cuenta</p>
+            </ng-template>
+          </div>
         </div>
       </div>
 
@@ -311,6 +342,7 @@ import { CurrencyInputComponent } from '../../shared/components/currency-input/c
       max-height: 90vh;
       overflow-y: auto;
     }
+    .modal-wide { max-width: 600px; }
     .modal-header {
       display: flex;
       justify-content: space-between;
@@ -365,6 +397,43 @@ import { CurrencyInputComponent } from '../../shared/components/currency-input/c
       cursor: pointer;
     }
     .btn-secondary:hover { background: #e0e0e0; }
+    .modal-body {
+      padding: 16px 20px;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+    .movements-list { display: flex; flex-direction: column; gap: 8px; }
+    .movement-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      background: #fafafa;
+      border-radius: 8px;
+      border-left: 3px solid #ddd;
+    }
+    .movement-item.movement-income { border-left-color: #4caf50; }
+    .movement-item.movement-expense { border-left-color: #e53935; }
+    .movement-info { display: flex; flex-direction: column; gap: 2px; }
+    .movement-type-badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 4px;
+      width: fit-content;
+    }
+    .type-income, .type-investment_sell, .type-transfer_in { background: #e8f5e9; color: #2e7d32; }
+    .type-expense, .type-investment_buy, .type-credit_card_payment { background: #ffebee; color: #c62828; }
+    .type-credit_payment { background: #e3f2fd; color: #1565c0; }
+    .type-transfer { background: #f3e5f5; color: #7b1fa2; }
+    .movement-desc { font-size: 0.85rem; color: #555; }
+    .movement-date { font-size: 0.75rem; color: #999; }
+    .movement-amounts { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+    .movement-amount { font-weight: 600; font-size: 0.95rem; }
+    .movement-amount.positive { color: #4caf50; }
+    .movement-amount.negative { color: #e53935; }
+    .movement-balance { font-size: 0.75rem; color: #999; }
+    .no-data { color: #888; text-align: center; padding: 20px; }
   `]
 })
 export class AccountsComponent implements OnInit {
@@ -372,6 +441,7 @@ export class AccountsComponent implements OnInit {
   loading = false;
   showModal = false;
   editingId: number | null = null;
+  originalType: string = '';
   saving = false;
   form: FormGroup;
 
@@ -384,6 +454,11 @@ export class AccountsComponent implements OnInit {
   abonoCardId: number | null = null;
   abonoCardName = '';
   abonoForm: FormGroup;
+
+  showMovementsModal = false;
+  movementsAccountId: number | null = null;
+  movementsAccountName = '';
+  movements: any[] = [];
 
   constructor(private api: ApiService, private fb: FormBuilder) {
     this.form = this.fb.group({
@@ -490,11 +565,16 @@ export class AccountsComponent implements OnInit {
   closeModal(): void {
     this.showModal = false;
     this.editingId = null;
+    this.form.get('balance')?.enable();
   }
 
   editAccount(account: any): void {
     this.editingId = account.id;
+    this.originalType = account.type;
     this.form.patchValue({ name: account.name, type: account.type, balance: account.balance, credit_limit: account.credit_limit || 0 });
+    if (account.type === 'credit_card') {
+      this.form.get('balance')?.disable();
+    }
     this.showModal = true;
   }
 
@@ -502,9 +582,14 @@ export class AccountsComponent implements OnInit {
     if (this.form.invalid) return;
     this.saving = true;
 
+    const formValue = { ...this.form.value };
+    if (this.form.get('balance')?.disabled) {
+      formValue.balance = this.form.get('balance')?.value;
+    }
+
     const request = this.editingId
-      ? this.api.put(`/accounts/${this.editingId}`, this.form.value)
-      : this.api.post('/accounts', this.form.value);
+      ? this.api.put(`/accounts/${this.editingId}`, formValue)
+      : this.api.post('/accounts', formValue);
 
     request.subscribe({
       next: () => { this.loadAccounts(); this.closeModal(); this.saving = false; },
@@ -535,5 +620,38 @@ export class AccountsComponent implements OnInit {
 
   formatCurrency(value: number): string {
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value);
+  }
+
+  openMovements(account: any): void {
+    this.movementsAccountId = account.id;
+    this.movementsAccountName = account.name;
+    this.movements = [];
+    this.showMovementsModal = true;
+    this.api.get<any>(`/accounts/${account.id}/movements`).subscribe({
+      next: (res) => { this.movements = res.data; },
+      error: () => { this.movements = []; },
+    });
+  }
+
+  closeMovementsModal(): void {
+    this.showMovementsModal = false;
+    this.movementsAccountId = null;
+  }
+
+  isIncomeType(type: string): boolean {
+    return ['income', 'investment_sell', 'credit_payment'].includes(type);
+  }
+
+  isExpenseType(type: string): boolean {
+    return ['expense', 'investment_buy', 'credit_card_payment'].includes(type);
+  }
+
+  getTypeLabel(type: string): string {
+    const labels: Record<string, string> = {
+      income: 'Ingreso', expense: 'Gasto', transfer: 'Transferencia',
+      investment_buy: 'Compra Inv.', investment_sell: 'Venta Inv.',
+      credit_payment: 'Abono TC', credit_card_payment: 'Pago TC'
+    };
+    return labels[type] || type;
   }
 }

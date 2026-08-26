@@ -79,10 +79,10 @@ export class CurrencyInputComponent implements ControlValueAccessor {
       this.setRendered('');
       return;
     }
-    const fixed = Math.abs(Math.round(num * 100) / 100).toFixed(2);
+    const fixed = Math.abs(Math.round(num * 100000) / 100000).toFixed(5);
     const [i, d] = fixed.split('.');
     this.intDigits = i.replace(/^0+(?=\d)/, '');
-    this.decDigits = d === '00' ? '' : d.replace(/0+$/, '');
+    this.decDigits = d.replace(/0+$/, '');
     this.decimalMode = false;
     this.setRendered(this.buildDisplay());
   }
@@ -149,7 +149,7 @@ export class CurrencyInputComponent implements ControlValueAccessor {
         this.decimalMode = true;
       } else if (/\d/.test(data)) {
         if (this.decimalMode) {
-          if (this.decDigits.length < 2) this.decDigits += data;
+          if (this.decDigits.length < 5) this.decDigits += data;
         } else {
           const next = (this.intDigits + data).replace(/^0+(?=\d)/, '');
           if (next.length <= 15) this.intDigits = next;
@@ -206,14 +206,14 @@ export class CurrencyInputComponent implements ControlValueAccessor {
     }
 
     this.intDigits = intPart.replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, 15);
-    this.decDigits = decPart.replace(/\D/g, '').slice(0, 2);
+    this.decDigits = decPart.replace(/\D/g, '').slice(0, 5);
     this.decimalMode = this.decDigits.length > 0;
   }
 
   private currentValue(): number | null {
     if (!this.intDigits && !this.decDigits) return null;
     const num = Number(`${this.intDigits || '0'}.${this.decDigits || '0'}`);
-    return isNaN(num) ? null : Math.round(num * 100) / 100;
+    return isNaN(num) ? null : Math.round(num * 100000) / 100000;
   }
 
   private buildDisplay(): string {

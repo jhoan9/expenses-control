@@ -20,5 +20,6 @@ router.put('/:id', validate(updateAccountValidator), accountsController.update);
 router.delete('/:id', accountsController.delete);
 router.post('/:id/transfer', validate(transferValidator), accountsController.transfer);
 router.post('/:id/abono', validate(creditCardPaymentValidator), accountsController.creditCardPayment);
+router.get('/:id/movements', accountsController.getMovements);
 
 export default router;
