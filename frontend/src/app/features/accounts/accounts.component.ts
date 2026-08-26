@@ -559,6 +559,7 @@ export class AccountsComponent implements OnInit {
   openModal(): void {
     this.editingId = null;
     this.form.reset({ name: '', type: '', balance: 0, credit_limit: 0 });
+    this.form.get('balance')?.enable();
     this.showModal = true;
   }
 
@@ -571,6 +572,7 @@ export class AccountsComponent implements OnInit {
   editAccount(account: any): void {
     this.editingId = account.id;
     this.originalType = account.type;
+    this.form.get('balance')?.enable();
     this.form.patchValue({ name: account.name, type: account.type, balance: account.balance, credit_limit: account.credit_limit || 0 });
     if (account.type === 'credit_card') {
       this.form.get('balance')?.disable();
