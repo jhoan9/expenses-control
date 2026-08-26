@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
+import { formatCurrency } from '../../shared/utils/format';
 
 @Component({
   selector: 'app-third-party',
@@ -461,6 +462,7 @@ import { CurrencyInputComponent } from '../../shared/components/currency-input/c
   `]
 })
 export class ThirdPartyComponent implements OnInit {
+  formatCurrency = formatCurrency;
   accounts: any[] = [];
   selectedAccount: any = null;
   movements: any[] = [];
@@ -631,7 +633,4 @@ export class ThirdPartyComponent implements OnInit {
     return new Date(date).toLocaleDateString('es-CO');
   }
 
-  formatCurrency(value: number): string {
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value);
-  }
 }

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../core/services/api.service';
+import { formatCurrency } from '../../shared/utils/format';
 
 @Component({
   selector: 'app-dashboard',
@@ -166,6 +167,7 @@ import { ApiService } from '../../core/services/api.service';
   `]
 })
 export class DashboardComponent implements OnInit {
+  formatCurrency = formatCurrency;
   dashboard: any = null;
 
   constructor(private api: ApiService) {}
@@ -185,12 +187,4 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  formatCurrency(value: number): string {
-    if (value === undefined || value === null) return '$0';
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0,
-    }).format(value);
-  }
 }

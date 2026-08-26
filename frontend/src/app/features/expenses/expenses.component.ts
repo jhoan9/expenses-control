@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
+import { formatCurrency } from '../../shared/utils/format';
 
 interface ExpenseItem {
   name: string;
@@ -396,6 +397,7 @@ interface ExpenseItem {
   `]
 })
 export class ExpensesComponent implements OnInit {
+  formatCurrency = formatCurrency;
   expenses: any[] = [];
   accounts: any[] = [];
   categories: any[] = [];
@@ -684,7 +686,4 @@ export class ExpensesComponent implements OnInit {
     return labels[status] || status;
   }
 
-  formatCurrency(value: number): string {
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value);
-  }
 }

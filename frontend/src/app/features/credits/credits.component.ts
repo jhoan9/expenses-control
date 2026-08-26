@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
+import { formatCurrency } from '../../shared/utils/format';
 
 @Component({
   selector: 'app-credits',
@@ -495,6 +496,7 @@ import { CurrencyInputComponent } from '../../shared/components/currency-input/c
   `]
 })
 export class CreditsComponent implements OnInit {
+  formatCurrency = formatCurrency;
   credits: any[] = [];
   summary: any = null;
   selectedCredit: any = null;
@@ -693,7 +695,4 @@ export class CreditsComponent implements OnInit {
     return new Date(date).toLocaleDateString('es-CO');
   }
 
-  formatCurrency(value: number): string {
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value);
-  }
 }

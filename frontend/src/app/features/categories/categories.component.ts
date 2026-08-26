@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
+import { formatCurrency } from '../../shared/utils/format';
 
 @Component({
   selector: 'app-categories',
@@ -367,6 +368,7 @@ import { ApiService } from '../../core/services/api.service';
   `]
 })
 export class CategoriesComponent implements OnInit {
+  formatCurrency = formatCurrency;
   categories: any[] = [];
   loading = false;
   showModal = false;
@@ -505,7 +507,4 @@ export class CategoriesComponent implements OnInit {
     return labels[type] || type;
   }
 
-  formatCurrency(value: number): string {
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value);
-  }
 }

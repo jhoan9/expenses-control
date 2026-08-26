@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
+import { formatCurrency } from '../../shared/utils/format';
 
 @Component({
   selector: 'app-reports',
@@ -572,6 +573,7 @@ import { ApiService } from '../../core/services/api.service';
   `]
 })
 export class ReportsComponent implements OnInit {
+  formatCurrency = formatCurrency;
   activeTab = 'dashboard';
 
   dashboard: any = null;
@@ -757,12 +759,4 @@ export class ReportsComponent implements OnInit {
     return new Date(date).toLocaleDateString('es-CO');
   }
 
-  formatCurrency(value: number): string {
-    if (value === undefined || value === null) return '$0';
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0,
-    }).format(value);
-  }
 }

@@ -2,7 +2,7 @@ import { query, queryOne, execute, transaction } from '../../config/database';
 import { AppError } from '../../shared/errors/AppError';
 import { PoolClient } from 'pg';
 
-type AccountType = 'savings' | 'checking' | 'cash' | 'investment' | 'credit_card' | 'other';
+type AccountType = 'savings' | 'checking' | 'cash' | 'investment' | 'credit_card' | 'bajo_monto' | 'other';
 
 interface Account {
   id: number;

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
+import { formatCurrency } from '../../shared/utils/format';
 
 @Component({
   selector: 'app-accounts',
@@ -68,6 +69,7 @@ import { CurrencyInputComponent } from '../../shared/components/currency-input/c
                 <option value="cash">Efectivo</option>
                 <option value="investment">Inversión</option>
                 <option value="credit_card">Tarjeta de Crédito</option>
+                <option value="bajo_monto">Bajo Monto</option>
                 <option value="other">Otro</option>
               </select>
             </div>
@@ -437,6 +439,7 @@ import { CurrencyInputComponent } from '../../shared/components/currency-input/c
   `]
 })
 export class AccountsComponent implements OnInit {
+  formatCurrency = formatCurrency;
   accounts: any[] = [];
   loading = false;
   showModal = false;
@@ -605,21 +608,17 @@ export class AccountsComponent implements OnInit {
   }
 
   getAccountIcon(type: string): string {
-    const icons: Record<string, string> = { savings: '🏦', checking: '💳', cash: '💵', investment: '📈', credit_card: '💳', other: '💰' };
+    const icons: Record<string, string> = { savings: '🏦', checking: '💳', cash: '💵', investment: '📈', credit_card: '💳', bajo_monto: '💰', other: '💰' };
     return icons[type] || '💰';
   }
 
   getAccountTypeLabel(type: string): string {
-    const labels: Record<string, string> = { savings: 'Ahorros', checking: 'Corriente', cash: 'Efectivo', investment: 'Inversión', credit_card: 'Tarjeta de Crédito', other: 'Otro' };
+    const labels: Record<string, string> = { savings: 'Ahorros', checking: 'Corriente', cash: 'Efectivo', investment: 'Inversión', credit_card: 'Tarjeta de Crédito', bajo_monto: 'Bajo Monto', other: 'Otro' };
     return labels[type] || type;
   }
 
   availableCredit(account: any): number {
     return (Number(account.credit_limit) || 0) - (Number(account.balance) || 0);
-  }
-
-  formatCurrency(value: number): string {
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value);
   }
 
   openMovements(account: any): void {

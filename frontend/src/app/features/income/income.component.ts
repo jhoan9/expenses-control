@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
+import { formatCurrency } from '../../shared/utils/format';
 
 @Component({
   selector: 'app-income',
@@ -254,6 +255,7 @@ import { CurrencyInputComponent } from '../../shared/components/currency-input/c
   `]
 })
 export class IncomeComponent implements OnInit {
+  formatCurrency = formatCurrency;
   income: any[] = [];
   accounts: any[] = [];
   categories: any[] = [];
@@ -355,7 +357,4 @@ export class IncomeComponent implements OnInit {
     return this.categories.find(c => c.id === id)?.name || '-';
   }
 
-  formatCurrency(value: number): string {
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value);
-  }
 }

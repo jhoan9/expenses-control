@@ -1,6 +1,6 @@
 import { body } from 'express-validator';
 
-const ACCOUNT_TYPES = ['savings', 'checking', 'cash', 'investment', 'credit_card', 'other'];
+const ACCOUNT_TYPES = ['savings', 'checking', 'cash', 'investment', 'credit_card', 'bajo_monto', 'other'];
 
 export const createAccountValidator = [
   body('name')

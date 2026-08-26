@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
+import { formatCurrency } from '../../shared/utils/format';
 
 @Component({
   selector: 'app-budget',
@@ -519,6 +520,7 @@ import { CurrencyInputComponent } from '../../shared/components/currency-input/c
   `]
 })
 export class BudgetComponent implements OnInit {
+  formatCurrency = formatCurrency;
   budgets: any[] = [];
   selectedBudget: any = null;
   draftItems: any[] = [];
@@ -727,7 +729,4 @@ export class BudgetComponent implements OnInit {
     return labels[status] || status;
   }
 
-  formatCurrency(value: number): string {
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value);
-  }
 }
