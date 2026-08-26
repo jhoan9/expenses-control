@@ -7,9 +7,8 @@ export function formatCurrency(value: number): string {
     role = user.role || '';
   } catch {}
 
-  const hasDecimals = value % 1 !== 0;
-
-  if (role === 'jh01') {
+  if (role === 'ji01') {
+    const hasDecimals = value % 1 !== 0;
     return new Intl.NumberFormat('es-CO', {
       style: 'currency',
       currency: 'COP',
