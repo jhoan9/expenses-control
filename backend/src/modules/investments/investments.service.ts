@@ -90,10 +90,10 @@ export function buildFifoLots(positions: Position[]): FifoLot[] {
             sell_position_id: p.id,
             quantity: take,
             unit_price: Number(p.unit_price),
-            commission: Math.round(Number(p.commission) * sellFrac * 100) / 100,
+            commission: Math.round(Number(p.commission) * sellFrac * 100000) / 100000,
             opened_at: p.opened_at,
-            total_value: Math.round((Number(p.unit_price) * take - Number(p.commission) * sellFrac) * 100) / 100,
-            realized_pnl: Math.round((Number(p.unit_price) * take - Number(p.commission) * sellFrac - (Number(lot.buy.unit_price) * take + Number(lot.buy.commission) * lotFrac)) * 100) / 100,
+            total_value: Math.round((Number(p.unit_price) * take - Number(p.commission) * sellFrac) * 100000) / 100000,
+            realized_pnl: Math.round((Number(p.unit_price) * take - Number(p.commission) * sellFrac - (Number(lot.buy.unit_price) * take + Number(lot.buy.commission) * lotFrac)) * 100000) / 100000,
           });
           lot.remaining = Math.round((lot.remaining - take) * 1e8) / 1e8;
         }
@@ -115,10 +115,10 @@ export function buildFifoLots(positions: Position[]): FifoLot[] {
           sell_position_id: p.id,
           quantity: take,
           unit_price: Number(p.unit_price),
-          commission: Math.round(Number(p.commission) * sellFrac * 100) / 100,
+          commission: Math.round(Number(p.commission) * sellFrac * 100000) / 100000,
           opened_at: p.opened_at,
-          total_value: Math.round(sellValuePortion * 100) / 100,
-          realized_pnl: Math.round((sellValuePortion - buyCostPortion) * 100) / 100,
+          total_value: Math.round(sellValuePortion * 100000) / 100000,
+          realized_pnl: Math.round((sellValuePortion - buyCostPortion) * 100000) / 100000,
         });
         lot.remaining = Math.round((lot.remaining - take) * 1e8) / 1e8;
         pending -= take;
@@ -191,7 +191,7 @@ export class InvestmentsService {
       return sum + Number(l.buy.unit_price) * l.remaining + Number(l.buy.commission) * frac;
     }, 0);
 
-    const avg_cost = open_quantity > 0 ? Math.round((costBasis / open_quantity) * 100) / 100 : 0;
+    const avg_cost = open_quantity > 0 ? Math.round((costBasis / open_quantity) * 100000) / 100000 : 0;
 
     const openLotList = openLots.map(l => ({
       id: l.buy.id,
@@ -491,7 +491,7 @@ export class InvestmentsService {
 
     return lots.map(lot => {
       const sold_quantity = Math.round(lot.sells.reduce((s, a) => s + a.quantity, 0) * 1e8) / 1e8;
-      const realized_pnl = Math.round(lot.sells.reduce((s, a) => s + a.realized_pnl, 0) * 100) / 100;
+      const realized_pnl = Math.round(lot.sells.reduce((s, a) => s + a.realized_pnl, 0) * 100000) / 100000;
       const totalSoldValue = lot.sells.reduce((s, a) => s + a.total_value, 0);
       // El estado se determina por el replay del historial, no por el valor almacenado,
       // para ser consistente incluso si hay datos previos al sistema FIFO
@@ -506,7 +506,7 @@ export class InvestmentsService {
         sold_quantity,
         remaining_quantity: Math.round(lot.remaining * 1e8) / 1e8,
         sells: lot.sells,
-        avg_sell_price: sold_quantity > 0 ? Math.round((totalSoldValue / sold_quantity) * 100) / 100 : 0,
+        avg_sell_price: sold_quantity > 0 ? Math.round((totalSoldValue / sold_quantity) * 100000) / 100000 : 0,
         realized_pnl,
         status: isClosed ? ('closed' as const) : ('open' as const),
         closed_at: isClosed ? (lot.buy.closed_at ?? this.lastSellAt(lot.sells)) : null,
@@ -541,7 +541,7 @@ export class InvestmentsService {
           return s + Number(l.buy.unit_price) * l.remaining + Number(l.buy.commission) * frac;
         }, 0) * 100
       ) / 100;
-      const avg_cost = open_quantity > 0 ? Math.round((cost_basis / open_quantity) * 100) / 100 : 0;
+      const avg_cost = open_quantity > 0 ? Math.round((cost_basis / open_quantity) * 100000) / 100000 : 0;
 
       result.push({
         investment_id: inv.id,
@@ -581,8 +581,8 @@ export class InvestmentsService {
 
       const bought_quantity = Math.round(invPositions.filter(p => p.type === 'buy').reduce((s, p) => s + Number(p.quantity), 0) * 1e8) / 1e8;
       const sold_quantity = Math.round(invPositions.filter(p => p.type === 'sell').reduce((s, p) => s + Number(p.quantity), 0) * 1e8) / 1e8;
-      const bought_value = Math.round(invPositions.filter(p => p.type === 'buy').reduce((s, p) => s + Number(p.total_cost), 0) * 100) / 100;
-      const sold_value = Math.round(invPositions.filter(p => p.type === 'sell').reduce((s, p) => s + Number(p.total_cost), 0) * 100) / 100;
+      const bought_value = Math.round(invPositions.filter(p => p.type === 'buy').reduce((s, p) => s + Number(p.total_cost), 0) * 100000) / 100000;
+      const sold_value = Math.round(invPositions.filter(p => p.type === 'sell').reduce((s, p) => s + Number(p.total_cost), 0) * 100000) / 100000;
 
       const sellDates = lots.flatMap(l => l.sells.map(s => new Date(s.opened_at).getTime()));
       const closed_at = sellDates.length > 0 ? new Date(Math.max(...sellDates)) : null;

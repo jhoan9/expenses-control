@@ -820,7 +820,7 @@ export class InvestmentsComponent implements OnInit {
   }
 
   operationsPnl(): number {
-    return Math.round(this.operations.reduce((sum, op) => sum + (Number(op.realized_pnl) || 0), 0) * 100) / 100;
+    return Math.round(this.operations.reduce((sum, op) => sum + (Number(op.realized_pnl) || 0), 0) * 100000) / 100000;
   }
 
   goToInvestment(id: number): void {

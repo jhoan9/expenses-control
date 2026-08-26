@@ -509,7 +509,7 @@ export class AccountsComponent implements OnInit {
 
   get fourXThousandTax(): number {
     if (!this.transferForm.value.applies_four_x_thousand) return 0;
-    return Math.round(this.transferAmount * 0.004 * 100) / 100;
+    return Math.round(this.transferAmount * 0.004 * 100000) / 100000;
   }
 
   openTransfer(account: any): void {

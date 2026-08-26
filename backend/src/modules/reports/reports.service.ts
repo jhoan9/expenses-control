@@ -25,7 +25,7 @@ function computeOpenCostBasis(positions: Position[]): number {
     }, 0);
   }
 
-  return Math.round(total * 100) / 100;
+  return Math.round(total * 100000) / 100000;
 }
 
 function computeInvestmentDetail(positions: Position[], investment: any): any {
@@ -53,9 +53,9 @@ function computeInvestmentDetail(positions: Position[], investment: any): any {
     ticker: investment.ticker,
     type: investment.type,
     open_quantity,
-    cost_basis: Math.round(costBasis * 100) / 100,
-    avg_cost: open_quantity > 0 ? Math.round((costBasis / open_quantity) * 100) / 100 : 0,
-    realized_pnl: Math.round(realizedPnl * 100) / 100,
+    cost_basis: Math.round(costBasis * 100000) / 100000,
+    avg_cost: open_quantity > 0 ? Math.round((costBasis / open_quantity) * 100000) / 100000 : 0,
+    realized_pnl: Math.round(realizedPnl * 100000) / 100000,
     total_bought: totalBought,
     total_sold: totalSold,
     total_operations: invPositions.length,
@@ -342,7 +342,7 @@ export class ReportsService {
     return {
       positions: details,
       total_invested: totalInvested,
-      total_realized_pnl: Math.round(totalRealizedPnl * 100) / 100,
+      total_realized_pnl: Math.round(totalRealizedPnl * 100000) / 100000,
     };
   }
 

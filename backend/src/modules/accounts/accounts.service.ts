@@ -151,7 +151,7 @@ export class AccountsService {
     const to = await this.findById(toId, userId);
 
     const amount = Number(data.amount);
-    const tax = data.applies_four_x_thousand ? Math.round(amount * FOUR_X_THOUSAND_RATE * 100) / 100 : 0;
+    const tax = data.applies_four_x_thousand ? Math.round(amount * FOUR_X_THOUSAND_RATE * 100000) / 100000 : 0;
     const totalDebit = amount + tax;
 
     if (Number(from.balance) < totalDebit) {

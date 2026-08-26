@@ -477,7 +477,7 @@ export class ExpensesComponent implements OnInit {
   }
 
   itemsTotal(): number {
-    return Math.round(this.items.reduce((sum, it) => sum + (Number(it.amount) || 0), 0) * 100) / 100;
+    return Math.round(this.items.reduce((sum, it) => sum + (Number(it.amount) || 0), 0) * 100000) / 100000;
   }
 
   formatNumber(value: number): string {
