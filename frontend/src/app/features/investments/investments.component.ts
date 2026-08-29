@@ -52,34 +52,59 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               <span class="type-badge" [class]="'type-' + selectedInvestment.type">{{ getTypeLabel(selectedInvestment.type) }}</span>
             </div>
             <div class="detail-actions">
-              <button class="btn-action btn-buy" (click)="openTradeModal('buy')">Comprar</button>
-              <button class="btn-action btn-sell" (click)="openTradeModal('sell')" *ngIf="hasOpenQuantity(selectedInvestment)">Vender</button>
+              <ng-container *ngIf="selectedInvestment.type !== 'land'">
+                <button class="btn-action btn-buy" (click)="openTradeModal('buy')">Comprar</button>
+                <button class="btn-action btn-sell" (click)="openTradeModal('sell')" *ngIf="hasOpenQuantity(selectedInvestment)">Vender</button>
+              </ng-container>
+              <button class="btn-action btn-buy" (click)="openAbonoModal()" *ngIf="selectedInvestment.type === 'land'">+ Abono</button>
             </div>
           </div>
 
           <div class="summary-bar" *ngIf="selectedInvestment">
-            <div class="summary-item">
-              <span>Cantidad Abierta</span>
-              <strong>{{ formatQuantity(selectedInvestment.open_quantity) }}</strong>
-            </div>
-            <div class="summary-item">
-              <span>Precio Promedio</span>
-              <strong>{{ formatCurrency(selectedInvestment.avg_cost || 0) }}</strong>
-            </div>
-            <div class="summary-item">
-              <span>Operaciones</span>
-              <strong>{{ operations.length }}</strong>
-            </div>
-            <div class="summary-item">
-              <span>Ganancia Realizada</span>
-              <strong [class.result-positive]="operationsPnl() >= 0" [class.result-negative]="operationsPnl() < 0">
-                {{ operationsPnl() >= 0 ? '+' : '' }}{{ formatCurrency(operationsPnl()) }}
-              </strong>
-            </div>
+            <ng-container *ngIf="selectedInvestment.type !== 'land'">
+              <div class="summary-item">
+                <span>Cantidad Abierta</span>
+                <strong>{{ formatQuantity(selectedInvestment.open_quantity) }}</strong>
+              </div>
+              <div class="summary-item">
+                <span>Precio Promedio</span>
+                <strong>{{ formatCurrency(selectedInvestment.avg_cost || 0) }}</strong>
+              </div>
+              <div class="summary-item">
+                <span>Operaciones</span>
+                <strong>{{ operations.length }}</strong>
+              </div>
+              <div class="summary-item">
+                <span>Ganancia Realizada</span>
+                <strong [class.result-positive]="operationsPnl() >= 0" [class.result-negative]="operationsPnl() < 0">
+                  {{ operationsPnl() >= 0 ? '+' : '' }}{{ formatCurrency(operationsPnl()) }}
+                </strong>
+              </div>
+            </ng-container>
+            <ng-container *ngIf="selectedInvestment.type === 'land'">
+              <div class="summary-item">
+                <span>Total Abonado</span>
+                <strong>{{ formatCurrency(selectedInvestment.total_abonado || 0) }}</strong>
+              </div>
+              <div class="summary-item">
+                <span>Abonos</span>
+                <strong>{{ abonos.length }}</strong>
+              </div>
+              <div class="summary-item" *ngIf="selectedInvestment.target_value != null">
+                <span>Valor Objetivo</span>
+                <strong>{{ formatCurrency(selectedInvestment.target_value) }}</strong>
+              </div>
+              <div class="summary-item" *ngIf="selectedInvestment.target_value != null">
+                <span>Pendiente</span>
+                <strong [class.result-negative]="(selectedInvestment.remaining_value || 0) > 0">
+                  {{ formatCurrency(selectedInvestment.remaining_value || 0) }}
+                </strong>
+              </div>
+            </ng-container>
           </div>
 
           <!-- Operaciones (compra + sus ventas) -->
-          <div class="operations-list" *ngIf="operations.length > 0">
+          <div class="operations-list" *ngIf="selectedInvestment.type !== 'land' && operations.length > 0">
             <div class="operation-card" *ngFor="let op of operations" [class.op-closed]="op.status === 'closed'">
               <div class="op-header">
                 <span class="trade-badge trade-buy">COMPRA</span>
@@ -114,8 +139,30 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
             </div>
           </div>
 
-          <div class="empty-state" *ngIf="operations.length === 0 && !loadingDetail">
+          <div class="empty-state" *ngIf="selectedInvestment.type !== 'land' && operations.length === 0 && !loadingDetail">
             <p>No hay operaciones registradas para esta inversión</p>
+          </div>
+
+          <!-- Abonos (terrenos) -->
+          <div class="abonos-wrap" *ngIf="selectedInvestment.type === 'land'">
+            <div class="operations-list" *ngIf="abonos.length > 0">
+              <div class="operation-card" *ngFor="let abono of abonos">
+                <div class="op-header">
+                  <span class="trade-badge trade-buy">ABONO</span>
+                  <span class="op-date">{{ formatDate(abono.date) }}</span>
+                  <strong class="op-main">{{ formatCurrency(abono.amount) }}</strong>
+                  <span class="op-actions">
+                    <button class="btn-icon btn-danger-icon" (click)="deleteAbono(abono)" title="Eliminar abono">🗑️</button>
+                  </span>
+                </div>
+                <div class="op-footer" *ngIf="abono.notes">
+                  <span>Notas: <strong>{{ abono.notes }}</strong></span>
+                </div>
+              </div>
+            </div>
+            <div class="empty-state" *ngIf="abonos.length === 0 && !loadingDetail">
+              <p>No hay abonos registrados todavía. Agrega el primero con el botón "+ Abono".</p>
+            </div>
           </div>
         </div>
 
@@ -259,8 +306,14 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
                 <option value="bond">Bono</option>
                 <option value="etf">ETF</option>
                 <option value="crypto">Criptomoneda</option>
+                <option value="land">Terreno</option>
                 <option value="other">Otro</option>
               </select>
+            </div>
+            <div class="form-group" *ngIf="investmentForm.get('type')?.value === 'land'">
+              <label for="inv-target">Valor objetivo (total del terreno)</label>
+              <app-currency-input id="inv-target" formControlName="target_value" placeholder="0" />
+              <small class="field-hint">Opcional. Con este valor se calcula cuánto falta por abonar.</small>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn-secondary" (click)="closeInvestmentModal()">Cancelar</button>
@@ -331,6 +384,40 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               <button type="button" class="btn-secondary" (click)="closeTradeModal()">Cancelar</button>
               <button type="submit" class="btn-primary" [class.btn-buy]="tradeType === 'buy'" [class.btn-sell]="tradeType === 'sell'" [disabled]="tradeForm.invalid || saving">
                 {{ saving ? 'Guardando...' : (tradeType === 'buy' ? 'Comprar' : 'Vender') }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Abono Modal (terrenos) -->
+      <div class="modal-overlay" *ngIf="showAbonoModal" (click)="closeAbonoModal()">
+        <div class="modal" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h2>Nuevo Abono · {{ selectedInvestment?.name }}</h2>
+            <button class="btn-close" (click)="closeAbonoModal()">&times;</button>
+          </div>
+          <form [formGroup]="abonoForm" (ngSubmit)="onSubmitAbono()">
+            <div class="form-group">
+              <label for="abono-amount">Monto del abono</label>
+              <app-currency-input id="abono-amount" formControlName="amount" placeholder="0" />
+            </div>
+            <div class="form-group">
+              <label for="abono-date">Fecha</label>
+              <input id="abono-date" type="date" formControlName="date" />
+            </div>
+            <div class="form-group">
+              <label for="abono-notes">Notas (opcional)</label>
+              <input id="abono-notes" formControlName="notes" placeholder="Notas del abono..." />
+            </div>
+            <div class="trade-total" *ngIf="abonoForm.value.amount">
+              <span>Total abonado con este:</span>
+              <strong>{{ formatCurrency((selectedInvestment?.total_abonado || 0) + abonoForm.value.amount) }}</strong>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn-secondary" (click)="closeAbonoModal()">Cancelar</button>
+              <button type="submit" class="btn-primary" [disabled]="abonoForm.invalid || saving">
+                {{ saving ? 'Guardando...' : 'Registrar Abono' }}
               </button>
             </div>
           </form>
@@ -421,6 +508,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
     .type-bond { background: #f3e5f5; color: #7b1fa2; }
     .type-etf { background: #e8f5e9; color: #2e7d32; }
     .type-crypto { background: #fff3e0; color: #e65100; }
+    .type-land { background: #efebe9; color: #4e342e; }
     .type-other { background: #f5f5f5; color: #616161; }
     .btn-icon {
       background: none;
@@ -705,10 +793,13 @@ export class InvestmentsComponent implements OnInit {
   activeTab: 'investments' | 'positions' | 'closed' = 'investments';
   showInvestmentModal = false;
   showTradeModal = false;
+  showAbonoModal = false;
   editingInvestmentId: number | null = null;
   tradeType: 'buy' | 'sell' = 'buy';
   investmentForm: FormGroup;
   tradeForm: FormGroup;
+  abonoForm: FormGroup;
+  abonos: any[] = [];
 
   constructor(private api: ApiService, private fb: FormBuilder) {
     this.investmentForm = this.fb.group({
@@ -716,6 +807,7 @@ export class InvestmentsComponent implements OnInit {
       ticker: [''],
       exchange: [''],
       type: ['', [Validators.required]],
+      target_value: [null],
     });
     this.tradeForm = this.fb.group({
       account_id: [null, [Validators.required]],
@@ -725,6 +817,11 @@ export class InvestmentsComponent implements OnInit {
       date: [todayLocal()],
       notes: [''],
       position_id: [''],
+    });
+    this.abonoForm = this.fb.group({
+      amount: [null, [Validators.required, Validators.min(0.01)]],
+      date: [todayLocal(), [Validators.required]],
+      notes: [''],
     });
   }
 
@@ -795,6 +892,7 @@ export class InvestmentsComponent implements OnInit {
       next: (res) => {
         this.selectedInvestment = res.data;
         this.selectedPositions = res.data.positions || [];
+        this.abonos = res.data.abonos || [];
         this.loadingDetail = false;
       },
       error: () => { this.loadingDetail = false; },
@@ -813,7 +911,7 @@ export class InvestmentsComponent implements OnInit {
     if (!this.selectedInvestment) return;
     const id = this.selectedInvestment.id;
     this.api.get<any>(`/investments/${id}`).subscribe({
-      next: (res) => { this.selectedInvestment = res.data; this.selectedPositions = res.data.positions || []; },
+      next: (res) => { this.selectedInvestment = res.data; this.selectedPositions = res.data.positions || []; this.abonos = res.data.abonos || []; },
     });
     this.loadOperations(id);
     this.loadInvestments();
@@ -837,7 +935,7 @@ export class InvestmentsComponent implements OnInit {
 
   openInvestmentModal(): void {
     this.editingInvestmentId = null;
-    this.investmentForm.reset({ name: '', ticker: '', exchange: '', type: '' });
+    this.investmentForm.reset({ name: '', ticker: '', exchange: '', type: '', target_value: null });
     this.showInvestmentModal = true;
   }
 
@@ -854,6 +952,7 @@ export class InvestmentsComponent implements OnInit {
       ticker: inv.ticker || '',
       exchange: inv.exchange || '',
       type: inv.type,
+      target_value: inv.target_value ?? null,
     });
     this.showInvestmentModal = true;
   }
@@ -945,8 +1044,40 @@ export class InvestmentsComponent implements OnInit {
   }
 
   getTypeLabel(type: string): string {
-    const labels: Record<string, string> = { stock: 'Acción', bond: 'Bono', etf: 'ETF', crypto: 'Crypto', other: 'Otro' };
+    const labels: Record<string, string> = { stock: 'Acción', bond: 'Bono', etf: 'ETF', crypto: 'Crypto', land: 'Terreno', other: 'Otro' };
     return labels[type] || type;
+  }
+
+  openAbonoModal(): void {
+    this.abonoForm.reset({ amount: null, date: todayLocal(), notes: '' });
+    this.showAbonoModal = true;
+  }
+
+  closeAbonoModal(): void {
+    this.showAbonoModal = false;
+  }
+
+  onSubmitAbono(): void {
+    if (this.abonoForm.invalid || !this.selectedInvestment) return;
+    this.saving = true;
+    this.api.post(`/investments/${this.selectedInvestment.id}/abonos`, this.abonoForm.value).subscribe({
+      next: () => {
+        this.refreshDetail();
+        this.closeAbonoModal();
+        this.saving = false;
+      },
+      error: () => { this.saving = false; },
+    });
+  }
+
+  deleteAbono(abono: any): void {
+    if (!this.selectedInvestment) return;
+    if (!confirm('¿Eliminar este abono?')) return;
+    this.api.delete(`/investments/${this.selectedInvestment.id}/abonos/${abono.id}`).subscribe({
+      next: () => {
+        this.refreshDetail();
+      },
+    });
   }
 
   formatDate = formatDateUtil;

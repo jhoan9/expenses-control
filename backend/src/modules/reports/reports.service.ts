@@ -87,6 +87,7 @@ export class ReportsService {
       monthlyExpenses,
       thirdPartyTotal,
       userPositions,
+      abonosTotal,
       loansSummary,
       creditsSummary,
       recentExpenses,
@@ -106,6 +107,10 @@ export class ReportsService {
       ),
       query<Position>(
         'SELECT p.* FROM positions p JOIN investments i ON i.id = p.investment_id WHERE i.user_id = $1 AND i.deleted_at IS NULL',
+        [userId]
+      ),
+      queryOne<{ total: number }>(
+        'SELECT COALESCE(SUM(a.amount), 0) as total FROM investment_abonos a JOIN investments i ON i.id = a.investment_id WHERE i.user_id = $1 AND i.deleted_at IS NULL',
         [userId]
       ),
       queryOne<{ total_remaining: number }>(
@@ -148,7 +153,7 @@ export class ReportsService {
         net: (Number(monthlyIncome?.total) || 0) - (Number(monthlyExpenses?.total) || 0),
       },
       third_party: Number(thirdPartyTotal?.total) || 0,
-      investments: Number(computeOpenCostBasis(userPositions)) || 0,
+      investments: (Number(computeOpenCostBasis(userPositions)) || 0) + (Number(abonosTotal?.total) || 0),
       loans: Number(loansSummary?.total_remaining) || 0,
       credits: Number(creditsSummary?.total_balance) || 0,
       recent_expenses: recentExpenses,

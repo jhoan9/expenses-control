@@ -128,6 +128,33 @@ export class InvestmentsController {
       next(error);
     }
   }
+
+  async createAbono(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const investmentId = parseInt(req.params.id);
+      const abono = await investmentsService.createAbono(investmentId, req.userId!, req.body);
+      res.status(201).json({
+        success: true,
+        data: abono,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteAbono(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const investmentId = parseInt(req.params.id);
+      const abonoId = parseInt(req.params.abonoId);
+      await investmentsService.deleteAbono(investmentId, abonoId, req.userId!);
+      res.json({
+        success: true,
+        message: 'Abono deleted successfully',
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const investmentsController = new InvestmentsController();

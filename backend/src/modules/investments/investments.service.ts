@@ -8,7 +8,8 @@ interface Investment {
   name: string;
   ticker: string | null;
   exchange: string | null;
-  type: 'stock' | 'bond' | 'etf' | 'crypto' | 'other';
+  type: 'stock' | 'bond' | 'etf' | 'crypto' | 'land' | 'other';
+  target_value: number | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -34,7 +35,24 @@ interface CreateInvestmentDTO {
   name: string;
   ticker?: string;
   exchange?: string;
-  type: 'stock' | 'bond' | 'etf' | 'crypto' | 'other';
+  type: 'stock' | 'bond' | 'etf' | 'crypto' | 'land' | 'other';
+  target_value?: number;
+}
+
+interface CreateAbonoDTO {
+  amount: number;
+  date: string;
+  notes?: string;
+}
+
+export interface Abono {
+  id: number;
+  investment_id: number;
+  user_id: number;
+  amount: number;
+  date: string;
+  notes: string | null;
+  created_at: Date;
 }
 
 interface CreatePositionDTO {
@@ -163,7 +181,7 @@ export class InvestmentsService {
     );
   }
 
-  async findById(id: number, userId: number): Promise<Investment & { positions: Position[]; open_quantity: number; avg_cost: number; lots: any[] }> {
+  async findById(id: number, userId: number): Promise<Investment & { positions: Position[]; open_quantity: number; avg_cost: number; lots: any[]; abonos: Abono[]; total_abonado: number; remaining_value: number }> {
     const investment = await queryOne<Investment>(
       'SELECT * FROM investments WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL',
       [id, userId]
@@ -177,6 +195,16 @@ export class InvestmentsService {
       'SELECT * FROM positions WHERE investment_id = $1 AND user_id = $2 ORDER BY opened_at ASC, id ASC',
       [id, userId]
     );
+
+    const abonos = await query<Abono>(
+      'SELECT * FROM investment_abonos WHERE investment_id = $1 AND user_id = $2 ORDER BY date DESC, id DESC',
+      [id, userId]
+    );
+
+    const total_abonado = Math.round(abonos.reduce((s, a) => s + Number(a.amount), 0) * 100000) / 100000;
+    const remaining_value = investment.target_value != null
+      ? Math.round((Number(investment.target_value) - total_abonado) * 100000) / 100000
+      : 0;
 
     // El saldo abierto se calcula reproduciendo el historial FIFO completo,
     // no con el campo almacenado (puede estar desactualizado en datos viejos)
@@ -201,13 +229,13 @@ export class InvestmentsService {
       opened_at: l.buy.opened_at,
     }));
 
-    return { ...investment, positions, open_quantity, avg_cost, lots: openLotList };
+    return { ...investment, positions, open_quantity, avg_cost, lots: openLotList, abonos, total_abonado, remaining_value };
   }
 
   async create(userId: number, data: CreateInvestmentDTO): Promise<Investment> {
     const result = await execute(
-      'INSERT INTO investments (user_id, name, ticker, exchange, type) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-      [userId, data.name, data.ticker || null, data.exchange || null, data.type]
+      'INSERT INTO investments (user_id, name, ticker, exchange, type, target_value) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+      [userId, data.name, data.ticker || null, data.exchange || null, data.type, data.target_value ?? null]
     );
 
     return queryOne<Investment>(
@@ -239,6 +267,10 @@ export class InvestmentsService {
       fields.push(`type = $${paramIndex++}`);
       values.push(data.type);
     }
+    if (data.target_value !== undefined) {
+      fields.push(`target_value = $${paramIndex++}`);
+      values.push(data.target_value ?? null);
+    }
 
     if (fields.length === 0) {
       return queryOne<Investment>(
@@ -262,6 +294,49 @@ export class InvestmentsService {
   async delete(id: number, userId: number): Promise<void> {
     await this.findById(id, userId);
     await execute('UPDATE investments SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1 AND user_id = $2', [id, userId]);
+  }
+
+  async createAbono(investmentId: number, userId: number, data: CreateAbonoDTO): Promise<Abono> {
+    const investment = await queryOne<Investment>(
+      'SELECT * FROM investments WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL',
+      [investmentId, userId]
+    );
+
+    if (!investment) {
+      throw AppError.notFound('Investment not found');
+    }
+
+    const result = await execute(
+      'INSERT INTO investment_abonos (investment_id, user_id, amount, date, notes) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+      [investmentId, userId, data.amount, data.date, data.notes || null]
+    );
+
+    return queryOne<Abono>(
+      'SELECT * FROM investment_abonos WHERE id = $1',
+      [result.rows[0].id]
+    ) as Promise<Abono>;
+  }
+
+  async deleteAbono(investmentId: number, abonoId: number, userId: number): Promise<void> {
+    const investment = await queryOne<Investment>(
+      'SELECT * FROM investments WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL',
+      [investmentId, userId]
+    );
+
+    if (!investment) {
+      throw AppError.notFound('Investment not found');
+    }
+
+    const abono = await queryOne<Abono>(
+      'SELECT * FROM investment_abonos WHERE id = $1 AND investment_id = $2',
+      [abonoId, investmentId]
+    );
+
+    if (!abono) {
+      throw AppError.notFound('Abono not found');
+    }
+
+    await execute('DELETE FROM investment_abonos WHERE id = $1', [abonoId]);
   }
 
   async buy(investmentId: number, userId: number, data: CreatePositionDTO): Promise<Position> {

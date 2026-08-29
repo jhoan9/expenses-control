@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import { query, queryOne, execute } from '../../config/database';
 import { AppError } from '../../shared/errors/AppError';
 
@@ -144,6 +144,16 @@ export class UsersService {
     const isValidPassword = await bcrypt.compare(password, user.password_hash);
     if (!isValidPassword) {
       throw AppError.unauthorized('Invalid credentials');
+    }
+
+    // Downgrade legacy hashes (cost > 10) on successful login so
+    // future logins verify much faster with native bcrypt.
+    if (bcrypt.getRounds(user.password_hash) > SALT_ROUNDS) {
+      const rehashed = await bcrypt.hash(password, SALT_ROUNDS);
+      await execute('UPDATE users SET password_hash = $1 WHERE id = $2', [
+        rehashed,
+        user.id,
+      ]);
     }
 
     return user;

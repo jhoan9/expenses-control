@@ -13,7 +13,7 @@ const pool = new Pool({
   password: env.DB_PASSWORD,
   database: env.DB_NAME,
   max: 10,
-  idleTimeoutMillis: 30000,
+  idleTimeoutMillis: 60000,
   connectionTimeoutMillis: 5000,
   options: '-c search_path=expenses_control',
   ...(env.DB_SSL ? { ssl: { rejectUnauthorized: false } } : {}),

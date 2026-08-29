@@ -6,6 +6,7 @@ import {
   createInvestmentValidator,
   updateInvestmentValidator,
   createPositionValidator,
+  createAbonoValidator,
 } from './investments.validator';
 
 const router = Router();
@@ -23,5 +24,7 @@ router.delete('/:id', investmentsController.delete);
 
 router.post('/:id/buy', validate(createPositionValidator), investmentsController.buy);
 router.post('/:id/sell', validate(createPositionValidator), investmentsController.sell);
+router.post('/:id/abonos', validate(createAbonoValidator), investmentsController.createAbono);
+router.delete('/:id/abonos/:abonoId', investmentsController.deleteAbono);
 
 export default router;

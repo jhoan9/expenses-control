@@ -16,8 +16,12 @@ export const createInvestmentValidator = [
     .isLength({ max: 50 })
     .withMessage('Exchange must be less than 50 characters'),
   body('type')
-    .isIn(['stock', 'bond', 'etf', 'crypto', 'other'])
-    .withMessage('Type must be stock, bond, etf, crypto, or other'),
+    .isIn(['stock', 'bond', 'etf', 'crypto', 'land', 'other'])
+    .withMessage('Type must be stock, bond, etf, crypto, land, or other'),
+  body('target_value')
+    .optional({ nullable: true })
+    .isFloat({ min: 0 })
+    .withMessage('Target value must be a non-negative number'),
 ];
 
 export const updateInvestmentValidator = [
@@ -38,8 +42,26 @@ export const updateInvestmentValidator = [
     .withMessage('Exchange must be less than 50 characters'),
   body('type')
     .optional()
-    .isIn(['stock', 'bond', 'etf', 'crypto', 'other'])
-    .withMessage('Type must be stock, bond, etf, crypto, or other'),
+    .isIn(['stock', 'bond', 'etf', 'crypto', 'land', 'other'])
+    .withMessage('Type must be stock, bond, etf, crypto, land, or other'),
+  body('target_value')
+    .optional({ nullable: true })
+    .isFloat({ min: 0 })
+    .withMessage('Target value must be a non-negative number'),
+];
+
+export const createAbonoValidator = [
+  body('amount')
+    .isFloat({ min: 0.01 })
+    .withMessage('Amount must be a positive number'),
+  body('date')
+    .isISO8601()
+    .withMessage('Date must be a valid date (YYYY-MM-DD)'),
+  body('notes')
+    .optional()
+    .trim()
+    .isLength({ max: 500 })
+    .withMessage('Notes must be less than 500 characters'),
 ];
 
 export const createPositionValidator = [
