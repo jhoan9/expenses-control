@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
-import { formatCurrency } from '../../shared/utils/format';
+import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../shared/utils/format';
 
 @Component({
   selector: 'app-credits',
@@ -521,7 +521,7 @@ export class CreditsComponent implements OnInit {
     this.paymentForm = this.fb.group({
       amount: [null, [Validators.required, Validators.min(0.01)]],
       minimum_payment: [null],
-      date: [new Date().toISOString().split('T')[0], [Validators.required]],
+      date: [todayLocal(), [Validators.required]],
     });
   }
 
@@ -648,7 +648,7 @@ export class CreditsComponent implements OnInit {
     this.paymentForm.reset({
       amount: null,
       minimum_payment: null,
-      date: new Date().toISOString().split('T')[0],
+      date: todayLocal(),
     });
     this.showPaymentModal = true;
   }
@@ -691,8 +691,7 @@ export class CreditsComponent implements OnInit {
   }
 
   formatDate(date: string): string {
-    if (!date) return '-';
-    return new Date(date).toLocaleDateString('es-CO');
+    return formatDateUtil(date);
   }
 
 }

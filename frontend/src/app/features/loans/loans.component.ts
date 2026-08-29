@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
-import { formatCurrency } from '../../shared/utils/format';
+import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../shared/utils/format';
 
 @Component({
   selector: 'app-loans',
@@ -39,33 +39,56 @@ import { formatCurrency } from '../../shared/utils/format';
           </div>
         </div>
 
-        <div class="cards-grid">
-          <div class="loan-card" *ngFor="let loan of loans">
-            <div class="card-header">
-              <h3>{{ loan.borrower_name }}</h3>
-              <span class="status-badge" [ngClass]="'status-' + loan.status">
-                {{ getStatusLabel(loan.status) }}
-              </span>
-            </div>
-            <div class="card-values">
-              <div class="card-row">
-                <span>Monto</span>
-                <strong>{{ formatCurrency(loan.amount) }}</strong>
+        <div *ngIf="groupedLoans.length > 0">
+          <div class="person-group" *ngFor="let group of groupedLoans">
+            <div class="person-header">
+              <div class="person-info">
+                <h3>{{ group.borrower_name }}</h3>
+                <span class="person-meta">
+                  {{ group.loans.length }} préstamo(s) · Total
+                  <strong>{{ formatCurrency(group.total) }}</strong> · Pendiente
+                  <strong>{{ formatCurrency(group.remaining) }}</strong>
+                </span>
               </div>
-              <div class="card-row">
-                <span>Fecha</span>
-                <strong>{{ formatDate(loan.date) }}</strong>
-              </div>
-              <div class="card-row" *ngIf="loan.description">
-                <span>Descripción</span>
-                <strong class="desc-text">{{ loan.description }}</strong>
+              <button class="btn-primary-sm" (click)="openLoanModalFor(group.borrower_name)">+ Nuevo préstamo</button>
+            </div>
+            <div class="cards-grid">
+              <div class="loan-card" *ngFor="let loan of group.loans">
+                <div class="card-header">
+                  <h3>{{ loan.borrower_name }}</h3>
+                  <span class="status-badge" [ngClass]="'status-' + loan.status">
+                    {{ getStatusLabel(loan.status) }}
+                  </span>
+                </div>
+                <div class="card-values">
+                  <div class="card-row">
+                    <span>Monto</span>
+                    <strong>{{ formatCurrency(loan.amount) }}</strong>
+                  </div>
+                  <div class="card-row">
+                    <span>Pagado</span>
+                    <strong>{{ formatCurrency(loan.total_paid || 0) }}</strong>
+                  </div>
+                  <div class="card-row">
+                    <span>Pendiente</span>
+                    <strong>{{ formatCurrency(loan.remaining || 0) }}</strong>
+                  </div>
+                  <div class="card-row">
+                    <span>Fecha</span>
+                    <strong>{{ formatDate(loan.date) }}</strong>
+                  </div>
+                  <div class="card-row" *ngIf="loan.description">
+                    <span>Descripción</span>
+                    <strong class="desc-text">{{ loan.description }}</strong>
+                  </div>
+                </div>
+                <div class="card-actions">
+                  <button class="btn-icon" (click)="editLoan(loan, $event)" title="Editar">✏️</button>
+                  <button class="btn-icon" (click)="deleteLoan(loan.id, $event)" title="Eliminar">🗑️</button>
+                </div>
+                <button class="btn-detail" (click)="viewLoan(loan)">Ver detalle →</button>
               </div>
             </div>
-            <div class="card-actions">
-              <button class="btn-icon" (click)="editLoan(loan, $event)" title="Editar">✏️</button>
-              <button class="btn-icon" (click)="deleteLoan(loan.id, $event)" title="Eliminar">🗑️</button>
-            </div>
-            <button class="btn-detail" (click)="viewLoan(loan)">Ver detalle →</button>
           </div>
         </div>
 
@@ -166,7 +189,11 @@ import { formatCurrency } from '../../shared/utils/format';
           <form [formGroup]="loanForm" (ngSubmit)="onSubmitLoan()">
             <div class="form-group">
               <label for="borrower_name">Nombre del deudor</label>
-              <input id="borrower_name" formControlName="borrower_name" placeholder="Ej: Juan Pérez" />
+              <input id="borrower_name" formControlName="borrower_name" list="existing-borrowers" placeholder="Ej: Juan Pérez" />
+              <datalist id="existing-borrowers">
+                <option *ngFor="let name of existingBorrowers" [value]="name"></option>
+              </datalist>
+              <small class="hint" *ngIf="editingLoanId === null">Si la persona ya tiene préstamos, puedes elegirla de la lista para agregar otro a su nombre.</small>
             </div>
             <div class="form-group">
               <label for="amount">Monto</label>
@@ -260,6 +287,50 @@ import { formatCurrency } from '../../shared/utils/format';
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 16px;
+    }
+    .person-group {
+      margin-bottom: 24px;
+    }
+    .person-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      background: white;
+      padding: 12px 16px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      flex-wrap: wrap;
+    }
+    .person-info h3 {
+      margin: 0;
+      color: #333;
+      font-size: 1.05rem;
+    }
+    .person-meta {
+      display: block;
+      font-size: 0.85rem;
+      color: #888;
+      margin-top: 2px;
+    }
+    .person-meta strong { color: #333; }
+    .btn-primary-sm {
+      background: #4caf50;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+    .btn-primary-sm:hover { background: #43a047; }
+    .hint {
+      display: block;
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 4px;
     }
     .loan-card {
       background: white;
@@ -545,12 +616,12 @@ export class LoansComponent implements OnInit {
     this.loanForm = this.fb.group({
       borrower_name: ['', [Validators.required, Validators.maxLength(100)]],
       amount: [null, [Validators.required, Validators.min(0.01)]],
-      date: [new Date().toISOString().split('T')[0], [Validators.required]],
+      date: [todayLocal(), [Validators.required]],
       description: [''],
     });
     this.paymentForm = this.fb.group({
       amount: [null, [Validators.required, Validators.min(0.01)]],
-      date: [new Date().toISOString().split('T')[0], [Validators.required]],
+      date: [todayLocal(), [Validators.required]],
       description: [''],
     });
   }
@@ -573,6 +644,29 @@ export class LoansComponent implements OnInit {
       next: (res) => { this.loans = res.data; this.loading = false; },
       error: () => { this.loading = false; },
     });
+  }
+
+  get existingBorrowers(): string[] {
+    const names = new Set<string>();
+    for (const loan of this.loans) {
+      if (loan.borrower_name) names.add(loan.borrower_name);
+    }
+    return Array.from(names).sort((a, b) => a.localeCompare(b, 'es'));
+  }
+
+  get groupedLoans(): any[] {
+    const map = new Map<string, any[]>();
+    for (const loan of this.loans) {
+      const name = loan.borrower_name || 'Sin nombre';
+      if (!map.has(name)) map.set(name, []);
+      map.get(name)!.push(loan);
+    }
+    return Array.from(map.entries()).map(([borrower_name, loanList]) => ({
+      borrower_name,
+      loans: loanList,
+      total: loanList.reduce((s, l) => s + Number(l.amount), 0),
+      remaining: loanList.reduce((s, l) => s + Number(l.remaining || 0), 0),
+    }));
   }
 
   viewLoan(loan: any): void {
@@ -606,7 +700,7 @@ export class LoansComponent implements OnInit {
     this.loanForm.reset({
       borrower_name: '',
       amount: null,
-      date: new Date().toISOString().split('T')[0],
+      date: todayLocal(),
       description: '',
     });
     if (this.selectedLoan) {
@@ -618,6 +712,17 @@ export class LoansComponent implements OnInit {
         description: this.selectedLoan.description || '',
       });
     }
+    this.showLoanModal = true;
+  }
+
+  openLoanModalFor(borrowerName: string | undefined): void {
+    this.editingLoanId = null;
+    this.loanForm.reset({
+      borrower_name: borrowerName || '',
+      amount: null,
+      date: todayLocal(),
+      description: '',
+    });
     this.showLoanModal = true;
   }
 
@@ -672,7 +777,7 @@ export class LoansComponent implements OnInit {
   openPaymentModal(): void {
     this.paymentForm.reset({
       amount: null,
-      date: new Date().toISOString().split('T')[0],
+      date: todayLocal(),
       description: '',
     });
     this.showPaymentModal = true;
@@ -717,9 +822,6 @@ export class LoansComponent implements OnInit {
     return labels[status] || status;
   }
 
-  formatDate(date: string): string {
-    if (!date) return '-';
-    return new Date(date).toLocaleDateString('es-CO');
-  }
+  formatDate = formatDateUtil;
 
 }

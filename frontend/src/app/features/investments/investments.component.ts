@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
-import { formatCurrency } from '../../shared/utils/format';
+import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../shared/utils/format';
 
 @Component({
   selector: 'app-investments',
@@ -722,7 +722,7 @@ export class InvestmentsComponent implements OnInit {
       quantity: [null, [Validators.required, Validators.min(0.0001)]],
       unit_price: [null, [Validators.required, Validators.min(0)]],
       commission: [0],
-      date: [new Date().toISOString().split('T')[0]],
+      date: [todayLocal()],
       notes: [''],
       position_id: [''],
     });
@@ -895,7 +895,7 @@ export class InvestmentsComponent implements OnInit {
       quantity: null,
       unit_price: null,
       commission: 0,
-      date: new Date().toISOString().split('T')[0],
+      date: todayLocal(),
       notes: '',
       position_id: '',
     });
@@ -949,9 +949,6 @@ export class InvestmentsComponent implements OnInit {
     return labels[type] || type;
   }
 
-  formatDate(date: string): string {
-    if (!date) return '-';
-    return new Date(date).toLocaleDateString('es-CO');
-  }
+  formatDate = formatDateUtil;
 
 }

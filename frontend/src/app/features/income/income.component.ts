@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
-import { formatCurrency } from '../../shared/utils/format';
+import { formatCurrency, todayLocal } from '../../shared/utils/format';
 
 @Component({
   selector: 'app-income',
@@ -267,7 +267,7 @@ export class IncomeComponent implements OnInit {
   form: FormGroup;
 
   constructor(private api: ApiService, private fb: FormBuilder) {
-    const today = new Date().toISOString().split('T')[0];
+    const today = todayLocal();
     this.filters.date_from = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
     this.filters.date_to = today;
 
@@ -308,7 +308,7 @@ export class IncomeComponent implements OnInit {
 
   openModal(): void {
     this.editingId = null;
-    const today = new Date().toISOString().split('T')[0];
+    const today = todayLocal();
     this.form.reset({ amount: null, date: today, account_id: null, category_id: null, description: '' });
     this.showModal = true;
   }

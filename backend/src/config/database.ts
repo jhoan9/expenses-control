@@ -1,5 +1,10 @@
-import { Pool, PoolClient, QueryResult } from 'pg';
+import { Pool, PoolClient, QueryResult, types } from 'pg';
 import { env } from './env';
+
+// PostgreSQL DATE (OID 1082): return 'YYYY-MM-DD' as string
+// instead of a Date object at UTC midnight (avoids off-by-one display
+// errors in timezones behind UTC, e.g. Colombia UTC-5)
+types.setTypeParser(1082, (value) => value);
 
 const pool = new Pool({
   host: env.DB_HOST,

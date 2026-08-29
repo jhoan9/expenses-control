@@ -28,7 +28,7 @@ interface UpdateUserDTO {
   role?: UserRole;
 }
 
-const SALT_ROUNDS = 12;
+const SALT_ROUNDS = 10;
 
 export class UsersService {
   async findAll(page: number = 1, limit: number = 20): Promise<{ users: Omit<User, 'password_hash'>[]; total: number }> {

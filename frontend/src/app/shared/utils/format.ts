@@ -24,3 +24,22 @@ export function formatCurrency(value: number): string {
     maximumFractionDigits: 0,
   }).format(value);
 }
+
+export function todayLocal(): string {
+  const now = new Date();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${m}-${d}`;
+}
+
+export function formatDate(date: string | Date | null | undefined): string {
+  if (!date) return '-';
+  const raw = String(date);
+  // Date-only 'YYYY-MM-DD' → build from components (avoids UTC/local off-by-one)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const [y, m, d] = raw.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('es-CO');
+  }
+  const parsed = new Date(raw);
+  return isNaN(parsed.getTime()) ? raw : parsed.toLocaleDateString('es-CO');
+}

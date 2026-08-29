@@ -46,7 +46,13 @@ interface CreatePaymentDTO {
 export class LoansService {
   async findAll(userId: number): Promise<Loan[]> {
     return query<Loan>(
-      'SELECT * FROM loans WHERE lender_id = $1 AND deleted_at IS NULL ORDER BY date DESC',
+      `SELECT l.*,
+        COALESCE(p.total_paid, 0) as total_paid,
+        l.amount - COALESCE(p.total_paid, 0) as remaining
+       FROM loans l
+       LEFT JOIN (SELECT loan_id, SUM(amount) as total_paid FROM loan_payments GROUP BY loan_id) p ON p.loan_id = l.id
+       WHERE l.lender_id = $1 AND l.deleted_at IS NULL
+       ORDER BY l.date DESC`,
       [userId]
     );
   }

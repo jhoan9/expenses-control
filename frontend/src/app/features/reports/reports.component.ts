@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
-import { formatCurrency } from '../../shared/utils/format';
+import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../shared/utils/format';
 
 @Component({
   selector: 'app-reports',
@@ -585,7 +585,7 @@ export class ReportsComponent implements OnInit {
 
   filters = {
     date_from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-    date_to: new Date().toISOString().split('T')[0],
+    date_to: todayLocal(),
   };
 
   constructor(private api: ApiService) {}
@@ -755,8 +755,7 @@ export class ReportsComponent implements OnInit {
   }
 
   formatDate(date: string): string {
-    if (!date) return '-';
-    return new Date(date).toLocaleDateString('es-CO');
+    return formatDateUtil(date);
   }
 
 }

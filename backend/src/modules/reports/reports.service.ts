@@ -82,59 +82,62 @@ export class ReportsService {
       balanceByType[a.type] = (balanceByType[a.type] || 0) + val;
     }
 
-    const monthlyIncome = await queryOne<{ total: number }>(
-      'SELECT COALESCE(SUM(amount), 0) as total FROM income WHERE user_id = $1 AND deleted_at IS NULL AND date >= $2 AND date <= $3',
-      [userId, firstDayMonth, lastDayMonth]
-    );
-
-    const monthlyExpenses = await queryOne<{ total: number }>(
-      'SELECT COALESCE(SUM(amount), 0) as total FROM expenses WHERE user_id = $1 AND deleted_at IS NULL AND status = \'completed\' AND date >= $2 AND date <= $3',
-      [userId, firstDayMonth, lastDayMonth]
-    );
-
-    const thirdPartyTotal = await queryOne<{ total: number }>(
-      'SELECT COALESCE(SUM(total_available), 0) as total FROM third_party_accounts WHERE user_id = $1 AND deleted_at IS NULL',
-      [userId]
-    );
-
-    const userPositions = await query<Position>(
-      'SELECT p.* FROM positions p JOIN investments i ON i.id = p.investment_id WHERE i.user_id = $1 AND i.deleted_at IS NULL',
-      [userId]
-    );
-    const investmentsSummary = { total_invested: computeOpenCostBasis(userPositions) };
-
-    const loansSummary = await queryOne<{ total_remaining: number }>(
-      `SELECT COALESCE(SUM(l.amount - COALESCE(p.total_paid, 0)), 0) as total_remaining
-       FROM loans l
-       LEFT JOIN (SELECT loan_id, SUM(amount) as total_paid FROM loan_payments GROUP BY loan_id) p ON l.id = p.loan_id
-       WHERE l.lender_id = $1 AND l.deleted_at IS NULL AND l.status = 'active'`,
-      [userId]
-    );
-
-    const creditsSummary = await queryOne<{ total_balance: number }>(
-      'SELECT COALESCE(SUM(balance), 0) as total_balance FROM credits WHERE user_id = $1 AND deleted_at IS NULL',
-      [userId]
-    );
-
-    const recentExpenses = await query(
-      `SELECT e.*, c.name as category_name, c.color as category_color
-       FROM expenses e
-       LEFT JOIN categories c ON e.category_id = c.id
-       WHERE e.user_id = $1 AND e.deleted_at IS NULL
-       ORDER BY e.date DESC, e.created_at DESC
-       LIMIT 5`,
-      [userId]
-    );
-
-    const recentIncome = await query(
-      `SELECT i.*, c.name as category_name
-       FROM income i
-       LEFT JOIN categories c ON i.category_id = c.id
-       WHERE i.user_id = $1 AND i.deleted_at IS NULL
-       ORDER BY i.date DESC, i.created_at DESC
-       LIMIT 5`,
-      [userId]
-    );
+    const [
+      monthlyIncome,
+      monthlyExpenses,
+      thirdPartyTotal,
+      userPositions,
+      loansSummary,
+      creditsSummary,
+      recentExpenses,
+      recentIncome,
+    ] = await Promise.all([
+      queryOne<{ total: number }>(
+        'SELECT COALESCE(SUM(amount), 0) as total FROM income WHERE user_id = $1 AND deleted_at IS NULL AND date >= $2 AND date <= $3',
+        [userId, firstDayMonth, lastDayMonth]
+      ),
+      queryOne<{ total: number }>(
+        'SELECT COALESCE(SUM(amount), 0) as total FROM expenses WHERE user_id = $1 AND deleted_at IS NULL AND status = \'completed\' AND date >= $2 AND date <= $3',
+        [userId, firstDayMonth, lastDayMonth]
+      ),
+      queryOne<{ total: number }>(
+        'SELECT COALESCE(SUM(total_available), 0) as total FROM third_party_accounts WHERE user_id = $1 AND deleted_at IS NULL',
+        [userId]
+      ),
+      query<Position>(
+        'SELECT p.* FROM positions p JOIN investments i ON i.id = p.investment_id WHERE i.user_id = $1 AND i.deleted_at IS NULL',
+        [userId]
+      ),
+      queryOne<{ total_remaining: number }>(
+        `SELECT COALESCE(SUM(l.amount - COALESCE(p.total_paid, 0)), 0) as total_remaining
+         FROM loans l
+         LEFT JOIN (SELECT loan_id, SUM(amount) as total_paid FROM loan_payments GROUP BY loan_id) p ON l.id = p.loan_id
+         WHERE l.lender_id = $1 AND l.deleted_at IS NULL AND l.status = 'active'`,
+        [userId]
+      ),
+      queryOne<{ total_balance: number }>(
+        'SELECT COALESCE(SUM(balance), 0) as total_balance FROM credits WHERE user_id = $1 AND deleted_at IS NULL',
+        [userId]
+      ),
+      query(
+        `SELECT e.*, c.name as category_name, c.color as category_color
+         FROM expenses e
+         LEFT JOIN categories c ON e.category_id = c.id
+         WHERE e.user_id = $1 AND e.deleted_at IS NULL
+         ORDER BY e.date DESC, e.created_at DESC
+         LIMIT 5`,
+        [userId]
+      ),
+      query(
+        `SELECT i.*, c.name as category_name
+         FROM income i
+         LEFT JOIN categories c ON i.category_id = c.id
+         WHERE i.user_id = $1 AND i.deleted_at IS NULL
+         ORDER BY i.date DESC, i.created_at DESC
+         LIMIT 5`,
+        [userId]
+      ),
+    ]);
 
     return {
       balance: Number(totalBalance) || 0,
@@ -145,7 +148,7 @@ export class ReportsService {
         net: (Number(monthlyIncome?.total) || 0) - (Number(monthlyExpenses?.total) || 0),
       },
       third_party: Number(thirdPartyTotal?.total) || 0,
-      investments: Number(investmentsSummary?.total_invested) || 0,
+      investments: Number(computeOpenCostBasis(userPositions)) || 0,
       loans: Number(loansSummary?.total_remaining) || 0,
       credits: Number(creditsSummary?.total_balance) || 0,
       recent_expenses: recentExpenses,

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
-import { formatCurrency } from '../../shared/utils/format';
+import { formatCurrency, todayLocal } from '../../shared/utils/format';
 
 interface ExpenseItem {
   name: string;
@@ -52,7 +52,7 @@ interface ExpenseItem {
           </thead>
           <tbody>
             <tr *ngFor="let item of expenses">
-              <td>{{ item.date | date: 'yyyy-MM-dd' }}</td>
+              <td>{{ item.date | date: 'yyyy-MM-dd':'UTC' }}</td>
               <td>{{ item.description || '-' }}</td>
               <td>
                 <span class="category-badge" [style.background]="getCategoryColor(item.category_id)">
@@ -413,7 +413,7 @@ export class ExpensesComponent implements OnInit {
 
   filters: any = {
     date_from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-    date_to: new Date().toISOString().split('T')[0],
+    date_to: todayLocal(),
     category_id: '',
   };
 
@@ -422,7 +422,7 @@ export class ExpensesComponent implements OnInit {
   constructor(private api: ApiService, private fb: FormBuilder) {
     this.form = this.fb.group({
       amount: [null, [Validators.required, Validators.min(0.01)]],
-      date: [new Date().toISOString().split('T')[0], [Validators.required]],
+      date: [todayLocal(), [Validators.required]],
       account_id: [null, [Validators.required]],
       category_id: [null],
       subcategory_id: [null],
@@ -594,7 +594,7 @@ export class ExpensesComponent implements OnInit {
     this.templatesLoadedFor = null;
     this.form.reset({
       amount: null,
-      date: new Date().toISOString().split('T')[0],
+      date: todayLocal(),
       account_id: null,
       category_id: null,
       subcategory_id: null,
