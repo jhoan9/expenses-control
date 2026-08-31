@@ -242,8 +242,21 @@ export class AccountsService {
   async getMovements(id: number, userId: number): Promise<any[]> {
     await this.findById(id, userId);
     return query<any>(
-      `SELECT id, type, amount, balance_before, balance_after, reference_type, reference_id, description, date, created_at
-       FROM account_movements WHERE account_id = $1 ORDER BY date DESC, created_at DESC`,
+      `SELECT
+         m.id, m.type, m.amount, m.balance_before, m.balance_after,
+         m.reference_type, m.reference_id, m.description, m.created_at,
+         COALESCE(
+           i.date,
+           e.date,
+           p.created_at::date,
+           m.date
+         ) AS date
+       FROM account_movements m
+       LEFT JOIN income i ON m.reference_type = 'income' AND i.id = m.reference_id
+       LEFT JOIN expenses e ON m.reference_type = 'expense' AND e.id = m.reference_id
+       LEFT JOIN positions p ON m.reference_type = 'position' AND p.id = m.reference_id
+       WHERE m.account_id = $1
+       ORDER BY date DESC, m.created_at DESC`,
       [id]
     );
   }
