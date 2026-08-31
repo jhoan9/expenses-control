@@ -248,7 +248,7 @@ export class AccountsService {
          COALESCE(
            i.date,
            e.date,
-           p.created_at::date,
+           p.opened_at::date,
            m.date
          ) AS date
        FROM account_movements m
