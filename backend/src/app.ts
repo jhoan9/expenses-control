@@ -33,11 +33,21 @@ app.use(
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 300,
   message: 'Too many requests, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 50,
+  message: 'Too many login attempts, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use('/api/auth', authLimiter);
 app.use('/api', limiter);
 
 app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
