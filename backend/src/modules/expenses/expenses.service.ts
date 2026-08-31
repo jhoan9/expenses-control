@@ -183,8 +183,8 @@ export class ExpensesService {
         );
 
         await execute(
-          'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-          [data.account_id, 'expense', data.amount, Number(account.balance), newBalance, 'expense', insertId, data.description || null],
+          'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description, date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
+          [data.account_id, 'expense', data.amount, Number(account.balance), newBalance, 'expense', insertId, data.description || null, data.date],
           client
         );
       }

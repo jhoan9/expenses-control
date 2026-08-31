@@ -175,12 +175,12 @@ export class AccountsService {
 
       const description = data.description || `Transfer to ${to.name}`;
       await execute(
-        'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description, date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_DATE)',
         [fromId, 'transfer', totalDebit, from.balance, newFromBalance, 'transfer', toId, description],
         client
       );
       await execute(
-        'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description, date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_DATE)',
         [toId, 'transfer', amount, to.balance, newToBalance, 'transfer', fromId, `Transfer from ${from.name}`],
         client
       );
@@ -225,12 +225,12 @@ export class AccountsService {
       );
 
       await execute(
-        'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description, date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_DATE)',
         [data.from_account_id, 'expense', amount, from.balance, newFromBalance, 'credit_card_payment', cardId, data.description || `Abono a ${card.name}`],
         client
       );
       await execute(
-        'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description, date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_DATE)',
         [cardId, 'credit_payment', amount, card.balance, newCardBalance, 'credit_card_payment', data.from_account_id, `Abono desde ${from.name}`],
         client
       );
@@ -242,8 +242,8 @@ export class AccountsService {
   async getMovements(id: number, userId: number): Promise<any[]> {
     await this.findById(id, userId);
     return query<any>(
-      `SELECT id, type, amount, balance_before, balance_after, reference_type, reference_id, description, created_at
-       FROM account_movements WHERE account_id = $1 ORDER BY created_at DESC`,
+      `SELECT id, type, amount, balance_before, balance_after, reference_type, reference_id, description, date, created_at
+       FROM account_movements WHERE account_id = $1 ORDER BY date DESC, created_at DESC`,
       [id]
     );
   }

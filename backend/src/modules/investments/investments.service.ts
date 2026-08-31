@@ -398,7 +398,7 @@ export class InvestmentsService {
       );
 
       await execute(
-        'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description, date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
         [
           data.account_id,
           'investment_buy',
@@ -408,6 +408,7 @@ export class InvestmentsService {
           'position',
           positionId,
           `Buy ${data.quantity} ${investment.name} @ ${data.unit_price}`,
+          data.date || null,
         ],
         client
       );
@@ -534,7 +535,7 @@ export class InvestmentsService {
       );
 
       await execute(
-        'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description, date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
         [
           data.account_id,
           'investment_sell',
@@ -544,6 +545,7 @@ export class InvestmentsService {
           'position',
           positionId,
           `Sell ${data.quantity} ${investment.name} @ ${data.unit_price}`,
+          data.date || null,
         ],
         client
       );

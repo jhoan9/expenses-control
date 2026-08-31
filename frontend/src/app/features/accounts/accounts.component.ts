@@ -107,7 +107,7 @@ import { formatCurrency } from '../../shared/utils/format';
                 <div class="movement-info">
                   <span class="movement-type-badge" [class]="'type-' + mov.type">{{ getTypeLabel(mov.type) }}</span>
                   <span class="movement-desc">{{ mov.description || 'Sin descripción' }}</span>
-                  <small class="movement-date">{{ mov.created_at | date:'dd/MM/yy HH:mm' }}</small>
+                  <small class="movement-date">{{ mov.date | date:'dd/MM/yyyy' }}</small>
                 </div>
                 <div class="movement-amounts">
                   <span class="movement-amount" [class.positive]="isIncomeType(mov.type)" [class.negative]="isExpenseType(mov.type)">
