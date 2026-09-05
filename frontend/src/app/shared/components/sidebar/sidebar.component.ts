@@ -40,7 +40,7 @@ import { CommonModule } from '@angular/common';
           <span class="icon">👥</span> Terceros
         </a>
         <a routerLink="/loans" routerLinkActive="active" *ngIf="canAccess('loans')">
-          <span class="icon">🤝</span> Préstamos
+          <span class="icon">🤝</span> {{ loansLabel }}
         </a>
         <a routerLink="/credits" routerLinkActive="active">
           <span class="icon">💳</span> {{ creditsLabel }}
@@ -197,6 +197,10 @@ export class SidebarComponent {
     return this.isRole('ji01') ? 'Activos' : 'Créditos';
   }
 
+  get loansLabel(): string {
+    return this.isRole('ji01') ? 'Pasivos' : 'Préstamos';
+  }
+
   private isRole(role: string): boolean {
     return this.authService.currentUser?.role === role;
   }
@@ -211,6 +215,9 @@ export class SidebarComponent {
 
   canAccess(module: 'investments' | 'third-party' | 'loans'): boolean {
     const role = this.authService.currentUser?.role;
+    if (module === 'loans') {
+      return role === 'jh01' || role === 'admin' || role === 'ji01';
+    }
     return role === 'jh01' || role === 'admin';
   }
 
