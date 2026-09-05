@@ -28,7 +28,7 @@ import { CommonModule } from '@angular/common';
           <span class="icon">💰</span> Ingresos
         </a>
         <a routerLink="/expenses" routerLinkActive="active">
-          <span class="icon">💸</span> Gastos
+          <span class="icon">💸</span> {{ expensesLabel }}
         </a>
         <a routerLink="/budget" routerLinkActive="active">
           <span class="icon">📅</span> Presupuesto
@@ -43,7 +43,7 @@ import { CommonModule } from '@angular/common';
           <span class="icon">🤝</span> Préstamos
         </a>
         <a routerLink="/credits" routerLinkActive="active">
-          <span class="icon">💳</span> Créditos
+          <span class="icon">💳</span> {{ creditsLabel }}
         </a>
         <a routerLink="/categories" routerLinkActive="active">
           <span class="icon">🏷️</span> Categorías
@@ -188,6 +188,18 @@ export class SidebarComponent {
   isOpen = false;
 
   constructor(public authService: AuthService) {}
+
+  get expensesLabel(): string {
+    return this.isRole('ji01') ? 'Egresos' : 'Gastos';
+  }
+
+  get creditsLabel(): string {
+    return this.isRole('ji01') ? 'Activos' : 'Créditos';
+  }
+
+  private isRole(role: string): boolean {
+    return this.authService.currentUser?.role === role;
+  }
 
   toggleMenu(): void {
     this.isOpen = !this.isOpen;
