@@ -22,7 +22,7 @@ import { formatCurrency } from '../../shared/utils/format';
           <div class="card" *ngFor="let b of budgets" (click)="selectBudget(b)">
             <div class="card-header">
               <span class="period-badge" [class.first]="b.period_type === 'first'" [class.second]="b.period_type === 'second'">
-                {{ b.period_type === 'first' ? '1ra Quincena' : '2da Quincena' }}
+                {{ periodLabel(b) }}
               </span>
               <div class="card-actions">
                 <button class="btn-icon" (click)="editBudget(b, $event)" title="Editar">✏️</button>
@@ -46,10 +46,10 @@ import { formatCurrency } from '../../shared/utils/format';
         <div class="page-header">
           <div class="header-left">
             <button class="btn-back" (click)="backToList()">← Volver</button>
-            <h1>{{ selectedBudget.period_type === 'first' ? '1ra Quincena' : '2da Quincena' }}</h1>
+            <h1>{{ periodLabel(selectedBudget) }}</h1>
           </div>
           <div class="header-actions">
-            <button class="btn-copy" (click)="copyNext()" title="Crear la siguiente quincena con los gastos activos">⏭ Siguiente Quincena</button>
+            <button class="btn-copy" (click)="copyNext()" title="Crear el siguiente período con los ítems activos">⏭ Siguiente Período</button>
             <button class="btn-primary" (click)="saveDraft()" [disabled]="saving">
               {{ saving ? 'Guardando...' : 'Guardar Cambios' }}
             </button>
@@ -61,7 +61,7 @@ import { formatCurrency } from '../../shared/utils/format';
         <!-- Total Income -->
         <div class="income-box">
           <div class="form-group income-input">
-            <label for="total_income">Ingreso de la Quincena</label>
+            <label for="total_income">Total Presupuestado</label>
             <app-currency-input id="total_income" [(ngModel)]="totalIncome" placeholder="0" />
           </div>
           <div class="income-summary">
@@ -85,7 +85,7 @@ import { formatCurrency } from '../../shared/utils/format';
         <!-- Items Form -->
         <div class="form-table" *ngIf="draftItems.length > 0">
           <div class="form-row header-row">
-            <span>Gasto</span>
+            <span>{{ selectedBudget?.budget_type === 'income' ? 'Concepto' : 'Ítem' }}</span>
             <span>Monto</span>
             <span>%</span>
             <span>Pagado</span>
@@ -93,7 +93,7 @@ import { formatCurrency } from '../../shared/utils/format';
             <span></span>
           </div>
           <div class="form-row" *ngFor="let item of draftItems" [class.row-cancelled]="item.status === 'cancelled'">
-            <input type="text" [(ngModel)]="item.name" placeholder="Nombre del gasto" />
+            <input type="text" [(ngModel)]="item.name" placeholder="Nombre del ítem" />
             <app-currency-input [(ngModel)]="item.amount" placeholder="0" />
             <span class="pct-cell">{{ itemPercent(item) }}%</span>
             <input class="check-cell" type="checkbox" [checked]="item.status === 'completed'"
@@ -102,12 +102,12 @@ import { formatCurrency } from '../../shared/utils/format';
               (change)="toggleCancelled(item, $event)" />
             <button class="btn-icon" (click)="removeDraftItem(item)" title="Eliminar">🗑️</button>
           </div>
-          <button class="btn-add-row" (click)="addDraftItem()">+ Agregar Gasto</button>
+          <button class="btn-add-row" (click)="addDraftItem()">+ Agregar Ítem</button>
         </div>
 
         <div class="empty-state" *ngIf="draftItems.length === 0 && !loading">
-          <p>No hay gastos en este presupuesto</p>
-          <button class="btn-primary" (click)="addDraftItem()">+ Agregar primer gasto</button>
+          <p>No hay ítems en este presupuesto</p>
+          <button class="btn-primary" (click)="addDraftItem()">+ Agregar primer ítem</button>
         </div>
       </ng-container>
 
@@ -120,10 +120,24 @@ import { formatCurrency } from '../../shared/utils/format';
           </div>
 
           <div class="form-group">
-            <label for="period_type">Tipo de Quincena</label>
+            <label for="budget_type">Tipo</label>
+            <select id="budget_type" [(ngModel)]="budgetForm.budget_type">
+              <option *ngFor="let t of budgetTypes" [value]="t.value">{{ t.label }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="cycle">Ciclo / Periodicidad</label>
+            <select id="cycle" [(ngModel)]="budgetForm.cycle">
+              <option *ngFor="let c of budgetCycles" [value]="c.value">{{ c.label }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="period_type">Periodo</label>
             <select id="period_type" [(ngModel)]="budgetForm.period_type">
-              <option value="first">1ra Quincena</option>
-              <option value="second">2da Quincena</option>
+              <option value="first">Periodo 1</option>
+              <option value="second">Periodo 2</option>
             </select>
           </div>
 
@@ -529,9 +543,26 @@ export class BudgetComponent implements OnInit {
 
   showBudgetModal = false;
   editingBudgetId: number | null = null;
-  budgetForm = { period_type: 'first', start_date: '', end_date: '', total_income: null as number | null };
+  budgetForm = { period_type: 'first', budget_type: 'expense', cycle: 'biweekly', start_date: '', end_date: '', total_income: null as number | null };
 
   saving = false;
+
+  budgetTypes = [
+    { value: 'income', label: 'Ingreso' },
+    { value: 'expense', label: 'Gasto' },
+    { value: 'remesa', label: 'Remesa' },
+    { value: 'investment', label: 'Inversión' },
+    { value: 'debt', label: 'Deuda / Pago' },
+    { value: 'other', label: 'Otro' },
+  ];
+
+  budgetCycles = [
+    { value: 'daily', label: 'Diario' },
+    { value: 'weekly', label: 'Semanal' },
+    { value: 'biweekly', label: 'Quincenal' },
+    { value: 'monthly', label: 'Mensual' },
+    { value: 'other', label: 'Otro' },
+  ];
 
   constructor(private api: ApiService) {}
 
@@ -668,7 +699,7 @@ export class BudgetComponent implements OnInit {
   // Budget CRUD
   openBudgetModal(): void {
     this.editingBudgetId = null;
-    this.budgetForm = { period_type: 'first', start_date: '', end_date: '', total_income: null };
+    this.budgetForm = { period_type: 'first', budget_type: 'expense', cycle: 'biweekly', start_date: '', end_date: '', total_income: null };
     this.showBudgetModal = true;
   }
 
@@ -677,6 +708,8 @@ export class BudgetComponent implements OnInit {
     this.editingBudgetId = budget.id;
     this.budgetForm = {
       period_type: budget.period_type,
+      budget_type: budget.budget_type || 'expense',
+      cycle: budget.cycle || 'biweekly',
       start_date: budget.start_date,
       end_date: budget.end_date,
       total_income: budget.total_income,
@@ -693,6 +726,8 @@ export class BudgetComponent implements OnInit {
     this.saving = true;
     const data: any = {
       period_type: this.budgetForm.period_type,
+      budget_type: this.budgetForm.budget_type,
+      cycle: this.budgetForm.cycle,
       start_date: this.budgetForm.start_date,
       end_date: this.budgetForm.end_date,
     };
@@ -727,6 +762,34 @@ export class BudgetComponent implements OnInit {
   getStatusLabel(status: string): string {
     const labels: Record<string, string> = { completed: 'Pagado', pending: 'Pendiente', cancelled: 'Cancelado' };
     return labels[status] || status;
+  }
+
+  get typeLabel(): string {
+    const t = this.budgetTypes.find(x => x.value === this.budgetForm.budget_type);
+    return t ? t.label : 'Gasto';
+  }
+
+  get cycleLabel(): string {
+    const c = this.budgetCycles.find(x => x.value === this.budgetForm.cycle);
+    return c ? c.label : 'Quincenal';
+  }
+
+  typeLabelFor(type: string): string {
+    const t = this.budgetTypes.find(x => x.value === type);
+    return t ? t.label : 'Gasto';
+  }
+
+  cycleLabelFor(cycle: string | undefined): string {
+    const c = this.budgetCycles.find(x => x.value === (cycle || 'biweekly'));
+    return c ? c.label : 'Quincenal';
+  }
+
+  periodLabel(b: any): string {
+    const base = this.typeLabelFor(b.budget_type) + ' · ' + this.cycleLabelFor(b.cycle);
+    if ((b.cycle || 'biweekly') === 'biweekly') {
+      return base + ' · ' + (b.period_type === 'first' ? '1ra Quincena' : '2da Quincena');
+    }
+    return base + ' · ' + (b.period_type === 'first' ? 'Periodo 1' : 'Periodo 2');
   }
 
 }

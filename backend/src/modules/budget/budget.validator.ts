@@ -4,6 +4,14 @@ export const createBudgetValidator = [
   body('period_type')
     .isIn(['first', 'second'])
     .withMessage('Period type must be first or second'),
+  body('budget_type')
+    .optional()
+    .isIn(['income', 'expense', 'remesa', 'investment', 'debt', 'other'])
+    .withMessage('Budget type must be income, expense, remesa, investment, debt or other'),
+  body('cycle')
+    .optional()
+    .isIn(['daily', 'weekly', 'biweekly', 'monthly', 'other'])
+    .withMessage('Cycle must be daily, weekly, biweekly, monthly or other'),
   body('start_date')
     .isISO8601()
     .withMessage('Start date must be a valid date (YYYY-MM-DD)'),
@@ -21,6 +29,14 @@ export const updateBudgetValidator = [
     .optional()
     .isIn(['first', 'second'])
     .withMessage('Period type must be first or second'),
+  body('budget_type')
+    .optional()
+    .isIn(['income', 'expense', 'remesa', 'investment', 'debt', 'other'])
+    .withMessage('Budget type must be income, expense, remesa, investment, debt or other'),
+  body('cycle')
+    .optional()
+    .isIn(['daily', 'weekly', 'biweekly', 'monthly', 'other'])
+    .withMessage('Cycle must be daily, weekly, biweekly, monthly or other'),
   body('start_date')
     .optional()
     .isISO8601()

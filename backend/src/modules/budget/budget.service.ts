@@ -6,6 +6,8 @@ interface Budget {
   id: number;
   user_id: number;
   period_type: 'first' | 'second';
+  budget_type: 'income' | 'expense' | 'remesa' | 'investment' | 'debt' | 'other';
+  cycle: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'other';
   start_date: string;
   end_date: string;
   total_income: number;
@@ -33,6 +35,8 @@ interface BudgetWithItems extends Budget {
 
 interface CreateBudgetDTO {
   period_type: 'first' | 'second';
+  budget_type?: Budget['budget_type'];
+  cycle?: Budget['cycle'];
   start_date: string;
   end_date: string;
   total_income?: number;
@@ -84,8 +88,16 @@ export class BudgetService {
 
   async create(userId: number, data: CreateBudgetDTO): Promise<Budget> {
     const result = await execute(
-      'INSERT INTO budgets (user_id, period_type, start_date, end_date, total_income) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-      [userId, data.period_type, data.start_date, data.end_date, data.total_income || 0]
+      'INSERT INTO budgets (user_id, period_type, budget_type, cycle, start_date, end_date, total_income) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+      [
+        userId,
+        data.period_type,
+        data.budget_type || 'expense',
+        data.cycle || 'biweekly',
+        data.start_date,
+        data.end_date,
+        data.total_income || 0,
+      ]
     );
 
     return this.findById(result.rows[0].id, userId) as Promise<Budget>;
@@ -101,6 +113,14 @@ export class BudgetService {
     if (data.period_type !== undefined) {
       fields.push(`period_type = $${paramIndex++}`);
       values.push(data.period_type);
+    }
+    if (data.budget_type !== undefined) {
+      fields.push(`budget_type = $${paramIndex++}`);
+      values.push(data.budget_type);
+    }
+    if (data.cycle !== undefined) {
+      fields.push(`cycle = $${paramIndex++}`);
+      values.push(data.cycle);
     }
     if (data.start_date !== undefined) {
       fields.push(`start_date = $${paramIndex++}`);
@@ -298,16 +318,18 @@ export class BudgetService {
     const budget = await this.findById(budgetId, userId);
 
     const nextPeriodType: Budget['period_type'] = budget.period_type === 'first' ? 'second' : 'first';
+    const cycle = budget.cycle || 'biweekly';
     const nextStart = new Date(budget.end_date);
     nextStart.setDate(nextStart.getDate() + 1);
     const nextEnd = new Date(nextStart);
-    nextEnd.setDate(nextEnd.getDate() + 14);
+    const cycleDays: Record<string, number> = { daily: 1, weekly: 7, biweekly: 14, monthly: 30, other: 14 };
+    nextEnd.setDate(nextEnd.getDate() + (cycleDays[cycle] || 14));
 
     const formatDate = (d: Date) => d.toISOString().split('T')[0];
 
     const result = await execute(
-      'INSERT INTO budgets (user_id, period_type, start_date, end_date, total_income) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-      [userId, nextPeriodType, formatDate(nextStart), formatDate(nextEnd), budget.total_income]
+      'INSERT INTO budgets (user_id, period_type, budget_type, cycle, start_date, end_date, total_income) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+      [userId, nextPeriodType, budget.budget_type || 'expense', cycle, formatDate(nextStart), formatDate(nextEnd), budget.total_income]
     );
     const newBudgetId = result.rows[0].id;
 
