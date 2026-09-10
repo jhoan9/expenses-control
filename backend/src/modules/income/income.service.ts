@@ -205,6 +205,31 @@ export class IncomeService {
         client
       );
 
+      const finalBalance = await queryOne<any>(
+        'SELECT balance FROM accounts WHERE id = $1',
+        [newAccountId],
+        client
+      );
+      const balanceAfter = Number(finalBalance?.balance || 0);
+      const balanceBefore = balanceAfter - Number(newAmount);
+
+      await execute(
+        `UPDATE account_movements
+         SET account_id = $1, amount = $2, description = $3, date = $4,
+             balance_before = $5, balance_after = $6
+         WHERE reference_type = 'income' AND reference_id = $7`,
+        [
+          newAccountId,
+          Number(newAmount),
+          data.description !== undefined ? data.description : existing.description,
+          data.date !== undefined ? data.date : existing.date,
+          balanceBefore,
+          balanceAfter,
+          id,
+        ],
+        client
+      );
+
       return this.findById(id, userId, client);
     });
   }
@@ -227,6 +252,12 @@ export class IncomeService {
 
       await execute(
         'UPDATE income SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1',
+        [id],
+        client
+      );
+
+      await execute(
+        'DELETE FROM account_movements WHERE reference_type = \'income\' AND reference_id = $1',
         [id],
         client
       );

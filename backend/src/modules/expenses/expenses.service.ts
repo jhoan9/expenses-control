@@ -299,6 +299,64 @@ export class ExpensesService {
         }
       }
 
+      if (newStatus !== 'pending') {
+        const accountNow = await queryOne<any>(
+          'SELECT balance FROM accounts WHERE id = $1',
+          [newAccountId],
+          client
+        );
+        const balanceBefore = Number(accountNow?.balance || 0) + Number(newAmount);
+        const balanceAfter = Number(accountNow?.balance || 0);
+        const existingMovement = await queryOne<any>(
+          `SELECT id FROM account_movements
+           WHERE reference_type = 'expense' AND reference_id = $1`,
+          [id],
+          client
+        );
+
+        if (existingMovement) {
+          await execute(
+            `UPDATE account_movements
+             SET account_id = $1, amount = $2, description = $3, date = $4,
+                 balance_before = $5, balance_after = $6
+             WHERE reference_type = 'expense' AND reference_id = $7`,
+            [
+              newAccountId,
+              Number(newAmount),
+              data.description !== undefined ? data.description : existing.description,
+              data.date !== undefined ? data.date : existing.date,
+              balanceBefore,
+              balanceAfter,
+              id,
+            ],
+            client
+          );
+        } else {
+          await execute(
+            `INSERT INTO account_movements
+             (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description, date)
+             VALUES ($1, 'expense', $2, $3, $4, 'expense', $5, $6, $7)`,
+            [
+              newAccountId,
+              Number(newAmount),
+              balanceBefore,
+              balanceAfter,
+              id,
+              data.description !== undefined ? data.description : existing.description,
+              data.date !== undefined ? data.date : existing.date,
+            ],
+            client
+          );
+        }
+      } else {
+        await execute(
+          `DELETE FROM account_movements
+           WHERE reference_type = 'expense' AND reference_id = $1`,
+          [id],
+          client
+        );
+      }
+
       return this.findById(id, userId, client);
     });
   }
@@ -327,6 +385,12 @@ export class ExpensesService {
 
       await execute(
         'UPDATE expenses SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1',
+        [id],
+        client
+      );
+
+      await execute(
+        'DELETE FROM account_movements WHERE reference_type = \'expense\' AND reference_id = $1',
         [id],
         client
       );
