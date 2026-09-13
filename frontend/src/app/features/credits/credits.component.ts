@@ -14,17 +14,17 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
       <!-- List View -->
       <div *ngIf="selectedCredit === null">
         <div class="page-header">
-          <h1>Créditos</h1>
-          <button class="btn-primary" (click)="openCreditModal()">+ Nuevo Crédito</button>
+          <h1>CrÃ©ditos</h1>
+          <button class="btn-primary" (click)="openCreditModal()">+ Nuevo CrÃ©dito</button>
         </div>
 
         <div class="summary-bar" *ngIf="summary">
           <div class="summary-item">
-            <span>Total Créditos</span>
+            <span>Total CrÃ©ditos</span>
             <strong>{{ summary.total_credits }}</strong>
           </div>
           <div class="summary-item">
-            <span>Límite Total</span>
+            <span>LÃ­mite Total</span>
             <strong>{{ formatCurrency(summary.total_limit) }}</strong>
           </div>
           <div class="summary-item">
@@ -43,11 +43,11 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
           <div class="credit-card" *ngFor="let credit of credits" (click)="viewCredit(credit)">
             <div class="card-header">
               <h3>{{ credit.institution }}</h3>
-              <button class="btn-icon btn-danger-icon" (click)="deleteCredit(credit.id, $event)" title="Eliminar">🗑️</button>
+              <button class="btn-icon btn-danger-icon" (click)="deleteCredit(credit.id, $event)" title="Eliminar">ðŸ—‘ï¸</button>
             </div>
             <div class="card-values">
               <div class="card-row">
-                <span>Límite</span>
+                <span>LÃ­mite</span>
                 <strong>{{ formatCurrency(credit.credit_limit) }}</strong>
               </div>
               <div class="card-row">
@@ -69,20 +69,20 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               </div>
               <span class="usage-text">{{ getUsagePercent(credit) | number:'1.0-0' }}% usado</span>
             </div>
-            <button class="btn-detail" (click)="viewCredit(credit)">Ver detalle →</button>
+            <button class="btn-detail" (click)="viewCredit(credit)">Ver detalle â†’</button>
           </div>
         </div>
 
         <div class="empty-state" *ngIf="credits.length === 0 && !loading">
-          <p>No hay créditos registrados</p>
-          <button class="btn-primary" (click)="openCreditModal()">Crear primer crédito</button>
+          <p>No hay crÃ©ditos registrados</p>
+          <button class="btn-primary" (click)="openCreditModal()">Crear primer crÃ©dito</button>
         </div>
       </div>
 
       <!-- Detail View -->
       <div *ngIf="selectedCredit !== null">
         <div class="detail-header">
-          <button class="btn-back" (click)="goBack()">← Volver</button>
+          <button class="btn-back" (click)="goBack()">â† Volver</button>
           <div class="detail-info">
             <h2>{{ selectedCredit.institution }}</h2>
           </div>
@@ -94,7 +94,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
 
         <div class="summary-bar">
           <div class="summary-item">
-            <span>Límite</span>
+            <span>LÃ­mite</span>
             <strong>{{ formatCurrency(selectedCredit.credit_limit) }}</strong>
           </div>
           <div class="summary-item">
@@ -124,7 +124,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               <tr>
                 <th>Fecha</th>
                 <th>Monto</th>
-                <th>Pago Mínimo</th>
+                <th>Pago MÃ­nimo</th>
                 <th></th>
               </tr>
             </thead>
@@ -134,7 +134,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
                 <td class="amount-cell negative">{{ formatCurrency(payment.amount) }}</td>
                 <td>{{ payment.minimum_payment ? formatCurrency(payment.minimum_payment) : '-' }}</td>
                 <td class="actions-cell">
-                  <button class="btn-icon btn-danger-icon" (click)="deletePayment(payment)" title="Eliminar abono">🗑️</button>
+                  <button class="btn-icon btn-danger-icon" (click)="deletePayment(payment)" title="Eliminar abono">ðŸ—‘ï¸</button>
                 </td>
               </tr>
             </tbody>
@@ -151,16 +151,16 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
       <div class="modal-overlay" *ngIf="showCreditModal" (click)="closeCreditModal()">
         <div class="modal" (click)="$event.stopPropagation()">
           <div class="modal-header">
-            <h2>{{ editingCreditId ? 'Editar Crédito' : 'Nuevo Crédito' }}</h2>
+            <h2>{{ editingCreditId ? 'Editar CrÃ©dito' : 'Nuevo CrÃ©dito' }}</h2>
             <button class="btn-close" (click)="closeCreditModal()">&times;</button>
           </div>
           <form [formGroup]="creditForm" (ngSubmit)="onSubmitCredit()">
             <div class="form-group">
-              <label for="institution">Institución</label>
+              <label for="institution">InstituciÃ³n</label>
               <input id="institution" formControlName="institution" placeholder="Ej: Bancolombia" />
             </div>
             <div class="form-group">
-              <label for="credit_limit">Límite de crédito</label>
+              <label for="credit_limit">LÃ­mite de crÃ©dito</label>
               <app-currency-input id="credit_limit" formControlName="credit_limit" placeholder="0" />
             </div>
             <div class="form-group">
@@ -190,7 +190,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
           </div>
           <div class="modal-body-info" *ngIf="selectedCredit">
             <span>Saldo actual: <strong class="negative">{{ formatCurrency(selectedCredit.balance) }}</strong></span>
-            <span class="separator">→</span>
+            <span class="separator">â†’</span>
             <span>Nuevo saldo: <strong [class.negative]="getNewBalance() > 0" [class]="getNewBalance() <= 0 ? 'positive' : ''">
               {{ formatCurrency(getNewBalance()) }}
             </strong></span>
@@ -201,7 +201,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               <app-currency-input id="pay-amount" formControlName="amount" placeholder="0" />
             </div>
             <div class="form-group">
-              <label for="pay-minimum">Pago mínimo (opcional)</label>
+              <label for="pay-minimum">Pago mÃ­nimo (opcional)</label>
               <app-currency-input id="pay-minimum" formControlName="minimum_payment" placeholder="0" />
             </div>
             <div class="form-group">
@@ -218,282 +218,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
         </div>
       </div>
     </div>
-  `,
-  styles: [`
-    .page { padding: 0; }
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-    .page-header h1 { margin: 0; color: #333; }
-    .summary-bar {
-      display: flex;
-      gap: 24px;
-      margin-bottom: 16px;
-      background: white;
-      padding: 16px 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      flex-wrap: wrap;
-    }
-    .summary-item {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .summary-item span {
-      font-size: 0.85rem;
-      color: #888;
-    }
-    .summary-item strong {
-      font-size: 1.1rem;
-      color: #333;
-    }
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 16px;
-    }
-    .credit-card {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      transition: transform 0.2s;
-      cursor: pointer;
-    }
-    .credit-card:hover { transform: translateY(-2px); }
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-    .card-header h3 { margin: 0; color: #333; }
-    .card-values {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-    .card-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .card-row span {
-      font-size: 0.9rem;
-      color: #888;
-    }
-    .card-row strong {
-      font-size: 1rem;
-      color: #333;
-    }
-    .usage-container {
-      margin-bottom: 12px;
-    }
-    .usage-container-detail {
-      margin-bottom: 16px;
-      background: white;
-      padding: 16px 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-    .usage-bar {
-      width: 100%;
-      height: 10px;
-      background: #e0e0e0;
-      border-radius: 5px;
-      overflow: hidden;
-      margin-bottom: 6px;
-    }
-    .usage-fill {
-      height: 100%;
-      border-radius: 5px;
-      transition: width 0.3s ease, background 0.3s ease;
-    }
-    .usage-text {
-      font-size: 0.8rem;
-      color: #888;
-    }
-    .btn-icon {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 1rem;
-      padding: 4px;
-      border-radius: 4px;
-    }
-    .btn-icon:hover { background: #f0f0f0; }
-    .btn-danger-icon:hover { background: #ffebee; }
-    .btn-detail {
-      width: 100%;
-      background: #f5f5f5;
-      color: #333;
-      border: none;
-      padding: 10px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 500;
-      font-size: 0.9rem;
-      transition: background 0.2s;
-    }
-    .btn-detail:hover { background: #e8e8e8; }
-    .negative { color: #e53935 !important; }
-    .positive { color: #4caf50 !important; }
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: #888;
-      background: white;
-      border-radius: 8px;
-    }
-    .detail-header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-    .btn-back {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 0.95rem;
-      color: #4caf50;
-      font-weight: 500;
-      padding: 4px 0;
-    }
-    .btn-back:hover { text-decoration: underline; }
-    .detail-info {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex: 1;
-    }
-    .detail-info h2 { margin: 0; color: #333; }
-    .detail-actions {
-      display: flex;
-      gap: 8px;
-    }
-    .table-container {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      overflow-x: auto;
-    }
-    table { width: 100%; border-collapse: collapse; }
-    th, td {
-      padding: 12px 16px;
-      text-align: left;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    th {
-      background: #fafafa;
-      font-weight: 600;
-      color: #555;
-      font-size: 0.85rem;
-      text-transform: uppercase;
-    }
-    tr:hover { background: #f9f9f9; }
-    .amount-cell { font-weight: 600; }
-    .actions-cell { text-align: right; }
-    .btn-primary {
-      background: #4caf50;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 500;
-    }
-    .btn-primary:hover { background: #43a047; }
-    .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
-    .btn-secondary {
-      background: #f5f5f5;
-      color: #333;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .btn-secondary:hover { background: #e0e0e0; }
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-    .modal {
-      background: white;
-      border-radius: 12px;
-      width: 100%;
-      max-width: 480px;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px;
-      border-bottom: 1px solid #eee;
-    }
-    .modal-header h2 { margin: 0; font-size: 1.2rem; }
-    .btn-close {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: #888;
-    }
-    .modal-body-info {
-      padding: 12px 20px;
-      background: #f5f5f5;
-      font-size: 0.95rem;
-      color: #555;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .separator { color: #bbb; }
-    .form-group {
-      padding: 0 20px;
-      margin-bottom: 16px;
-    }
-    .form-group:first-of-type { margin-top: 20px; }
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 500;
-      color: #333;
-    }
-    input, select {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 1rem;
-      box-sizing: border-box;
-    }
-    input:focus, select:focus {
-      outline: none;
-      border-color: #4caf50;
-    }
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      padding: 16px 20px;
-      border-top: 1px solid #eee;
-    }
-  `]
+  `
 })
 export class CreditsComponent implements OnInit {
   formatCurrency = formatCurrency;
@@ -635,7 +360,7 @@ export class CreditsComponent implements OnInit {
 
   deleteCredit(id: number, event: Event): void {
     event.stopPropagation();
-    if (!confirm('¿Eliminar este crédito y todos sus abonos?')) return;
+    if (!confirm('Â¿Eliminar este crÃ©dito y todos sus abonos?')) return;
     this.api.delete(`/credits/${id}`).subscribe({
       next: () => {
         this.loadCredits();
@@ -680,7 +405,7 @@ export class CreditsComponent implements OnInit {
   }
 
   deletePayment(payment: any): void {
-    if (!confirm('¿Eliminar este abono?')) return;
+    if (!confirm('Â¿Eliminar este abono?')) return;
     this.api.delete(`/credits/${this.selectedCredit.id}/payments/${payment.id}`).subscribe({
       next: () => {
         this.viewCredit(this.selectedCredit);

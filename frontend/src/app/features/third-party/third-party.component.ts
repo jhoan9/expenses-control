@@ -44,8 +44,8 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
             <div class="card-header">
               <h3>{{ account.person_name }}</h3>
               <div class="card-actions">
-                <button class="btn-icon" (click)="editAccount(account, $event)">✏️</button>
-                <button class="btn-icon" (click)="deleteAccount(account.id, $event)">🗑️</button>
+                <button class="btn-icon" (click)="editAccount(account, $event)">âœï¸</button>
+                <button class="btn-icon" (click)="deleteAccount(account.id, $event)">ðŸ—‘ï¸</button>
               </div>
             </div>
             <div class="card-values">
@@ -68,7 +68,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
                 </strong>
               </div>
             </div>
-            <button class="btn-detail" (click)="viewAccount(account)">Ver detalle →</button>
+            <button class="btn-detail" (click)="viewAccount(account)">Ver detalle â†’</button>
           </div>
         </div>
 
@@ -81,7 +81,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
       <!-- Detail View -->
       <div *ngIf="selectedAccount !== null">
         <div class="detail-header">
-          <button class="btn-back" (click)="selectedAccount = null; movements = []; movementsByType = []">← Volver</button>
+          <button class="btn-back" (click)="selectedAccount = null; movements = []; movementsByType = []">â† Volver</button>
           <div class="detail-info">
             <h2>{{ selectedAccount.person_name }}</h2>
           </div>
@@ -124,7 +124,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               <tr>
                 <th>Fecha</th>
                 <th>Tipo</th>
-                <th>Descripción</th>
+                <th>DescripciÃ³n</th>
                 <th>Monto</th>
               </tr>
             </thead>
@@ -159,7 +159,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
           <form [formGroup]="accountForm" (ngSubmit)="onSubmitAccount()">
             <div class="form-group">
               <label for="person_name">Nombre de la persona</label>
-              <input id="person_name" formControlName="person_name" placeholder="Ej: Juan Pérez" />
+              <input id="person_name" formControlName="person_name" placeholder="Ej: Juan PÃ©rez" />
             </div>
             <div class="modal-footer">
               <button type="button" class="btn-secondary" (click)="closeAccountModal()">Cancelar</button>
@@ -183,10 +183,10 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               <label for="mov-type">Tipo</label>
               <select id="mov-type" formControlName="type">
                 <option value="">Seleccionar tipo</option>
-                <option value="deposit">Depósito</option>
+                <option value="deposit">DepÃ³sito</option>
                 <option value="withdrawal">Retiro</option>
-                <option value="investment_buy">Compra de Inversión</option>
-                <option value="investment_sell">Venta de Inversión</option>
+                <option value="investment_buy">Compra de InversiÃ³n</option>
+                <option value="investment_sell">Venta de InversiÃ³n</option>
                 <option value="transfer">Transferencia</option>
               </select>
             </div>
@@ -199,8 +199,8 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               <input id="mov-date" type="date" formControlName="date" />
             </div>
             <div class="form-group">
-              <label for="mov-description">Descripción (opcional)</label>
-              <input id="mov-description" formControlName="description" placeholder="Descripción del movimiento..." />
+              <label for="mov-description">DescripciÃ³n (opcional)</label>
+              <input id="mov-description" formControlName="description" placeholder="DescripciÃ³n del movimiento..." />
             </div>
             <div class="modal-footer">
               <button type="button" class="btn-secondary" (click)="closeMovementModal()">Cancelar</button>
@@ -212,254 +212,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
         </div>
       </div>
     </div>
-  `,
-  styles: [`
-    .page { padding: 0; }
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-    .page-header h1 { margin: 0; color: #333; }
-    .summary-bar {
-      display: flex;
-      gap: 24px;
-      margin-bottom: 16px;
-      background: white;
-      padding: 16px 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      flex-wrap: wrap;
-    }
-    .summary-item {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .summary-item span {
-      font-size: 0.85rem;
-      color: #888;
-    }
-    .summary-item strong {
-      font-size: 1.1rem;
-      color: #333;
-    }
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 16px;
-    }
-    .account-card {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      transition: transform 0.2s;
-    }
-    .account-card:hover { transform: translateY(-2px); }
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-    .card-header h3 { margin: 0; color: #333; }
-    .card-actions { display: flex; gap: 4px; }
-    .btn-icon {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 1rem;
-      padding: 4px;
-      border-radius: 4px;
-    }
-    .btn-icon:hover { background: #f0f0f0; }
-    .card-values {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-    .card-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .card-row span {
-      font-size: 0.9rem;
-      color: #888;
-    }
-    .card-row strong {
-      font-size: 1rem;
-      color: #333;
-    }
-    .btn-detail {
-      width: 100%;
-      background: #f5f5f5;
-      color: #333;
-      border: none;
-      padding: 10px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 500;
-      font-size: 0.9rem;
-      transition: background 0.2s;
-    }
-    .btn-detail:hover { background: #e8e8e8; }
-    .positive { color: #4caf50 !important; }
-    .negative { color: #e53935 !important; }
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: #888;
-      background: white;
-      border-radius: 8px;
-    }
-    .detail-header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-    .btn-back {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 0.95rem;
-      color: #4caf50;
-      font-weight: 500;
-      padding: 4px 0;
-    }
-    .btn-back:hover { text-decoration: underline; }
-    .detail-info {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex: 1;
-    }
-    .detail-info h2 { margin: 0; color: #333; }
-    .type-badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: 500;
-    }
-    .type-deposit { background: #e8f5e9; color: #2e7d32; }
-    .type-withdrawal { background: #ffebee; color: #c62828; }
-    .type-investment_buy { background: #e3f2fd; color: #1565c0; }
-    .type-investment_sell { background: #f3e5f5; color: #7b1fa2; }
-    .type-transfer { background: #fff3e0; color: #e65100; }
-    .movement-type-label {
-      display: inline-flex;
-      align-items: center;
-    }
-    .table-container {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      overflow-x: auto;
-    }
-    table { width: 100%; border-collapse: collapse; }
-    th, td {
-      padding: 12px 16px;
-      text-align: left;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    th {
-      background: #fafafa;
-      font-weight: 600;
-      color: #555;
-      font-size: 0.85rem;
-      text-transform: uppercase;
-    }
-    tr:hover { background: #f9f9f9; }
-    .amount-cell { font-weight: 600; }
-    .btn-primary {
-      background: #4caf50;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 500;
-    }
-    .btn-primary:hover { background: #43a047; }
-    .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-    .modal {
-      background: white;
-      border-radius: 12px;
-      width: 100%;
-      max-width: 480px;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px;
-      border-bottom: 1px solid #eee;
-    }
-    .modal-header h2 { margin: 0; font-size: 1.2rem; }
-    .btn-close {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: #888;
-    }
-    .form-group {
-      padding: 0 20px;
-      margin-bottom: 16px;
-    }
-    .form-group:first-of-type { margin-top: 20px; }
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 500;
-      color: #333;
-    }
-    input, select {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 1rem;
-      box-sizing: border-box;
-    }
-    input:focus, select:focus {
-      outline: none;
-      border-color: #4caf50;
-    }
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      padding: 16px 20px;
-      border-top: 1px solid #eee;
-    }
-    .btn-secondary {
-      background: #f5f5f5;
-      color: #333;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .btn-secondary:hover { background: #e0e0e0; }
-  `]
+  `
 })
 export class ThirdPartyComponent implements OnInit {
   formatCurrency = formatCurrency;
@@ -568,7 +321,7 @@ export class ThirdPartyComponent implements OnInit {
 
   deleteAccount(id: number, event: Event): void {
     event.stopPropagation();
-    if (!confirm('¿Eliminar este tercero y todos sus movimientos?')) return;
+    if (!confirm('Â¿Eliminar este tercero y todos sus movimientos?')) return;
     this.api.delete(`/third-party/${id}`).subscribe({
       next: () => {
         if (this.selectedAccount?.id === id) {
@@ -611,7 +364,7 @@ export class ThirdPartyComponent implements OnInit {
 
   getMovementTypeLabel(type: string): string {
     const labels: Record<string, string> = {
-      deposit: 'Depósito',
+      deposit: 'DepÃ³sito',
       withdrawal: 'Retiro',
       investment_buy: 'Compra Inv.',
       investment_sell: 'Venta Inv.',

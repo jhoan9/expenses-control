@@ -20,17 +20,26 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
       input {
         width: 100%;
         padding: 10px 12px;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        font-size: 1rem;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--r-sm);
+        font-family: inherit;
+        font-size: var(--fs-base);
+        color: var(--text);
+        background: var(--surface);
         box-sizing: border-box;
+        transition: border-color var(--tr), box-shadow var(--tr), background var(--tr);
       }
       input:focus {
         outline: none;
-        border-color: #4caf50;
+        border-color: var(--brand);
+        box-shadow: 0 0 0 3px rgba(14, 159, 110, 0.14);
+      }
+      input::placeholder {
+        color: var(--text-3);
       }
       input:disabled {
-        background: #f5f5f5;
+        background: var(--surface-2);
+        color: var(--text-3);
         cursor: not-allowed;
       }
     `,

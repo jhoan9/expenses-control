@@ -3,177 +3,130 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, IconComponent],
   template: `
     <div class="auth-container">
-      <div class="auth-card">
-        <h1>Crear Cuenta</h1>
-        <p class="subtitle">Expenses Control</p>
+      <div class="auth-brand">
+        <div class="auth-brand-top">
+          <img class="brand-icon" src="assets/icono.png" alt="Controla" />
+          <div class="brand-text">
+            <span class="brand-name">Controla</span>
+            <span class="brand-sub">Finanzas Personales</span>
+          </div>
+        </div>
 
-        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
-          <div class="form-group">
-            <label for="name">Nombre</label>
-            <input
-              type="text"
-              id="name"
-              formControlName="name"
-              placeholder="Tu nombre"
-            />
-            <span class="error" *ngIf="registerForm.get('name')?.touched && registerForm.get('name')?.errors?.['required']">
-              El nombre es requerido
-            </span>
+        <div class="auth-brand-mid">
+          <h1>Tu dinero merece <br />una segunda mirada.</h1>
+          <p>
+            Crea tu cuenta y empieza a tomar decisiones financieras con
+            confianza, claridad y control total.
+          </p>
+        </div>
+
+        <div class="auth-brand-features">
+          <span><app-icon name="shield-check" /> Datos seguros</span>
+          <span><app-icon name="target" /> Objetivos claros</span>
+          <span><app-icon name="bar-chart" /> Reportes simples</span>
+        </div>
+      </div>
+
+      <div class="auth-form-side">
+        <div class="auth-card">
+          <div class="auth-card-header">
+            <div class="auth-mobile-brand">
+              <img src="assets/icono.png" alt="Controla" />
+              <strong>Controla</strong>
+            </div>
+            <h2>Crear cuenta</h2>
+            <p>Empieza a tomar control de tus finanzas hoy.</p>
           </div>
 
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              formControlName="email"
-              placeholder="tu@email.com"
-            />
-            <span class="error" *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.errors?.['required']">
-              El email es requerido
-            </span>
-            <span class="error" *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.errors?.['email']">
-              Email inválido
-            </span>
-          </div>
+          <form class="auth-form" [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+            <div class="form-group">
+              <label for="name">Nombre</label>
+              <input
+                type="text"
+                id="name"
+                formControlName="name"
+                placeholder="Tu nombre"
+                autocomplete="name"
+              />
+              <span class="error" *ngIf="registerForm.get('name')?.touched && registerForm.get('name')?.errors?.['required']">
+                El nombre es requerido
+              </span>
+            </div>
 
-          <div class="form-group">
-            <label for="password">Contraseña</label>
-            <input
-              type="password"
-              id="password"
-              formControlName="password"
-              placeholder="••••••••"
-            />
-            <span class="error" *ngIf="registerForm.get('password')?.touched && registerForm.get('password')?.errors?.['required']">
-              La contraseña es requerida
-            </span>
-            <span class="error" *ngIf="registerForm.get('password')?.touched && registerForm.get('password')?.errors?.['minlength']">
-              Mínimo 8 caracteres
-            </span>
-          </div>
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input
+                type="email"
+                id="email"
+                formControlName="email"
+                placeholder="tu@email.com"
+                autocomplete="email"
+              />
+              <span class="error" *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.errors?.['required']">
+                El email es requerido
+              </span>
+              <span class="error" *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.errors?.['email']">
+                Email inválido
+              </span>
+            </div>
 
-          <div class="form-group">
-            <label for="confirmPassword">Confirmar Contraseña</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              formControlName="confirmPassword"
-              placeholder="••••••••"
-            />
-            <span class="error" *ngIf="registerForm.get('confirmPassword')?.touched && registerForm.errors?.['passwordMismatch']">
-              Las contraseñas no coinciden
-            </span>
-          </div>
+            <div class="form-group">
+              <label for="password">Contraseña</label>
+              <input
+                type="password"
+                id="password"
+                formControlName="password"
+                placeholder="••••••••"
+                autocomplete="new-password"
+              />
+              <span class="error" *ngIf="registerForm.get('password')?.touched && registerForm.get('password')?.errors?.['required']">
+                La contraseña es requerida
+              </span>
+              <span class="error" *ngIf="registerForm.get('password')?.touched && registerForm.get('password')?.errors?.['minlength']">
+                Mínimo 8 caracteres
+              </span>
+            </div>
 
-          <div class="error-message" *ngIf="errorMessage">
-            {{ errorMessage }}
-          </div>
+            <div class="form-group">
+              <label for="confirmPassword">Confirmar contraseña</label>
+              <input
+                type="password"
+                id="confirmPassword"
+                formControlName="confirmPassword"
+                placeholder="••••••••"
+                autocomplete="new-password"
+              />
+              <span class="error" *ngIf="registerForm.get('confirmPassword')?.touched && registerForm.errors?.['passwordMismatch']">
+                Las contraseñas no coinciden
+              </span>
+            </div>
 
-          <button type="submit" [disabled]="registerForm.invalid || isLoading">
-            {{ isLoading ? 'Creando cuenta...' : 'Crear Cuenta' }}
-          </button>
-        </form>
+            <div class="error-message" *ngIf="errorMessage">
+              <app-icon name="alert-circle" />
+              {{ errorMessage }}
+            </div>
 
-        <p class="auth-link">
-          ¿Ya tienes cuenta? <a routerLink="/auth/login">Inicia sesión</a>
-        </p>
+            <button type="submit" class="btn-primary" [disabled]="registerForm.invalid || isLoading">
+              <span *ngIf="isLoading" class="button-spinner"></span>
+              {{ isLoading ? 'Creando cuenta...' : 'Crear cuenta' }}
+            </button>
+          </form>
+
+          <p class="auth-footer">
+            ¿Ya tienes cuenta? <a routerLink="/auth/login">Inicia sesión</a>
+          </p>
+        </div>
       </div>
     </div>
   `,
-  styles: [`
-    .auth-container {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    }
-    .auth-card {
-      background: white;
-      padding: 40px;
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-      width: 100%;
-      max-width: 400px;
-    }
-    h1 {
-      margin: 0 0 8px 0;
-      color: #333;
-    }
-    .subtitle {
-      color: #888;
-      margin: 0 0 24px 0;
-    }
-    .form-group {
-      margin-bottom: 16px;
-    }
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 500;
-      color: #333;
-    }
-    input {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 1rem;
-      box-sizing: border-box;
-    }
-    input:focus {
-      outline: none;
-      border-color: #4caf50;
-    }
-    .error {
-      color: #e53935;
-      font-size: 0.85rem;
-      margin-top: 4px;
-      display: block;
-    }
-    .error-message {
-      background: #ffebee;
-      color: #c62828;
-      padding: 12px;
-      border-radius: 4px;
-      margin-bottom: 16px;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      background: #4caf50;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      font-size: 1rem;
-      cursor: pointer;
-      margin-top: 8px;
-    }
-    button:hover:not(:disabled) {
-      background: #43a047;
-    }
-    button:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-    .auth-link {
-      text-align: center;
-      margin-top: 16px;
-      color: #666;
-    }
-    .auth-link a {
-      color: #4caf50;
-      text-decoration: none;
-    }
-  `]
 })
 export class RegisterComponent {
   registerForm: FormGroup;

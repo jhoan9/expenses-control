@@ -2,187 +2,115 @@ import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { CommonModule } from '@angular/common';
+import { IconComponent } from '../icon/icon.component';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, CommonModule],
+  imports: [RouterLink, RouterLinkActive, CommonModule, IconComponent],
   template: `
-    <button class="menu-fab" (click)="toggleMenu()" [class.hidden]="isOpen">☰</button>
+    <div class="sidebar-backdrop" [class.show]="isOpen" (click)="closeMenu()"></div>
+
     <aside class="sidebar" [class.open]="isOpen">
       <div class="sidebar-header">
-        <h2>Expenses Control</h2>
-        <button class="menu-toggle" (click)="toggleMenu()">
-          {{ isOpen ? '×' : '☰' }}
+        <a class="brand" routerLink="/dashboard">
+          <img class="brand-icon" src="assets/icono.png" alt="Controla" />
+          <div class="brand-text">
+            <span class="brand-name">Controla</span>
+            <span class="brand-sub">Finanzas Personales</span>
+          </div>
+        </a>
+        <button class="menu-toggle" (click)="toggleMenu()" aria-label="Cerrar menú">
+          <app-icon name="x" />
         </button>
       </div>
 
       <nav class="sidebar-nav" (click)="closeMenu()">
-        <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
-          <span class="icon">📊</span> Dashboard
-        </a>
-        <a routerLink="/accounts" routerLinkActive="active">
-          <span class="icon">🏦</span> Cuentas
-        </a>
-        <a routerLink="/income" routerLinkActive="active">
-          <span class="icon">💰</span> Ingresos
-        </a>
-        <a routerLink="/expenses" routerLinkActive="active">
-          <span class="icon">💸</span> {{ expensesLabel }}
-        </a>
-        <a routerLink="/budget" routerLinkActive="active">
-          <span class="icon">📅</span> Presupuesto
-        </a>
-        <a routerLink="/investments" routerLinkActive="active" *ngIf="canAccess('investments')">
-          <span class="icon">📈</span> Inversiones
-        </a>
-        <a routerLink="/third-party" routerLinkActive="active" *ngIf="canAccess('third-party')">
-          <span class="icon">👥</span> Terceros
-        </a>
-        <a routerLink="/loans" routerLinkActive="active" *ngIf="canAccess('loans')">
-          <span class="icon">🤝</span> {{ loansLabel }}
-        </a>
-        <a routerLink="/credits" routerLinkActive="active">
-          <span class="icon">💳</span> {{ creditsLabel }}
-        </a>
-        <a routerLink="/categories" routerLinkActive="active">
-          <span class="icon">🏷️</span> Categorías
-        </a>
-        <a routerLink="/reports" routerLinkActive="active">
-          <span class="icon">📋</span> Reportes
-        </a>
+        <div class="nav-section">
+          <div class="nav-section-title">Resumen</div>
+          <a class="nav-item" routerLink="/dashboard" routerLinkActive="active"
+             [routerLinkActiveOptions]="{ exact: true }">
+            <app-icon class="nav-icon" name="grid" />
+            <span class="nav-text">Dashboard</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Movimientos</div>
+          <a class="nav-item" routerLink="/accounts" routerLinkActive="active">
+            <app-icon class="nav-icon" name="bank" />
+            <span class="nav-text">Cuentas</span>
+          </a>
+          <a class="nav-item" routerLink="/income" routerLinkActive="active">
+            <app-icon class="nav-icon" name="arrow-down-left" />
+            <span class="nav-text">Ingresos</span>
+          </a>
+          <a class="nav-item" routerLink="/expenses" routerLinkActive="active">
+            <app-icon class="nav-icon" name="receipt" />
+            <span class="nav-text">{{ expensesLabel }}</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Planificación</div>
+          <a class="nav-item" routerLink="/budget" routerLinkActive="active">
+            <app-icon class="nav-icon" name="calendar" />
+            <span class="nav-text">Presupuesto</span>
+          </a>
+        </div>
+
+        <div class="nav-section" *ngIf="canAccess('investments') || canAccess('third-party')">
+          <div class="nav-section-title">Crecimiento</div>
+          <a class="nav-item" routerLink="/investments" routerLinkActive="active" *ngIf="canAccess('investments')">
+            <app-icon class="nav-icon" name="trending-up" />
+            <span class="nav-text">Inversiones</span>
+          </a>
+          <a class="nav-item" routerLink="/third-party" routerLinkActive="active" *ngIf="canAccess('third-party')">
+            <app-icon class="nav-icon" name="users" />
+            <span class="nav-text">Terceros</span>
+          </a>
+        </div>
+
+        <div class="nav-section" *ngIf="canAccess('loans')">
+          <div class="nav-section-title">Financiación</div>
+          <a class="nav-item" routerLink="/loans" routerLinkActive="active">
+            <app-icon class="nav-icon" name="exchange" />
+            <span class="nav-text">{{ loansLabel }}</span>
+          </a>
+          <a class="nav-item" routerLink="/credits" routerLinkActive="active">
+            <app-icon class="nav-icon" name="credit-card" />
+            <span class="nav-text">{{ creditsLabel }}</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Administración</div>
+          <a class="nav-item" routerLink="/categories" routerLinkActive="active">
+            <app-icon class="nav-icon" name="tags" />
+            <span class="nav-text">Categorías</span>
+          </a>
+          <a class="nav-item" routerLink="/reports" routerLinkActive="active">
+            <app-icon class="nav-icon" name="bar-chart" />
+            <span class="nav-text">Reportes</span>
+          </a>
+        </div>
       </nav>
 
       <div class="sidebar-footer">
         <div class="user-info" *ngIf="authService.currentUser as user">
-          <span>{{ user.name }}</span>
-          <small>{{ user.role }}</small>
+          <div class="user-avatar">{{ userInitial(user) }}</div>
+          <div class="user-meta">
+            <span class="user-name">{{ user.name }}</span>
+            <small class="user-role">{{ user.role }}</small>
+          </div>
         </div>
-        <button class="logout-btn" (click)="logout()">Cerrar sesión</button>
+        <button class="logout-btn" (click)="logout()">
+          <app-icon class="nav-icon" name="log-out" />
+          <span>{{ roleLabel }}</span>
+        </button>
       </div>
     </aside>
   `,
-  styles: [`
-    .sidebar {
-      width: 260px;
-      background: #1a1a2e;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      position: fixed;
-      top: 0;
-      left: 0;
-      bottom: 0;
-      z-index: 100;
-      transition: transform 0.3s ease;
-    }
-    .sidebar-header {
-      padding: 20px;
-      border-bottom: 1px solid #2a2a4a;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .sidebar-header h2 {
-      margin: 0;
-      font-size: 1.2rem;
-    }
-    .menu-toggle {
-      display: none;
-      background: none;
-      border: none;
-      color: white;
-      font-size: 1.5rem;
-      cursor: pointer;
-    }
-    .sidebar-nav {
-      flex: 1;
-      padding: 16px 0;
-      overflow-y: auto;
-    }
-    .sidebar-nav a {
-      display: flex;
-      align-items: center;
-      padding: 12px 20px;
-      color: #b0b0b0;
-      text-decoration: none;
-      transition: all 0.2s;
-    }
-    .sidebar-nav a:hover {
-      background: #2a2a4a;
-      color: white;
-    }
-    .sidebar-nav a.active {
-      background: #3a3a5a;
-      color: white;
-      border-left: 3px solid #4caf50;
-    }
-    .icon {
-      margin-right: 12px;
-      font-size: 1.1rem;
-    }
-    .sidebar-footer {
-      padding: 16px 20px;
-      border-top: 1px solid #2a2a4a;
-    }
-    .user-info {
-      margin-bottom: 12px;
-    }
-    .user-info span {
-      display: block;
-      font-weight: 500;
-    }
-    .user-info small {
-      color: #888;
-    }
-    .logout-btn {
-      width: 100%;
-      padding: 8px;
-      background: #e53935;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .logout-btn:hover {
-      background: #c62828;
-    }
-    .menu-fab {
-      display: none;
-      position: fixed;
-      top: 12px;
-      left: 12px;
-      z-index: 101;
-      width: 44px;
-      height: 44px;
-      border: none;
-      border-radius: 8px;
-      background: #1a1a2e;
-      color: white;
-      font-size: 1.3rem;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    }
-    @media (max-width: 768px) {
-      .menu-fab {
-        display: block;
-      }
-      .menu-fab.hidden {
-        display: none;
-      }
-    }
-    @media (max-width: 768px) {
-      .sidebar {
-        transform: translateX(-100%);
-      }
-      .sidebar.open {
-        transform: translateX(0);
-      }
-      .menu-toggle {
-        display: block;
-      }
-    }
-  `]
 })
 export class SidebarComponent {
   isOpen = false;
@@ -199,6 +127,17 @@ export class SidebarComponent {
 
   get loansLabel(): string {
     return this.isRole('ji01') ? 'Pasivos' : 'Préstamos';
+  }
+
+  get roleLabel(): string {
+    return this.isRole('ji01') ? 'Cerrar sesión' : 'Cerrar sesión';
+  }
+
+  userInitial(user: any): string {
+    const name = user?.name?.trim();
+    if (!name) return 'U';
+    const parts = name.split(/\s+/);
+    return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || 'U';
   }
 
   private isRole(role: string): boolean {

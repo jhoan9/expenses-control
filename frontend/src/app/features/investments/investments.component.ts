@@ -13,7 +13,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
     <div class="page">
       <div class="page-header">
         <h1>Inversiones</h1>
-        <button class="btn-primary" (click)="openInvestmentModal()">+ Nueva Inversión</button>
+        <button class="btn-primary" (click)="openInvestmentModal()">+ Nueva InversiÃ³n</button>
       </div>
 
       <div class="tabs">
@@ -30,11 +30,11 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               <div>
                 <h3>{{ inv.name }}</h3>
                 <span class="ticker" *ngIf="inv.ticker">{{ inv.ticker }}</span>
-                <span class="exchange" *ngIf="inv.exchange"> · {{ inv.exchange }}</span>
+                <span class="exchange" *ngIf="inv.exchange"> Â· {{ inv.exchange }}</span>
               </div>
               <div class="card-actions">
-                <button class="btn-icon" (click)="editInvestment(inv, $event)">✏️</button>
-                <button class="btn-icon" (click)="deleteInvestment(inv.id, $event)">🗑️</button>
+                <button class="btn-icon" (click)="editInvestment(inv, $event)">âœï¸</button>
+                <button class="btn-icon" (click)="deleteInvestment(inv.id, $event)">ðŸ—‘ï¸</button>
               </div>
             </div>
             <span class="type-badge" [class]="'type-' + inv.type">{{ getTypeLabel(inv.type) }}</span>
@@ -44,11 +44,11 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
         <!-- Investment Detail -->
         <div *ngIf="selectedInvestment !== null">
           <div class="detail-header">
-            <button class="btn-back" (click)="selectedInvestment = null; selectedPositions = []">← Volver</button>
+            <button class="btn-back" (click)="selectedInvestment = null; selectedPositions = []">â† Volver</button>
             <div class="detail-info">
               <h2>{{ selectedInvestment.name }}</h2>
               <span class="ticker-lg" *ngIf="selectedInvestment.ticker">{{ selectedInvestment.ticker }}</span>
-              <span class="exchange" *ngIf="selectedInvestment.exchange"> · {{ selectedInvestment.exchange }}</span>
+              <span class="exchange" *ngIf="selectedInvestment.exchange"> Â· {{ selectedInvestment.exchange }}</span>
               <span class="type-badge" [class]="'type-' + selectedInvestment.type">{{ getTypeLabel(selectedInvestment.type) }}</span>
             </div>
             <div class="detail-actions">
@@ -140,7 +140,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
           </div>
 
           <div class="empty-state" *ngIf="selectedInvestment.type !== 'land' && operations.length === 0 && !loadingDetail">
-            <p>No hay operaciones registradas para esta inversión</p>
+            <p>No hay operaciones registradas para esta inversiÃ³n</p>
           </div>
 
           <!-- Abonos (terrenos) -->
@@ -152,7 +152,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
                   <span class="op-date">{{ formatDate(abono.date) }}</span>
                   <strong class="op-main">{{ formatCurrency(abono.amount) }}</strong>
                   <span class="op-actions">
-                    <button class="btn-icon btn-danger-icon" (click)="deleteAbono(abono)" title="Eliminar abono">🗑️</button>
+                    <button class="btn-icon btn-danger-icon" (click)="deleteAbono(abono)" title="Eliminar abono">ðŸ—‘ï¸</button>
                   </span>
                 </div>
                 <div class="op-footer" *ngIf="abono.notes">
@@ -161,14 +161,14 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               </div>
             </div>
             <div class="empty-state" *ngIf="abonos.length === 0 && !loadingDetail">
-              <p>No hay abonos registrados todavía. Agrega el primero con el botón "+ Abono".</p>
+              <p>No hay abonos registrados todavÃ­a. Agrega el primero con el botÃ³n "+ Abono".</p>
             </div>
           </div>
         </div>
 
         <div class="empty-state" *ngIf="investments.length === 0 && !loading && selectedInvestment === null">
           <p>No hay inversiones registradas</p>
-          <button class="btn-primary" (click)="openInvestmentModal()">Crear primera inversión</button>
+          <button class="btn-primary" (click)="openInvestmentModal()">Crear primera inversiÃ³n</button>
         </div>
       </div>
 
@@ -280,7 +280,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
       <div class="modal-overlay" *ngIf="showInvestmentModal" (click)="closeInvestmentModal()">
         <div class="modal" (click)="$event.stopPropagation()">
           <div class="modal-header">
-            <h2>{{ editingInvestmentId ? 'Editar Inversión' : 'Nueva Inversión' }}</h2>
+            <h2>{{ editingInvestmentId ? 'Editar InversiÃ³n' : 'Nueva InversiÃ³n' }}</h2>
             <button class="btn-close" (click)="closeInvestmentModal()">&times;</button>
           </div>
           <form [formGroup]="investmentForm" (ngSubmit)="onSubmitInvestment()">
@@ -302,7 +302,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               <label for="inv-type">Tipo</label>
               <select id="inv-type" formControlName="type">
                 <option value="">Seleccionar tipo</option>
-                <option value="stock">Acción</option>
+                <option value="stock">AcciÃ³n</option>
                 <option value="bond">Bono</option>
                 <option value="etf">ETF</option>
                 <option value="crypto">Criptomoneda</option>
@@ -313,7 +313,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
             <div class="form-group" *ngIf="investmentForm.get('type')?.value === 'land'">
               <label for="inv-target">Valor objetivo (total del terreno)</label>
               <app-currency-input id="inv-target" formControlName="target_value" placeholder="0" />
-              <small class="field-hint">Opcional. Con este valor se calcula cuánto falta por abonar.</small>
+              <small class="field-hint">Opcional. Con este valor se calcula cuÃ¡nto falta por abonar.</small>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn-secondary" (click)="closeInvestmentModal()">Cancelar</button>
@@ -341,15 +341,15 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               </select>
             </div>
             <div class="form-group" *ngIf="tradeType === 'sell' && sellLots.length > 1">
-              <label for="trade-position">Posición a vender</label>
+              <label for="trade-position">PosiciÃ³n a vender</label>
               <select id="trade-position" formControlName="position_id">
-                <option value="">Automático (FIFO - primera abierta)</option>
+                <option value="">AutomÃ¡tico (FIFO - primera abierta)</option>
                 <option *ngFor="let lot of sellLots" [value]="lot.id">
-                  #{{ lot.id }} · {{ formatQuantity(lot.remaining) }} disp. · {{ formatCurrency(lot.unit_price) }}
+                  #{{ lot.id }} Â· {{ formatQuantity(lot.remaining) }} disp. Â· {{ formatCurrency(lot.unit_price) }}
                 </option>
               </select>
               <small class="field-hint" *ngIf="selectedLot()">
-                Vendiendo desde la posición #{{ selectedLot().id }} (comprada a {{ formatCurrency(selectedLot().unit_price) }}). Máximo: {{ formatQuantity(selectedLot().remaining) }}.
+                Vendiendo desde la posiciÃ³n #{{ selectedLot().id }} (comprada a {{ formatCurrency(selectedLot().unit_price) }}). MÃ¡ximo: {{ formatQuantity(selectedLot().remaining) }}.
               </small>
             </div>
             <div class="form-row">
@@ -364,7 +364,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label for="trade-commission">Comisión</label>
+                <label for="trade-commission">ComisiÃ³n</label>
                 <app-currency-input id="trade-commission" formControlName="commission" placeholder="0" />
               </div>
               <div class="form-group">
@@ -394,7 +394,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
       <div class="modal-overlay" *ngIf="showAbonoModal" (click)="closeAbonoModal()">
         <div class="modal" (click)="$event.stopPropagation()">
           <div class="modal-header">
-            <h2>Nuevo Abono · {{ selectedInvestment?.name }}</h2>
+            <h2>Nuevo Abono Â· {{ selectedInvestment?.name }}</h2>
             <button class="btn-close" (click)="closeAbonoModal()">&times;</button>
           </div>
           <form [formGroup]="abonoForm" (ngSubmit)="onSubmitAbono()">
@@ -424,357 +424,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
         </div>
       </div>
     </div>
-  `,
-  styles: [`
-    .page { padding: 0; }
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-    .page-header h1 { margin: 0; color: #333; }
-    .tabs {
-      display: flex;
-      gap: 0;
-      margin-bottom: 24px;
-      border-bottom: 2px solid #eee;
-    }
-    .tab {
-      background: none;
-      border: none;
-      padding: 12px 24px;
-      cursor: pointer;
-      font-size: 0.95rem;
-      font-weight: 500;
-      color: #888;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -2px;
-      transition: all 0.2s;
-    }
-    .tab:hover { color: #333; }
-    .tab.active {
-      color: #4caf50;
-      border-bottom-color: #4caf50;
-    }
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 16px;
-    }
-    .investment-card {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      transition: transform 0.2s;
-      cursor: pointer;
-    }
-    .investment-card:hover { transform: translateY(-2px); }
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 12px;
-    }
-    .card-header h3 { margin: 0 0 4px 0; color: #333; }
-    .card-actions { display: flex; gap: 4px; }
-    .ticker {
-      display: inline-block;
-      font-size: 0.85rem;
-      color: #666;
-      font-weight: 600;
-      background: #f5f5f5;
-      padding: 2px 8px;
-      border-radius: 4px;
-    }
-    .ticker-lg {
-      font-size: 1rem;
-      color: #666;
-      font-weight: 600;
-      background: #f5f5f5;
-      padding: 2px 8px;
-      border-radius: 4px;
-    }
-    .exchange { color: #999; font-size: 0.85rem; }
-    .type-badge {
-      display: inline-block;
-      padding: 2px 10px;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: 500;
-    }
-    .type-stock { background: #e3f2fd; color: #1565c0; }
-    .type-bond { background: #f3e5f5; color: #7b1fa2; }
-    .type-etf { background: #e8f5e9; color: #2e7d32; }
-    .type-crypto { background: #fff3e0; color: #e65100; }
-    .type-land { background: #efebe9; color: #4e342e; }
-    .type-other { background: #f5f5f5; color: #616161; }
-    .btn-icon {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 1rem;
-      padding: 4px;
-      border-radius: 4px;
-    }
-    .btn-icon:hover { background: #f0f0f0; }
-    .detail-header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-    .btn-back {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 0.95rem;
-      color: #4caf50;
-      font-weight: 500;
-      padding: 4px 0;
-    }
-    .btn-back:hover { text-decoration: underline; }
-    .detail-info {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex: 1;
-    }
-    .detail-info h2 { margin: 0; color: #333; }
-    .detail-actions { display: flex; gap: 8px; }
-    .btn-action {
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 500;
-      font-size: 0.9rem;
-    }
-    .btn-buy { background: #4caf50; color: white; }
-    .btn-buy:hover { background: #43a047; }
-    .btn-sell { background: #e53935; color: white; }
-    .btn-sell:hover { background: #c62828; }
-    .summary-bar {
-      display: flex;
-      gap: 24px;
-      margin-bottom: 16px;
-      background: white;
-      padding: 16px 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      flex-wrap: wrap;
-    }
-    .summary-item {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .summary-item span {
-      font-size: 0.85rem;
-      color: #888;
-    }
-    .summary-item strong {
-      font-size: 1.1rem;
-      color: #333;
-    }
-    .table-container {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      overflow-x: auto;
-    }
-    table { width: 100%; border-collapse: collapse; }
-    th, td {
-      padding: 12px 16px;
-      text-align: left;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    th {
-      background: #fafafa;
-      font-weight: 600;
-      color: #555;
-      font-size: 0.85rem;
-      text-transform: uppercase;
-    }
-    tr:hover { background: #f9f9f9; }
-    .clickable-row { cursor: pointer; }
-    .result-positive { color: #2e7d32 !important; }
-    .result-negative { color: #c62828 !important; }
-    .result-badge {
-      display: inline-block;
-      padding: 2px 10px;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: 600;
-    }
-    .trade-badge {
-      display: inline-block;
-      padding: 2px 10px;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: 500;
-    }
-    .trade-buy { background: #e8f5e9; color: #2e7d32; }
-    .trade-sell { background: #ffebee; color: #c62828; }
-    .operations-list { display: flex; flex-direction: column; gap: 12px; }
-    .operation-card {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      padding: 14px 16px;
-      border-left: 4px solid #4caf50;
-    }
-    .operation-card.op-closed { border-left-color: #9e9e9e; opacity: 0.85; }
-    .op-header, .op-sell-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .op-header { margin-bottom: 6px; }
-    .op-sells {
-      border-top: 1px dashed #eee;
-      margin-top: 6px;
-      padding-top: 6px;
-    }
-    .op-sell-row { margin-bottom: 4px; font-size: 0.92rem; }
-    .op-date { color: #888; font-size: 0.85rem; min-width: 80px; }
-    .op-main { font-weight: 600; color: #333; flex: 1; }
-    .op-total { color: #555; font-weight: 500; }
-    .op-pnl { font-weight: 600; min-width: 90px; text-align: right; }
-    .status-badge-op {
-      display: inline-block;
-      padding: 2px 10px;
-      border-radius: 12px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      background: #fff3e0;
-      color: #e65100;
-    }
-    .status-badge-op.closed { background: #eeeeee; color: #757575; }
-    .op-footer {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      margin-top: 8px;
-      padding-top: 8px;
-      border-top: 1px solid #f0f0f0;
-      font-size: 0.85rem;
-      color: #666;
-    }
-    .op-footer strong { color: #333; }
-    .btn-primary {
-      background: #4caf50;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 500;
-    }
-    .btn-primary:hover { background: #43a047; }
-    .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: #888;
-      background: white;
-      border-radius: 8px;
-    }
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-    .modal {
-      background: white;
-      border-radius: 12px;
-      width: 100%;
-      max-width: 520px;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px;
-      border-bottom: 1px solid #eee;
-    }
-    .modal-header h2 { margin: 0; font-size: 1.2rem; }
-    .btn-close {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: #888;
-    }
-    .form-row {
-      display: flex;
-      gap: 12px;
-    }
-    .form-group {
-      padding: 0 20px;
-      margin-bottom: 16px;
-      flex: 1;
-    }
-    .form-group:first-of-type { margin-top: 20px; }
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 500;
-      color: #333;
-    }
-    input, select {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 1rem;
-      box-sizing: border-box;
-    }
-    input:focus, select:focus {
-      outline: none;
-      border-color: #4caf50;
-    }
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      padding: 16px 20px;
-      border-top: 1px solid #eee;
-    }
-    .btn-secondary {
-      background: #f5f5f5;
-      color: #333;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .btn-secondary:hover { background: #e0e0e0; }
-    .field-hint {
-      display: block;
-      margin-top: 4px;
-      font-size: 0.8rem;
-      color: #6b7280;
-    }
-    .trade-total {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 20px;
-      font-size: 1.1rem;
-    }
-    .trade-total strong { color: #333; }
-  `]
+  `
 })
 export class InvestmentsComponent implements OnInit {
   formatCurrency = formatCurrency;
@@ -975,7 +625,7 @@ export class InvestmentsComponent implements OnInit {
 
   deleteInvestment(id: number, event: Event): void {
     event.stopPropagation();
-    if (!confirm('¿Eliminar esta inversión y todas sus posiciones?')) return;
+    if (!confirm('Â¿Eliminar esta inversiÃ³n y todas sus posiciones?')) return;
     this.api.delete(`/investments/${id}`).subscribe({
       next: () => {
         if (this.selectedInvestment?.id === id) {
@@ -1044,7 +694,7 @@ export class InvestmentsComponent implements OnInit {
   }
 
   getTypeLabel(type: string): string {
-    const labels: Record<string, string> = { stock: 'Acción', bond: 'Bono', etf: 'ETF', crypto: 'Crypto', land: 'Terreno', other: 'Otro' };
+    const labels: Record<string, string> = { stock: 'AcciÃ³n', bond: 'Bono', etf: 'ETF', crypto: 'Crypto', land: 'Terreno', other: 'Otro' };
     return labels[type] || type;
   }
 
@@ -1072,7 +722,7 @@ export class InvestmentsComponent implements OnInit {
 
   deleteAbono(abono: any): void {
     if (!this.selectedInvestment) return;
-    if (!confirm('¿Eliminar este abono?')) return;
+    if (!confirm('Â¿Eliminar este abono?')) return;
     this.api.delete(`/investments/${this.selectedInvestment.id}/abonos/${abono.id}`).subscribe({
       next: () => {
         this.refreshDetail();

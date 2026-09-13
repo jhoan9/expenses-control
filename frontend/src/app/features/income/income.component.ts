@@ -27,8 +27,8 @@ import { formatCurrency, todayLocal } from '../../shared/utils/format';
           <thead>
             <tr>
               <th>Fecha</th>
-              <th>Descripción</th>
-              <th>Categoría</th>
+              <th>DescripciÃ³n</th>
+              <th>CategorÃ­a</th>
               <th>Cuenta</th>
               <th>Monto</th>
               <th>Acciones</th>
@@ -42,8 +42,8 @@ import { formatCurrency, todayLocal } from '../../shared/utils/format';
               <td>{{ getAccountName(item.account_id) }}</td>
               <td class="amount positive">{{ formatCurrency(item.amount) }}</td>
               <td>
-                <button class="btn-icon" (click)="editItem(item)">✏️</button>
-                <button class="btn-icon" (click)="deleteItem(item.id)">🗑️</button>
+                <button class="btn-icon" (click)="editItem(item)">âœï¸</button>
+                <button class="btn-icon" (click)="deleteItem(item.id)">ðŸ—‘ï¸</button>
               </td>
             </tr>
           </tbody>
@@ -89,16 +89,16 @@ import { formatCurrency, todayLocal } from '../../shared/utils/format';
             </div>
 
             <div class="form-group">
-              <label for="category_id">Categoría</label>
+              <label for="category_id">CategorÃ­a</label>
               <select id="category_id" formControlName="category_id">
-                <option value="">Sin categoría</option>
+                <option value="">Sin categorÃ­a</option>
                 <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label for="description">Descripción</label>
-              <input id="description" formControlName="description" placeholder="Descripción del ingreso" />
+              <label for="description">DescripciÃ³n</label>
+              <input id="description" formControlName="description" placeholder="DescripciÃ³n del ingreso" />
             </div>
 
             <div class="modal-footer">
@@ -111,148 +111,7 @@ import { formatCurrency, todayLocal } from '../../shared/utils/format';
         </div>
       </div>
     </div>
-  `,
-  styles: [`
-    .page { padding: 0; }
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-    .page-header h1 { margin: 0; color: #333; }
-    .filters {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    .filters input {
-      padding: 8px 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 0.95rem;
-    }
-    .table-container {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 12px 16px;
-      text-align: left;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    th {
-      background: #fafafa;
-      font-weight: 600;
-      color: #555;
-      font-size: 0.85rem;
-      text-transform: uppercase;
-    }
-    tr:hover { background: #f9f9f9; }
-    .amount { font-weight: 600; }
-    .amount.positive { color: #4caf50; }
-    .amount.negative { color: #e53935; }
-    .btn-primary {
-      background: #4caf50;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 500;
-    }
-    .btn-primary:hover { background: #43a047; }
-    .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
-    .btn-icon {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 1rem;
-      padding: 4px;
-    }
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: #888;
-      background: white;
-      border-radius: 8px;
-    }
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-    .modal {
-      background: white;
-      border-radius: 12px;
-      width: 100%;
-      max-width: 480px;
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px;
-      border-bottom: 1px solid #eee;
-    }
-    .modal-header h2 { margin: 0; font-size: 1.2rem; }
-    .btn-close {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: #888;
-    }
-    .form-group {
-      padding: 0 20px;
-      margin-bottom: 16px;
-    }
-    .form-group:first-of-type { margin-top: 20px; }
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 500;
-      color: #333;
-    }
-    input, select {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 1rem;
-      box-sizing: border-box;
-    }
-    input:focus, select:focus {
-      outline: none;
-      border-color: #4caf50;
-    }
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      padding: 16px 20px;
-      border-top: 1px solid #eee;
-    }
-    .btn-secondary {
-      background: #f5f5f5;
-      color: #333;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .btn-secondary:hover { background: #e0e0e0; }
-  `]
+  `
 })
 export class IncomeComponent implements OnInit {
   formatCurrency = formatCurrency;
@@ -345,7 +204,7 @@ export class IncomeComponent implements OnInit {
   }
 
   deleteItem(id: number): void {
-    if (!confirm('¿Eliminar este ingreso?')) return;
+    if (!confirm('Â¿Eliminar este ingreso?')) return;
     this.api.delete(`/income/${id}`).subscribe({ next: () => this.loadIncome() });
   }
 

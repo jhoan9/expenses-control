@@ -14,13 +14,13 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
       <!-- List View -->
       <div *ngIf="selectedLoan === null">
         <div class="page-header">
-          <h1>Préstamos</h1>
-          <button class="btn-primary" (click)="openLoanModal()">+ Nuevo Préstamo</button>
+          <h1>PrÃ©stamos</h1>
+          <button class="btn-primary" (click)="openLoanModal()">+ Nuevo PrÃ©stamo</button>
         </div>
 
         <div class="summary-bar" *ngIf="summary">
           <div class="summary-item">
-            <span>Total Préstamos</span>
+            <span>Total PrÃ©stamos</span>
             <strong>{{ summary.total_loans }}</strong>
           </div>
           <div class="summary-item">
@@ -45,12 +45,12 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               <div class="person-info">
                 <h3>{{ group.borrower_name }}</h3>
                 <span class="person-meta">
-                  {{ group.loans.length }} préstamo(s) · Total
-                  <strong>{{ formatCurrency(group.total) }}</strong> · Pendiente
+                  {{ group.loans.length }} prÃ©stamo(s) Â· Total
+                  <strong>{{ formatCurrency(group.total) }}</strong> Â· Pendiente
                   <strong>{{ formatCurrency(group.remaining) }}</strong>
                 </span>
               </div>
-              <button class="btn-primary-sm" (click)="openLoanModalFor(group.borrower_name)">+ Nuevo préstamo</button>
+              <button class="btn-primary-sm" (click)="openLoanModalFor(group.borrower_name)">+ Nuevo prÃ©stamo</button>
             </div>
             <div class="cards-grid">
               <div class="loan-card" *ngFor="let loan of group.loans">
@@ -78,30 +78,30 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
                     <strong>{{ formatDate(loan.date) }}</strong>
                   </div>
                   <div class="card-row" *ngIf="loan.description">
-                    <span>Descripción</span>
+                    <span>DescripciÃ³n</span>
                     <strong class="desc-text">{{ loan.description }}</strong>
                   </div>
                 </div>
                 <div class="card-actions">
-                  <button class="btn-icon" (click)="editLoan(loan, $event)" title="Editar">✏️</button>
-                  <button class="btn-icon" (click)="deleteLoan(loan.id, $event)" title="Eliminar">🗑️</button>
+                  <button class="btn-icon" (click)="editLoan(loan, $event)" title="Editar">âœï¸</button>
+                  <button class="btn-icon" (click)="deleteLoan(loan.id, $event)" title="Eliminar">ðŸ—‘ï¸</button>
                 </div>
-                <button class="btn-detail" (click)="viewLoan(loan)">Ver detalle →</button>
+                <button class="btn-detail" (click)="viewLoan(loan)">Ver detalle â†’</button>
               </div>
             </div>
           </div>
         </div>
 
         <div class="empty-state" *ngIf="loans.length === 0 && !loading">
-          <p>No hay préstamos registrados</p>
-          <button class="btn-primary" (click)="openLoanModal()">Crear primer préstamo</button>
+          <p>No hay prÃ©stamos registrados</p>
+          <button class="btn-primary" (click)="openLoanModal()">Crear primer prÃ©stamo</button>
         </div>
       </div>
 
       <!-- Detail View -->
       <div *ngIf="selectedLoan !== null">
         <div class="detail-header">
-          <button class="btn-back" (click)="goBack()">← Volver</button>
+          <button class="btn-back" (click)="goBack()">â† Volver</button>
           <div class="detail-info">
             <h2>{{ selectedLoan.borrower_name }}</h2>
             <span class="status-badge" [ngClass]="'status-' + selectedLoan.status">
@@ -145,7 +145,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
         </div>
 
         <div class="detail-description" *ngIf="selectedLoan.description">
-          <strong>Descripción:</strong> {{ selectedLoan.description }}
+          <strong>DescripciÃ³n:</strong> {{ selectedLoan.description }}
         </div>
 
         <div class="table-container">
@@ -153,7 +153,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
             <thead>
               <tr>
                 <th>Fecha</th>
-                <th>Descripción</th>
+                <th>DescripciÃ³n</th>
                 <th>Monto</th>
                 <th></th>
               </tr>
@@ -164,7 +164,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
                 <td>{{ payment.description || '-' }}</td>
                 <td class="amount-cell positive">{{ formatCurrency(payment.amount) }}</td>
                 <td class="actions-cell">
-                  <button class="btn-icon btn-danger-icon" (click)="deletePayment(payment)" title="Eliminar abono">🗑️</button>
+                  <button class="btn-icon btn-danger-icon" (click)="deletePayment(payment)" title="Eliminar abono">ðŸ—‘ï¸</button>
                 </td>
               </tr>
             </tbody>
@@ -183,17 +183,17 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
       <div class="modal-overlay" *ngIf="showLoanModal" (click)="closeLoanModal()">
         <div class="modal" (click)="$event.stopPropagation()">
           <div class="modal-header">
-            <h2>{{ editingLoanId ? 'Editar Préstamo' : 'Nuevo Préstamo' }}</h2>
+            <h2>{{ editingLoanId ? 'Editar PrÃ©stamo' : 'Nuevo PrÃ©stamo' }}</h2>
             <button class="btn-close" (click)="closeLoanModal()">&times;</button>
           </div>
           <form [formGroup]="loanForm" (ngSubmit)="onSubmitLoan()">
             <div class="form-group">
               <label for="borrower_name">Nombre del deudor</label>
-              <input id="borrower_name" formControlName="borrower_name" list="existing-borrowers" placeholder="Ej: Juan Pérez" />
+              <input id="borrower_name" formControlName="borrower_name" list="existing-borrowers" placeholder="Ej: Juan PÃ©rez" />
               <datalist id="existing-borrowers">
                 <option *ngFor="let name of existingBorrowers" [value]="name"></option>
               </datalist>
-              <small class="hint" *ngIf="editingLoanId === null">Si la persona ya tiene préstamos, puedes elegirla de la lista para agregar otro a su nombre.</small>
+              <small class="hint" *ngIf="editingLoanId === null">Si la persona ya tiene prÃ©stamos, puedes elegirla de la lista para agregar otro a su nombre.</small>
             </div>
             <div class="form-group">
               <label for="amount">Monto</label>
@@ -204,8 +204,8 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               <input id="date" type="date" formControlName="date" />
             </div>
             <div class="form-group">
-              <label for="description">Descripción (opcional)</label>
-              <input id="description" formControlName="description" placeholder="Descripción del préstamo..." />
+              <label for="description">DescripciÃ³n (opcional)</label>
+              <input id="description" formControlName="description" placeholder="DescripciÃ³n del prÃ©stamo..." />
             </div>
             <div class="modal-footer">
               <button type="button" class="btn-secondary" (click)="closeLoanModal()">Cancelar</button>
@@ -237,8 +237,8 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               <input id="pay-date" type="date" formControlName="date" />
             </div>
             <div class="form-group">
-              <label for="pay-description">Descripción (opcional)</label>
-              <input id="pay-description" formControlName="description" placeholder="Descripción del abono..." />
+              <label for="pay-description">DescripciÃ³n (opcional)</label>
+              <input id="pay-description" formControlName="description" placeholder="DescripciÃ³n del abono..." />
             </div>
             <div class="modal-footer">
               <button type="button" class="btn-secondary" (click)="closePaymentModal()">Cancelar</button>
@@ -250,351 +250,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
         </div>
       </div>
     </div>
-  `,
-  styles: [`
-    .page { padding: 0; }
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-    .page-header h1 { margin: 0; color: #333; }
-    .summary-bar {
-      display: flex;
-      gap: 24px;
-      margin-bottom: 16px;
-      background: white;
-      padding: 16px 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      flex-wrap: wrap;
-    }
-    .summary-item {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .summary-item span {
-      font-size: 0.85rem;
-      color: #888;
-    }
-    .summary-item strong {
-      font-size: 1.1rem;
-      color: #333;
-    }
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 16px;
-    }
-    .person-group {
-      margin-bottom: 24px;
-    }
-    .person-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
-      background: white;
-      padding: 12px 16px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      flex-wrap: wrap;
-    }
-    .person-info h3 {
-      margin: 0;
-      color: #333;
-      font-size: 1.05rem;
-    }
-    .person-meta {
-      display: block;
-      font-size: 0.85rem;
-      color: #888;
-      margin-top: 2px;
-    }
-    .person-meta strong { color: #333; }
-    .btn-primary-sm {
-      background: #4caf50;
-      color: white;
-      border: none;
-      padding: 8px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 500;
-      font-size: 0.9rem;
-    }
-    .btn-primary-sm:hover { background: #43a047; }
-    .hint {
-      display: block;
-      font-size: 0.8rem;
-      color: #888;
-      margin-top: 4px;
-    }
-    .loan-card {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      transition: transform 0.2s;
-    }
-    .loan-card:hover { transform: translateY(-2px); }
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-    .card-header h3 { margin: 0; color: #333; }
-    .status-badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: 500;
-    }
-    .status-active { background: #e8f5e9; color: #2e7d32; }
-    .status-paid { background: #e3f2fd; color: #1565c0; }
-    .status-cancelled { background: #ffebee; color: #c62828; }
-    .card-values {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-    .card-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .card-row span {
-      font-size: 0.9rem;
-      color: #888;
-    }
-    .card-row strong {
-      font-size: 1rem;
-      color: #333;
-    }
-    .desc-text {
-      font-size: 0.85rem !important;
-      max-width: 180px;
-      text-align: right;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .card-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 4px;
-      margin-bottom: 8px;
-    }
-    .btn-icon {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 1rem;
-      padding: 4px;
-      border-radius: 4px;
-    }
-    .btn-icon:hover { background: #f0f0f0; }
-    .btn-danger-icon:hover { background: #ffebee; }
-    .btn-detail {
-      width: 100%;
-      background: #f5f5f5;
-      color: #333;
-      border: none;
-      padding: 10px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 500;
-      font-size: 0.9rem;
-      transition: background 0.2s;
-    }
-    .btn-detail:hover { background: #e8e8e8; }
-    .negative { color: #e53935 !important; }
-    .positive { color: #4caf50 !important; }
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: #888;
-      background: white;
-      border-radius: 8px;
-    }
-    .detail-header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-    .btn-back {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 0.95rem;
-      color: #4caf50;
-      font-weight: 500;
-      padding: 4px 0;
-    }
-    .btn-back:hover { text-decoration: underline; }
-    .detail-info {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex: 1;
-    }
-    .detail-info h2 { margin: 0; color: #333; }
-    .detail-actions {
-      display: flex;
-      gap: 8px;
-    }
-    .progress-container {
-      margin-bottom: 16px;
-      background: white;
-      padding: 16px 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-    .progress-bar {
-      width: 100%;
-      height: 10px;
-      background: #e0e0e0;
-      border-radius: 5px;
-      overflow: hidden;
-      margin-bottom: 6px;
-    }
-    .progress-fill {
-      height: 100%;
-      background: #4caf50;
-      border-radius: 5px;
-      transition: width 0.3s ease;
-    }
-    .progress-text {
-      font-size: 0.85rem;
-      color: #888;
-    }
-    .detail-description {
-      margin-bottom: 16px;
-      background: white;
-      padding: 16px 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      font-size: 0.95rem;
-      color: #555;
-    }
-    .table-container {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      overflow-x: auto;
-    }
-    table { width: 100%; border-collapse: collapse; }
-    th, td {
-      padding: 12px 16px;
-      text-align: left;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    th {
-      background: #fafafa;
-      font-weight: 600;
-      color: #555;
-      font-size: 0.85rem;
-      text-transform: uppercase;
-    }
-    tr:hover { background: #f9f9f9; }
-    .amount-cell { font-weight: 600; }
-    .actions-cell { text-align: right; }
-    .btn-primary {
-      background: #4caf50;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 500;
-    }
-    .btn-primary:hover { background: #43a047; }
-    .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
-    .btn-secondary {
-      background: #f5f5f5;
-      color: #333;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .btn-secondary:hover { background: #e0e0e0; }
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-    .modal {
-      background: white;
-      border-radius: 12px;
-      width: 100%;
-      max-width: 480px;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px;
-      border-bottom: 1px solid #eee;
-    }
-    .modal-header h2 { margin: 0; font-size: 1.2rem; }
-    .btn-close {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: #888;
-    }
-    .modal-body-info {
-      padding: 12px 20px;
-      background: #f5f5f5;
-      font-size: 0.95rem;
-      color: #555;
-    }
-    .form-group {
-      padding: 0 20px;
-      margin-bottom: 16px;
-    }
-    .form-group:first-of-type { margin-top: 20px; }
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 500;
-      color: #333;
-    }
-    input, select {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 1rem;
-      box-sizing: border-box;
-    }
-    input:focus, select:focus {
-      outline: none;
-      border-color: #4caf50;
-    }
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      padding: 16px 20px;
-      border-top: 1px solid #eee;
-    }
-  `]
+  `
 })
 export class LoansComponent implements OnInit {
   formatCurrency = formatCurrency;
@@ -765,7 +421,7 @@ export class LoansComponent implements OnInit {
 
   deleteLoan(id: number, event: Event): void {
     event.stopPropagation();
-    if (!confirm('¿Eliminar este préstamo y todos sus abonos?')) return;
+    if (!confirm('Â¿Eliminar este prÃ©stamo y todos sus abonos?')) return;
     this.api.delete(`/loans/${id}`).subscribe({
       next: () => {
         this.loadLoans();
@@ -803,7 +459,7 @@ export class LoansComponent implements OnInit {
   }
 
   deletePayment(payment: any): void {
-    if (!confirm('¿Eliminar este abono?')) return;
+    if (!confirm('Â¿Eliminar este abono?')) return;
     this.api.delete(`/loans/${this.selectedLoan.id}/payments/${payment.id}`).subscribe({
       next: () => {
         this.viewLoan(this.selectedLoan);
