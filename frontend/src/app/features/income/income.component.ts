@@ -27,8 +27,8 @@ import { formatCurrency, todayLocal } from '../../shared/utils/format';
           <thead>
             <tr>
               <th>Fecha</th>
-              <th>DescripciÃ³n</th>
-              <th>CategorÃ­a</th>
+              <th>Descripción</th>
+              <th>Categoría</th>
               <th>Cuenta</th>
               <th>Monto</th>
               <th>Acciones</th>
@@ -42,8 +42,8 @@ import { formatCurrency, todayLocal } from '../../shared/utils/format';
               <td>{{ getAccountName(item.account_id) }}</td>
               <td class="amount positive">{{ formatCurrency(item.amount) }}</td>
               <td>
-                <button class="btn-icon" (click)="editItem(item)">âœï¸</button>
-                <button class="btn-icon" (click)="deleteItem(item.id)">ðŸ—‘ï¸</button>
+                <button class="btn-icon" (click)="editItem(item)">✏️</button>
+                <button class="btn-icon" (click)="deleteItem(item.id)">🗑️</button>
               </td>
             </tr>
           </tbody>
@@ -89,16 +89,16 @@ import { formatCurrency, todayLocal } from '../../shared/utils/format';
             </div>
 
             <div class="form-group">
-              <label for="category_id">CategorÃ­a</label>
+              <label for="category_id">Categoría</label>
               <select id="category_id" formControlName="category_id">
-                <option value="">Sin categorÃ­a</option>
+                <option value="">Sin categoría</option>
                 <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label for="description">DescripciÃ³n</label>
-              <input id="description" formControlName="description" placeholder="DescripciÃ³n del ingreso" />
+              <label for="description">Descripción</label>
+              <input id="description" formControlName="description" placeholder="Descripción del ingreso" />
             </div>
 
             <div class="modal-footer">
@@ -204,7 +204,7 @@ export class IncomeComponent implements OnInit {
   }
 
   deleteItem(id: number): void {
-    if (!confirm('Â¿Eliminar este ingreso?')) return;
+    if (!confirm('¿Eliminar este ingreso?')) return;
     this.api.delete(`/income/${id}`).subscribe({ next: () => this.loadIncome() });
   }
 

@@ -10,8 +10,8 @@ import { ApiService } from '../../core/services/api.service';
   template: `
     <div class="page">
       <div class="page-header">
-        <h1>MÃ©todos de Pago</h1>
-        <button class="btn-primary" (click)="openModal()">+ Nuevo MÃ©todo</button>
+        <h1>Métodos de Pago</h1>
+        <button class="btn-primary" (click)="openModal()">+ Nuevo Método</button>
       </div>
 
       <div class="cards-grid">
@@ -19,8 +19,8 @@ import { ApiService } from '../../core/services/api.service';
           <div class="method-header">
             <span class="method-icon">{{ method.icon || getTypeIcon(method.type) }}</span>
             <div class="method-actions">
-              <button class="btn-icon" (click)="editMethod(method)">âœï¸</button>
-              <button class="btn-icon" (click)="deleteMethod(method.id)">ðŸ—‘ï¸</button>
+              <button class="btn-icon" (click)="editMethod(method)">✏️</button>
+              <button class="btn-icon" (click)="deleteMethod(method.id)">🗑️</button>
             </div>
           </div>
           <h3>{{ method.name }}</h3>
@@ -32,15 +32,15 @@ import { ApiService } from '../../core/services/api.service';
       </div>
 
       <div class="empty-state" *ngIf="methods.length === 0 && !loading">
-        <p>No hay mÃ©todos de pago registrados</p>
-        <button class="btn-primary" (click)="openModal()">Crear primer mÃ©todo</button>
+        <p>No hay métodos de pago registrados</p>
+        <button class="btn-primary" (click)="openModal()">Crear primer método</button>
       </div>
 
       <!-- Modal -->
       <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
         <div class="modal" (click)="$event.stopPropagation()">
           <div class="modal-header">
-            <h2>{{ editingId ? 'Editar MÃ©todo de Pago' : 'Nuevo MÃ©todo de Pago' }}</h2>
+            <h2>{{ editingId ? 'Editar Método de Pago' : 'Nuevo Método de Pago' }}</h2>
             <button class="btn-close" (click)="closeModal()">&times;</button>
           </div>
 
@@ -55,8 +55,8 @@ import { ApiService } from '../../core/services/api.service';
               <select id="type" formControlName="type">
                 <option value="">Seleccionar tipo</option>
                 <option value="cash">Efectivo</option>
-                <option value="credit_card">Tarjeta de CrÃ©dito</option>
-                <option value="debit_card">Tarjeta DÃ©bito</option>
+                <option value="credit_card">Tarjeta de Crédito</option>
+                <option value="debit_card">Tarjeta Débito</option>
                 <option value="bank_transfer">Transferencia Bancaria</option>
                 <option value="other">Otro</option>
               </select>
@@ -64,7 +64,7 @@ import { ApiService } from '../../core/services/api.service';
 
             <div class="form-group">
               <label for="icon">Icono</label>
-              <input id="icon" formControlName="icon" placeholder="Ej: ðŸ’³ o texto" />
+              <input id="icon" formControlName="icon" placeholder="Ej: 💳 o texto" />
             </div>
 
             <div class="form-group" *ngIf="editingId">
@@ -156,7 +156,7 @@ export class PaymentMethodsComponent implements OnInit {
   }
 
   deleteMethod(id: number): void {
-    if (!confirm('Â¿Eliminar este mÃ©todo de pago?')) return;
+    if (!confirm('¿Eliminar este método de pago?')) return;
     this.api.delete(`/payment-methods/${id}`).subscribe({
       next: () => this.loadMethods(),
     });
@@ -164,15 +164,15 @@ export class PaymentMethodsComponent implements OnInit {
 
   getTypeIcon(type: string): string {
     const icons: Record<string, string> = {
-      cash: 'ðŸ’µ', credit_card: 'ðŸ’³', debit_card: 'ðŸ’³',
-      bank_transfer: 'ðŸ¦', other: 'ðŸ’°',
+      cash: '💵', credit_card: '💳', debit_card: '💳',
+      bank_transfer: '🏦', other: '💰',
     };
-    return icons[type] || 'ðŸ’°';
+    return icons[type] || '💰';
   }
 
   getTypeLabel(type: string): string {
     const labels: Record<string, string> = {
-      cash: 'Efectivo', credit_card: 'CrÃ©dito', debit_card: 'DÃ©bito',
+      cash: 'Efectivo', credit_card: 'Crédito', debit_card: 'Débito',
       bank_transfer: 'Transferencia', other: 'Otro',
     };
     return labels[type] || type;

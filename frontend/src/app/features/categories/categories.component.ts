@@ -12,8 +12,8 @@ import { formatCurrency } from '../../shared/utils/format';
   template: `
     <div class="page">
       <div class="page-header">
-        <h1>CategorÃ­as</h1>
-        <button class="btn-primary" (click)="openCategoryModal()">+ Nueva CategorÃ­a</button>
+        <h1>Categorías</h1>
+        <button class="btn-primary" (click)="openCategoryModal()">+ Nueva Categoría</button>
       </div>
 
       <div class="filter-tabs">
@@ -28,8 +28,8 @@ import { formatCurrency } from '../../shared/utils/format';
           <div class="card-header">
             <h3>{{ cat.name }}</h3>
             <div class="card-actions">
-              <button class="btn-icon" (click)="openCategoryModal(cat)">âœï¸</button>
-              <button class="btn-icon" (click)="deleteCategory(cat.id)">ðŸ—‘ï¸</button>
+              <button class="btn-icon" (click)="openCategoryModal(cat)">✏️</button>
+              <button class="btn-icon" (click)="deleteCategory(cat.id)">🗑️</button>
             </div>
           </div>
 
@@ -42,40 +42,40 @@ import { formatCurrency } from '../../shared/utils/format';
                 <input [(ngModel)]="editingSubName" (keyup.enter)="saveSubcategory(cat.id, sub)" (keyup.escape)="cancelSubEdit()" class="sub-input" />
               </div>
               <div class="subcategory-actions">
-                <button class="btn-icon-sm" *ngIf="editingSubId !== sub.id" (click)="startEditSub(sub)">âœï¸</button>
-                <button class="btn-icon-sm" *ngIf="editingSubId === sub.id" (click)="saveSubcategory(cat.id, sub)">âœ“</button>
-                <button class="btn-icon-sm" *ngIf="editingSubId === sub.id" (click)="cancelSubEdit()">âœ•</button>
-                <button class="btn-icon-sm" *ngIf="editingSubId !== sub.id" (click)="deleteSubcategory(cat.id, sub.id)">ðŸ—‘ï¸</button>
+                <button class="btn-icon-sm" *ngIf="editingSubId !== sub.id" (click)="startEditSub(sub)">✏️</button>
+                <button class="btn-icon-sm" *ngIf="editingSubId === sub.id" (click)="saveSubcategory(cat.id, sub)">✓</button>
+                <button class="btn-icon-sm" *ngIf="editingSubId === sub.id" (click)="cancelSubEdit()">✕</button>
+                <button class="btn-icon-sm" *ngIf="editingSubId !== sub.id" (click)="deleteSubcategory(cat.id, sub.id)">🗑️</button>
               </div>
             </div>
 
             <div class="subcategory-form" *ngIf="subInputFor === cat.id">
-              <input [(ngModel)]="newSubName" placeholder="Nueva subcategorÃ­a" class="sub-input" (keyup.enter)="addSubcategory(cat.id)" />
-              <button class="btn-icon-sm btn-add" (click)="addSubcategory(cat.id)" [disabled]="!newSubName.trim()">âœ“</button>
-              <button class="btn-icon-sm" (click)="cancelAddSub()">âœ•</button>
+              <input [(ngModel)]="newSubName" placeholder="Nueva subcategoría" class="sub-input" (keyup.enter)="addSubcategory(cat.id)" />
+              <button class="btn-icon-sm btn-add" (click)="addSubcategory(cat.id)" [disabled]="!newSubName.trim()">✓</button>
+              <button class="btn-icon-sm" (click)="cancelAddSub()">✕</button>
             </div>
-            <button class="btn-add-sub" *ngIf="subInputFor !== cat.id" (click)="startAddSub(cat.id)">+ Agregar subcategorÃ­a</button>
+            <button class="btn-add-sub" *ngIf="subInputFor !== cat.id" (click)="startAddSub(cat.id)">+ Agregar subcategoría</button>
           </div>
         </div>
       </div>
 
       <div class="empty-state" *ngIf="filteredCategories.length === 0 && !loading">
-        <p>No hay categorÃ­as registradas</p>
-        <button class="btn-primary" (click)="openCategoryModal()">Crear primera categorÃ­a</button>
+        <p>No hay categorías registradas</p>
+        <button class="btn-primary" (click)="openCategoryModal()">Crear primera categoría</button>
       </div>
 
       <!-- Category Modal -->
       <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
         <div class="modal" (click)="$event.stopPropagation()">
           <div class="modal-header">
-            <h2>{{ editingCategoryId ? 'Editar CategorÃ­a' : 'Nueva CategorÃ­a' }}</h2>
+            <h2>{{ editingCategoryId ? 'Editar Categoría' : 'Nueva Categoría' }}</h2>
             <button class="btn-close" (click)="closeModal()">&times;</button>
           </div>
 
           <form [formGroup]="categoryForm" (ngSubmit)="onSubmitCategory()">
             <div class="form-group">
               <label for="cat-name">Nombre</label>
-              <input id="cat-name" formControlName="name" placeholder="Ej: AlimentaciÃ³n" />
+              <input id="cat-name" formControlName="name" placeholder="Ej: Alimentación" />
             </div>
 
             <div class="form-group">
@@ -91,7 +91,7 @@ import { formatCurrency } from '../../shared/utils/format';
             <div class="form-row">
               <div class="form-group">
                 <label for="cat-icon">Icono</label>
-                <input id="cat-icon" formControlName="icon" placeholder="Ej: ðŸ”" />
+                <input id="cat-icon" formControlName="icon" placeholder="Ej: 🍔" />
               </div>
               <div class="form-group">
                 <label for="cat-color">Color</label>
@@ -206,7 +206,7 @@ export class CategoriesComponent implements OnInit {
   }
 
   deleteCategory(id: number): void {
-    if (!confirm('Â¿Eliminar esta categorÃ­a y todas sus subcategorÃ­as?')) return;
+    if (!confirm('¿Eliminar esta categoría y todas sus subcategorías?')) return;
     this.api.delete(`/categories/${id}`).subscribe({ next: () => this.loadCategories() });
   }
 
@@ -247,7 +247,7 @@ export class CategoriesComponent implements OnInit {
   }
 
   deleteSubcategory(categoryId: number, subId: number): void {
-    if (!confirm('Â¿Eliminar esta subcategorÃ­a?')) return;
+    if (!confirm('¿Eliminar esta subcategoría?')) return;
     this.api.delete(`/categories/${categoryId}/subcategories/${subId}`).subscribe({
       next: () => this.loadCategories(),
     });

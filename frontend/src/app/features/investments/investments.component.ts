@@ -13,7 +13,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
     <div class="page">
       <div class="page-header">
         <h1>Inversiones</h1>
-        <button class="btn-primary" (click)="openInvestmentModal()">+ Nueva InversiÃ³n</button>
+        <button class="btn-primary" (click)="openInvestmentModal()">+ Nueva Inversión</button>
       </div>
 
       <div class="tabs">
@@ -30,11 +30,11 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               <div>
                 <h3>{{ inv.name }}</h3>
                 <span class="ticker" *ngIf="inv.ticker">{{ inv.ticker }}</span>
-                <span class="exchange" *ngIf="inv.exchange"> Â· {{ inv.exchange }}</span>
+                <span class="exchange" *ngIf="inv.exchange"> · {{ inv.exchange }}</span>
               </div>
               <div class="card-actions">
-                <button class="btn-icon" (click)="editInvestment(inv, $event)">âœï¸</button>
-                <button class="btn-icon" (click)="deleteInvestment(inv.id, $event)">ðŸ—‘ï¸</button>
+                <button class="btn-icon" (click)="editInvestment(inv, $event)">✏️</button>
+                <button class="btn-icon" (click)="deleteInvestment(inv.id, $event)">🗑️</button>
               </div>
             </div>
             <span class="type-badge" [class]="'type-' + inv.type">{{ getTypeLabel(inv.type) }}</span>
@@ -44,11 +44,11 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
         <!-- Investment Detail -->
         <div *ngIf="selectedInvestment !== null">
           <div class="detail-header">
-            <button class="btn-back" (click)="selectedInvestment = null; selectedPositions = []">â† Volver</button>
+            <button class="btn-back" (click)="selectedInvestment = null; selectedPositions = []">← Volver</button>
             <div class="detail-info">
               <h2>{{ selectedInvestment.name }}</h2>
               <span class="ticker-lg" *ngIf="selectedInvestment.ticker">{{ selectedInvestment.ticker }}</span>
-              <span class="exchange" *ngIf="selectedInvestment.exchange"> Â· {{ selectedInvestment.exchange }}</span>
+              <span class="exchange" *ngIf="selectedInvestment.exchange"> · {{ selectedInvestment.exchange }}</span>
               <span class="type-badge" [class]="'type-' + selectedInvestment.type">{{ getTypeLabel(selectedInvestment.type) }}</span>
             </div>
             <div class="detail-actions">
@@ -140,7 +140,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
           </div>
 
           <div class="empty-state" *ngIf="selectedInvestment.type !== 'land' && operations.length === 0 && !loadingDetail">
-            <p>No hay operaciones registradas para esta inversiÃ³n</p>
+            <p>No hay operaciones registradas para esta inversión</p>
           </div>
 
           <!-- Abonos (terrenos) -->
@@ -152,7 +152,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
                   <span class="op-date">{{ formatDate(abono.date) }}</span>
                   <strong class="op-main">{{ formatCurrency(abono.amount) }}</strong>
                   <span class="op-actions">
-                    <button class="btn-icon btn-danger-icon" (click)="deleteAbono(abono)" title="Eliminar abono">ðŸ—‘ï¸</button>
+                    <button class="btn-icon btn-danger-icon" (click)="deleteAbono(abono)" title="Eliminar abono">🗑️</button>
                   </span>
                 </div>
                 <div class="op-footer" *ngIf="abono.notes">
@@ -161,14 +161,14 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               </div>
             </div>
             <div class="empty-state" *ngIf="abonos.length === 0 && !loadingDetail">
-              <p>No hay abonos registrados todavÃ­a. Agrega el primero con el botÃ³n "+ Abono".</p>
+              <p>No hay abonos registrados todavía. Agrega el primero con el botón "+ Abono".</p>
             </div>
           </div>
         </div>
 
         <div class="empty-state" *ngIf="investments.length === 0 && !loading && selectedInvestment === null">
           <p>No hay inversiones registradas</p>
-          <button class="btn-primary" (click)="openInvestmentModal()">Crear primera inversiÃ³n</button>
+          <button class="btn-primary" (click)="openInvestmentModal()">Crear primera inversión</button>
         </div>
       </div>
 
@@ -280,7 +280,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
       <div class="modal-overlay" *ngIf="showInvestmentModal" (click)="closeInvestmentModal()">
         <div class="modal" (click)="$event.stopPropagation()">
           <div class="modal-header">
-            <h2>{{ editingInvestmentId ? 'Editar InversiÃ³n' : 'Nueva InversiÃ³n' }}</h2>
+            <h2>{{ editingInvestmentId ? 'Editar Inversión' : 'Nueva Inversión' }}</h2>
             <button class="btn-close" (click)="closeInvestmentModal()">&times;</button>
           </div>
           <form [formGroup]="investmentForm" (ngSubmit)="onSubmitInvestment()">
@@ -302,7 +302,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               <label for="inv-type">Tipo</label>
               <select id="inv-type" formControlName="type">
                 <option value="">Seleccionar tipo</option>
-                <option value="stock">AcciÃ³n</option>
+                <option value="stock">Acción</option>
                 <option value="bond">Bono</option>
                 <option value="etf">ETF</option>
                 <option value="crypto">Criptomoneda</option>
@@ -313,7 +313,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
             <div class="form-group" *ngIf="investmentForm.get('type')?.value === 'land'">
               <label for="inv-target">Valor objetivo (total del terreno)</label>
               <app-currency-input id="inv-target" formControlName="target_value" placeholder="0" />
-              <small class="field-hint">Opcional. Con este valor se calcula cuÃ¡nto falta por abonar.</small>
+              <small class="field-hint">Opcional. Con este valor se calcula cuánto falta por abonar.</small>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn-secondary" (click)="closeInvestmentModal()">Cancelar</button>
@@ -341,15 +341,15 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               </select>
             </div>
             <div class="form-group" *ngIf="tradeType === 'sell' && sellLots.length > 1">
-              <label for="trade-position">PosiciÃ³n a vender</label>
+              <label for="trade-position">Posición a vender</label>
               <select id="trade-position" formControlName="position_id">
-                <option value="">AutomÃ¡tico (FIFO - primera abierta)</option>
+                <option value="">Automático (FIFO - primera abierta)</option>
                 <option *ngFor="let lot of sellLots" [value]="lot.id">
-                  #{{ lot.id }} Â· {{ formatQuantity(lot.remaining) }} disp. Â· {{ formatCurrency(lot.unit_price) }}
+                  #{{ lot.id }} · {{ formatQuantity(lot.remaining) }} disp. · {{ formatCurrency(lot.unit_price) }}
                 </option>
               </select>
               <small class="field-hint" *ngIf="selectedLot()">
-                Vendiendo desde la posiciÃ³n #{{ selectedLot().id }} (comprada a {{ formatCurrency(selectedLot().unit_price) }}). MÃ¡ximo: {{ formatQuantity(selectedLot().remaining) }}.
+                Vendiendo desde la posición #{{ selectedLot().id }} (comprada a {{ formatCurrency(selectedLot().unit_price) }}). Máximo: {{ formatQuantity(selectedLot().remaining) }}.
               </small>
             </div>
             <div class="form-row">
@@ -364,7 +364,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label for="trade-commission">ComisiÃ³n</label>
+                <label for="trade-commission">Comisión</label>
                 <app-currency-input id="trade-commission" formControlName="commission" placeholder="0" />
               </div>
               <div class="form-group">
@@ -394,7 +394,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
       <div class="modal-overlay" *ngIf="showAbonoModal" (click)="closeAbonoModal()">
         <div class="modal" (click)="$event.stopPropagation()">
           <div class="modal-header">
-            <h2>Nuevo Abono Â· {{ selectedInvestment?.name }}</h2>
+            <h2>Nuevo Abono · {{ selectedInvestment?.name }}</h2>
             <button class="btn-close" (click)="closeAbonoModal()">&times;</button>
           </div>
           <form [formGroup]="abonoForm" (ngSubmit)="onSubmitAbono()">
@@ -625,7 +625,7 @@ export class InvestmentsComponent implements OnInit {
 
   deleteInvestment(id: number, event: Event): void {
     event.stopPropagation();
-    if (!confirm('Â¿Eliminar esta inversiÃ³n y todas sus posiciones?')) return;
+    if (!confirm('¿Eliminar esta inversión y todas sus posiciones?')) return;
     this.api.delete(`/investments/${id}`).subscribe({
       next: () => {
         if (this.selectedInvestment?.id === id) {
@@ -694,7 +694,7 @@ export class InvestmentsComponent implements OnInit {
   }
 
   getTypeLabel(type: string): string {
-    const labels: Record<string, string> = { stock: 'AcciÃ³n', bond: 'Bono', etf: 'ETF', crypto: 'Crypto', land: 'Terreno', other: 'Otro' };
+    const labels: Record<string, string> = { stock: 'Acción', bond: 'Bono', etf: 'ETF', crypto: 'Crypto', land: 'Terreno', other: 'Otro' };
     return labels[type] || type;
   }
 
@@ -722,7 +722,7 @@ export class InvestmentsComponent implements OnInit {
 
   deleteAbono(abono: any): void {
     if (!this.selectedInvestment) return;
-    if (!confirm('Â¿Eliminar este abono?')) return;
+    if (!confirm('¿Eliminar este abono?')) return;
     this.api.delete(`/investments/${this.selectedInvestment.id}/abonos/${abono.id}`).subscribe({
       next: () => {
         this.refreshDetail();

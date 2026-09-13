@@ -14,13 +14,13 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
       <!-- List View -->
       <div *ngIf="selectedLoan === null">
         <div class="page-header">
-          <h1>PrÃ©stamos</h1>
-          <button class="btn-primary" (click)="openLoanModal()">+ Nuevo PrÃ©stamo</button>
+          <h1>Préstamos</h1>
+          <button class="btn-primary" (click)="openLoanModal()">+ Nuevo Préstamo</button>
         </div>
 
         <div class="summary-bar" *ngIf="summary">
           <div class="summary-item">
-            <span>Total PrÃ©stamos</span>
+            <span>Total Préstamos</span>
             <strong>{{ summary.total_loans }}</strong>
           </div>
           <div class="summary-item">
@@ -45,12 +45,12 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               <div class="person-info">
                 <h3>{{ group.borrower_name }}</h3>
                 <span class="person-meta">
-                  {{ group.loans.length }} prÃ©stamo(s) Â· Total
-                  <strong>{{ formatCurrency(group.total) }}</strong> Â· Pendiente
+                  {{ group.loans.length }} préstamo(s) · Total
+                  <strong>{{ formatCurrency(group.total) }}</strong> · Pendiente
                   <strong>{{ formatCurrency(group.remaining) }}</strong>
                 </span>
               </div>
-              <button class="btn-primary-sm" (click)="openLoanModalFor(group.borrower_name)">+ Nuevo prÃ©stamo</button>
+              <button class="btn-primary-sm" (click)="openLoanModalFor(group.borrower_name)">+ Nuevo préstamo</button>
             </div>
             <div class="cards-grid">
               <div class="loan-card" *ngFor="let loan of group.loans">
@@ -78,30 +78,30 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
                     <strong>{{ formatDate(loan.date) }}</strong>
                   </div>
                   <div class="card-row" *ngIf="loan.description">
-                    <span>DescripciÃ³n</span>
+                    <span>Descripción</span>
                     <strong class="desc-text">{{ loan.description }}</strong>
                   </div>
                 </div>
                 <div class="card-actions">
-                  <button class="btn-icon" (click)="editLoan(loan, $event)" title="Editar">âœï¸</button>
-                  <button class="btn-icon" (click)="deleteLoan(loan.id, $event)" title="Eliminar">ðŸ—‘ï¸</button>
+                  <button class="btn-icon" (click)="editLoan(loan, $event)" title="Editar">✏️</button>
+                  <button class="btn-icon" (click)="deleteLoan(loan.id, $event)" title="Eliminar">🗑️</button>
                 </div>
-                <button class="btn-detail" (click)="viewLoan(loan)">Ver detalle â†’</button>
+                <button class="btn-detail" (click)="viewLoan(loan)">Ver detalle →</button>
               </div>
             </div>
           </div>
         </div>
 
         <div class="empty-state" *ngIf="loans.length === 0 && !loading">
-          <p>No hay prÃ©stamos registrados</p>
-          <button class="btn-primary" (click)="openLoanModal()">Crear primer prÃ©stamo</button>
+          <p>No hay préstamos registrados</p>
+          <button class="btn-primary" (click)="openLoanModal()">Crear primer préstamo</button>
         </div>
       </div>
 
       <!-- Detail View -->
       <div *ngIf="selectedLoan !== null">
         <div class="detail-header">
-          <button class="btn-back" (click)="goBack()">â† Volver</button>
+          <button class="btn-back" (click)="goBack()">← Volver</button>
           <div class="detail-info">
             <h2>{{ selectedLoan.borrower_name }}</h2>
             <span class="status-badge" [ngClass]="'status-' + selectedLoan.status">
@@ -145,7 +145,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
         </div>
 
         <div class="detail-description" *ngIf="selectedLoan.description">
-          <strong>DescripciÃ³n:</strong> {{ selectedLoan.description }}
+          <strong>Descripción:</strong> {{ selectedLoan.description }}
         </div>
 
         <div class="table-container">
@@ -153,7 +153,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
             <thead>
               <tr>
                 <th>Fecha</th>
-                <th>DescripciÃ³n</th>
+                <th>Descripción</th>
                 <th>Monto</th>
                 <th></th>
               </tr>
@@ -164,7 +164,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
                 <td>{{ payment.description || '-' }}</td>
                 <td class="amount-cell positive">{{ formatCurrency(payment.amount) }}</td>
                 <td class="actions-cell">
-                  <button class="btn-icon btn-danger-icon" (click)="deletePayment(payment)" title="Eliminar abono">ðŸ—‘ï¸</button>
+                  <button class="btn-icon btn-danger-icon" (click)="deletePayment(payment)" title="Eliminar abono">🗑️</button>
                 </td>
               </tr>
             </tbody>
@@ -183,17 +183,17 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
       <div class="modal-overlay" *ngIf="showLoanModal" (click)="closeLoanModal()">
         <div class="modal" (click)="$event.stopPropagation()">
           <div class="modal-header">
-            <h2>{{ editingLoanId ? 'Editar PrÃ©stamo' : 'Nuevo PrÃ©stamo' }}</h2>
+            <h2>{{ editingLoanId ? 'Editar Préstamo' : 'Nuevo Préstamo' }}</h2>
             <button class="btn-close" (click)="closeLoanModal()">&times;</button>
           </div>
           <form [formGroup]="loanForm" (ngSubmit)="onSubmitLoan()">
             <div class="form-group">
               <label for="borrower_name">Nombre del deudor</label>
-              <input id="borrower_name" formControlName="borrower_name" list="existing-borrowers" placeholder="Ej: Juan PÃ©rez" />
+              <input id="borrower_name" formControlName="borrower_name" list="existing-borrowers" placeholder="Ej: Juan Pérez" />
               <datalist id="existing-borrowers">
                 <option *ngFor="let name of existingBorrowers" [value]="name"></option>
               </datalist>
-              <small class="hint" *ngIf="editingLoanId === null">Si la persona ya tiene prÃ©stamos, puedes elegirla de la lista para agregar otro a su nombre.</small>
+              <small class="hint" *ngIf="editingLoanId === null">Si la persona ya tiene préstamos, puedes elegirla de la lista para agregar otro a su nombre.</small>
             </div>
             <div class="form-group">
               <label for="amount">Monto</label>
@@ -204,8 +204,8 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               <input id="date" type="date" formControlName="date" />
             </div>
             <div class="form-group">
-              <label for="description">DescripciÃ³n (opcional)</label>
-              <input id="description" formControlName="description" placeholder="DescripciÃ³n del prÃ©stamo..." />
+              <label for="description">Descripción (opcional)</label>
+              <input id="description" formControlName="description" placeholder="Descripción del préstamo..." />
             </div>
             <div class="modal-footer">
               <button type="button" class="btn-secondary" (click)="closeLoanModal()">Cancelar</button>
@@ -237,8 +237,8 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               <input id="pay-date" type="date" formControlName="date" />
             </div>
             <div class="form-group">
-              <label for="pay-description">DescripciÃ³n (opcional)</label>
-              <input id="pay-description" formControlName="description" placeholder="DescripciÃ³n del abono..." />
+              <label for="pay-description">Descripción (opcional)</label>
+              <input id="pay-description" formControlName="description" placeholder="Descripción del abono..." />
             </div>
             <div class="modal-footer">
               <button type="button" class="btn-secondary" (click)="closePaymentModal()">Cancelar</button>
@@ -421,7 +421,7 @@ export class LoansComponent implements OnInit {
 
   deleteLoan(id: number, event: Event): void {
     event.stopPropagation();
-    if (!confirm('Â¿Eliminar este prÃ©stamo y todos sus abonos?')) return;
+    if (!confirm('¿Eliminar este préstamo y todos sus abonos?')) return;
     this.api.delete(`/loans/${id}`).subscribe({
       next: () => {
         this.loadLoans();
@@ -459,7 +459,7 @@ export class LoansComponent implements OnInit {
   }
 
   deletePayment(payment: any): void {
-    if (!confirm('Â¿Eliminar este abono?')) return;
+    if (!confirm('¿Eliminar este abono?')) return;
     this.api.delete(`/loans/${this.selectedLoan.id}/payments/${payment.id}`).subscribe({
       next: () => {
         this.viewLoan(this.selectedLoan);

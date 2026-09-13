@@ -26,7 +26,7 @@ interface ExpenseItem {
         <input type="date" [(ngModel)]="filters.date_from" (change)="loadExpenses()" />
         <input type="date" [(ngModel)]="filters.date_to" (change)="loadExpenses()" />
         <select [(ngModel)]="filters.category_id" (change)="loadExpenses()">
-          <option value="">Todas las categorÃ­as</option>
+          <option value="">Todas las categorías</option>
           <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
         </select>
       </div>
@@ -41,9 +41,9 @@ interface ExpenseItem {
           <thead>
             <tr>
               <th>Fecha</th>
-              <th>DescripciÃ³n</th>
-              <th>CategorÃ­a</th>
-              <th>MÃ©todo Pago</th>
+              <th>Descripción</th>
+              <th>Categoría</th>
+              <th>Método Pago</th>
               <th>Cuenta</th>
               <th>Monto</th>
               <th>Estado</th>
@@ -63,7 +63,7 @@ interface ExpenseItem {
               <td>{{ getAccountName(item.account_id) }}</td>
               <td class="amount negative">
                 {{ formatCurrency(item.amount) }}
-                <span class="items-count" *ngIf="item.item_count > 0" [title]="item.item_count + ' Ã­tems'">ðŸ§¾{{ item.item_count }}</span>
+                <span class="items-count" *ngIf="item.item_count > 0" [title]="item.item_count + ' ítems'">🧾{{ item.item_count }}</span>
               </td>
               <td>
                 <span class="status-badge" [class]="'status-' + item.status">
@@ -71,8 +71,8 @@ interface ExpenseItem {
                 </span>
               </td>
               <td>
-                <button class="btn-icon" (click)="editItem(item)">âœï¸</button>
-                <button class="btn-icon" (click)="deleteItem(item.id)">ðŸ—‘ï¸</button>
+                <button class="btn-icon" (click)="editItem(item)">✏️</button>
+                <button class="btn-icon" (click)="deleteItem(item.id)">🗑️</button>
               </td>
             </tr>
           </tbody>
@@ -96,7 +96,7 @@ interface ExpenseItem {
               <div class="form-group">
                 <label for="amount">Monto</label>
                 <app-currency-input id="amount" formControlName="amount" placeholder="0" />
-                <small class="hint" *ngIf="items.length > 0">Monto = suma de Ã­tems ($ {{ formatNumber(itemsTotal()) }})</small>
+                <small class="hint" *ngIf="items.length > 0">Monto = suma de ítems ($ {{ formatNumber(itemsTotal()) }})</small>
               </div>
               <div class="form-group">
                 <label for="date">Fecha</label>
@@ -113,9 +113,9 @@ interface ExpenseItem {
                 </select>
               </div>
               <div class="form-group">
-                <label for="payment_method_id">MÃ©todo de Pago</label>
+                <label for="payment_method_id">Método de Pago</label>
                 <select id="payment_method_id" formControlName="payment_method_id">
-                  <option value="">Seleccionar mÃ©todo</option>
+                  <option value="">Seleccionar método</option>
                   <option *ngFor="let pm of paymentMethods" [value]="pm.id">{{ pm.name }}</option>
                 </select>
               </div>
@@ -123,16 +123,16 @@ interface ExpenseItem {
 
             <div class="form-row">
               <div class="form-group">
-                <label for="category_id">CategorÃ­a</label>
+                <label for="category_id">Categoría</label>
                 <select id="category_id" formControlName="category_id" (change)="onCategoryChange()">
-                  <option value="">Sin categorÃ­a</option>
+                  <option value="">Sin categoría</option>
                   <option *ngFor="let cat of expenseCategories" [value]="cat.id">{{ cat.name }}</option>
                 </select>
               </div>
               <div class="form-group">
-                <label for="subcategory_id">SubcategorÃ­a</label>
+                <label for="subcategory_id">Subcategoría</label>
                 <select id="subcategory_id" formControlName="subcategory_id">
-                  <option value="">Sin subcategorÃ­a</option>
+                  <option value="">Sin subcategoría</option>
                   <option *ngFor="let sub of filteredSubcategories" [value]="sub.id">{{ sub.name }}</option>
                 </select>
               </div>
@@ -141,25 +141,25 @@ interface ExpenseItem {
             <!-- Items -->
             <div class="form-group items-section">
               <div class="items-header">
-                <label>Ãtems <span class="hint">(opcional, ej: arroz, lenteja, carne)</span></label>
+                <label>Ítems <span class="hint">(opcional, ej: arroz, lenteja, carne)</span></label>
                 <div class="items-actions">
-                  <button type="button" class="btn-mini" *ngIf="hasTemplate()" (click)="applyTemplate()">ðŸ“‹ Usar plantilla</button>
-                  <button type="button" class="btn-mini" (click)="saveAsTemplate()" [disabled]="templateNames().length === 0">ðŸ’¾ Guardar plantilla</button>
+                  <button type="button" class="btn-mini" *ngIf="hasTemplate()" (click)="applyTemplate()">📋 Usar plantilla</button>
+                  <button type="button" class="btn-mini" (click)="saveAsTemplate()" [disabled]="templateNames().length === 0">💾 Guardar plantilla</button>
                 </div>
               </div>
 
               <div class="item-row" *ngFor="let it of items; let i = index">
-                <input type="text" [(ngModel)]="it.name" [ngModelOptions]="{ standalone: true }" placeholder="Nombre del Ã­tem" class="item-name" />
+                <input type="text" [(ngModel)]="it.name" [ngModelOptions]="{ standalone: true }" placeholder="Nombre del ítem" class="item-name" />
                 <app-currency-input [(ngModel)]="it.amount" [ngModelOptions]="{ standalone: true }" placeholder="0" class="item-amount"></app-currency-input>
-                <button type="button" class="btn-icon" (click)="removeItem(i)">âœ–</button>
+                <button type="button" class="btn-icon" (click)="removeItem(i)">✖</button>
               </div>
 
-              <button type="button" class="btn-add-item" (click)="addItem()">+ Agregar Ã­tem</button>
+              <button type="button" class="btn-add-item" (click)="addItem()">+ Agregar ítem</button>
             </div>
 
             <div class="form-group">
-              <label for="description">DescripciÃ³n</label>
-              <input id="description" formControlName="description" placeholder="DescripciÃ³n del gasto" />
+              <label for="description">Descripción</label>
+              <input id="description" formControlName="description" placeholder="Descripción del gasto" />
             </div>
 
             <div class="form-group">
@@ -332,19 +332,19 @@ export class ExpensesComponent implements OnInit {
   saveAsTemplate(): void {
     const names = this.items.map(i => i.name.trim()).filter(n => n.length > 0);
     if (names.length === 0) {
-      alert('Agrega al menos un Ã­tem con nombre antes de guardar la plantilla');
+      alert('Agrega al menos un ítem con nombre antes de guardar la plantilla');
       return;
     }
     const catId = Number(this.form.get('category_id')?.value);
     if (!catId) {
-      alert('Selecciona una categorÃ­a primero');
+      alert('Selecciona una categoría primero');
       return;
     }
     const subId = this.currentTemplateKeySubcategoryId();
     const label = subId
       ? `${this.getCategoryName(catId)} / ${this.filteredSubcategories.find(s => s.id == subId)?.name || ''}`
       : this.getCategoryName(catId);
-    if (!confirm(`Â¿Guardar estos ${names.length} Ã­tems como plantilla para "${label}"?`)) return;
+    if (!confirm(`¿Guardar estos ${names.length} ítems como plantilla para "${label}"?`)) return;
 
     const body: any = { category_id: catId, names };
     if (subId) body.subcategory_id = subId;
@@ -460,7 +460,7 @@ export class ExpensesComponent implements OnInit {
   }
 
   deleteItem(id: number): void {
-    if (!confirm('Â¿Eliminar este gasto?')) return;
+    if (!confirm('¿Eliminar este gasto?')) return;
     this.api.delete(`/expenses/${id}`).subscribe({ next: () => this.loadExpenses() });
   }
 

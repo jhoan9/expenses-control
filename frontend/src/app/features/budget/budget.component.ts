@@ -25,12 +25,12 @@ import { formatCurrency } from '../../shared/utils/format';
                 {{ periodLabel(b) }}
               </span>
               <div class="card-actions">
-                <button class="btn-icon" (click)="editBudget(b, $event)" title="Editar">âœï¸</button>
-                <button class="btn-icon" (click)="deleteBudget(b.id, $event)" title="Eliminar">ðŸ—‘ï¸</button>
+                <button class="btn-icon" (click)="editBudget(b, $event)" title="Editar">✏️</button>
+                <button class="btn-icon" (click)="deleteBudget(b.id, $event)" title="Eliminar">🗑️</button>
               </div>
             </div>
             <div class="card-body">
-              <p class="card-dates">{{ b.start_date }} â€” {{ b.end_date }}</p>
+              <p class="card-dates">{{ b.start_date }} — {{ b.end_date }}</p>
               <p class="card-amount">{{ formatCurrency(b.total_income) }}</p>
             </div>
           </div>
@@ -45,18 +45,18 @@ import { formatCurrency } from '../../shared/utils/format';
       <ng-container *ngIf="selectedBudget">
         <div class="page-header">
           <div class="header-left">
-            <button class="btn-back" (click)="backToList()">â† Volver</button>
+            <button class="btn-back" (click)="backToList()">← Volver</button>
             <h1>{{ periodLabel(selectedBudget) }}</h1>
           </div>
           <div class="header-actions">
-            <button class="btn-copy" (click)="copyNext()" title="Crear el siguiente perÃ­odo con los Ã­tems activos">â­ Siguiente PerÃ­odo</button>
+            <button class="btn-copy" (click)="copyNext()" title="Crear el siguiente período con los ítems activos">⏭ Siguiente Período</button>
             <button class="btn-primary" (click)="saveDraft()" [disabled]="saving">
               {{ saving ? 'Guardando...' : 'Guardar Cambios' }}
             </button>
           </div>
         </div>
 
-        <p class="detail-dates">{{ selectedBudget.start_date }} â€” {{ selectedBudget.end_date }}</p>
+        <p class="detail-dates">{{ selectedBudget.start_date }} — {{ selectedBudget.end_date }}</p>
 
         <!-- Total Income -->
         <div class="income-box">
@@ -85,7 +85,7 @@ import { formatCurrency } from '../../shared/utils/format';
         <!-- Items Form -->
         <div class="form-table" *ngIf="draftItems.length > 0">
           <div class="form-row header-row">
-            <span>{{ selectedBudget?.budget_type === 'income' ? 'Concepto' : 'Ãtem' }}</span>
+            <span>{{ selectedBudget?.budget_type === 'income' ? 'Concepto' : 'Ítem' }}</span>
             <span>Monto</span>
             <span>%</span>
             <span>Pagado</span>
@@ -93,21 +93,21 @@ import { formatCurrency } from '../../shared/utils/format';
             <span></span>
           </div>
           <div class="form-row" *ngFor="let item of draftItems" [class.row-cancelled]="item.status === 'cancelled'">
-            <input type="text" [(ngModel)]="item.name" placeholder="Nombre del Ã­tem" />
+            <input type="text" [(ngModel)]="item.name" placeholder="Nombre del ítem" />
             <app-currency-input [(ngModel)]="item.amount" placeholder="0" />
             <span class="pct-cell">{{ itemPercent(item) }}%</span>
             <input class="check-cell" type="checkbox" [checked]="item.status === 'completed'"
               (change)="toggleCompleted(item, $event)" />
             <input class="check-cell" type="checkbox" [checked]="item.status === 'cancelled'"
               (change)="toggleCancelled(item, $event)" />
-            <button class="btn-icon" (click)="removeDraftItem(item)" title="Eliminar">ðŸ—‘ï¸</button>
+            <button class="btn-icon" (click)="removeDraftItem(item)" title="Eliminar">🗑️</button>
           </div>
-          <button class="btn-add-row" (click)="addDraftItem()">+ Agregar Ãtem</button>
+          <button class="btn-add-row" (click)="addDraftItem()">+ Agregar Ítem</button>
         </div>
 
         <div class="empty-state" *ngIf="draftItems.length === 0 && !loading">
-          <p>No hay Ã­tems en este presupuesto</p>
-          <button class="btn-primary" (click)="addDraftItem()">+ Agregar primer Ã­tem</button>
+          <p>No hay ítems en este presupuesto</p>
+          <button class="btn-primary" (click)="addDraftItem()">+ Agregar primer ítem</button>
         </div>
       </ng-container>
 
@@ -186,7 +186,7 @@ export class BudgetComponent implements OnInit {
     { value: 'income', label: 'Ingreso' },
     { value: 'expense', label: 'Gasto' },
     { value: 'remesa', label: 'Remesa' },
-    { value: 'investment', label: 'InversiÃ³n' },
+    { value: 'investment', label: 'Inversión' },
     { value: 'debt', label: 'Deuda / Pago' },
     { value: 'other', label: 'Otro' },
   ];
@@ -245,7 +245,7 @@ export class BudgetComponent implements OnInit {
 
   removeDraftItem(item: any): void {
     if (item.id) {
-      if (!confirm('Â¿Eliminar este gasto?')) return;
+      if (!confirm('¿Eliminar este gasto?')) return;
       this.api.delete(`/budgets/${this.selectedBudget.id}/items/${item.id}`).subscribe({
         next: () => this.loadBudgetDetail(this.selectedBudget.id),
       });
@@ -317,7 +317,7 @@ export class BudgetComponent implements OnInit {
   }
 
   copyNext(): void {
-    if (!confirm('Â¿Crear la siguiente quincena con los gastos activos?')) return;
+    if (!confirm('¿Crear la siguiente quincena con los gastos activos?')) return;
     this.saving = true;
     this.api.post(`/budgets/${this.selectedBudget.id}/copy`, {}).subscribe({
       next: (res: any) => {
@@ -390,7 +390,7 @@ export class BudgetComponent implements OnInit {
 
   deleteBudget(id: number, event: Event): void {
     event.stopPropagation();
-    if (!confirm('Â¿Eliminar este presupuesto y todos sus gastos?')) return;
+    if (!confirm('¿Eliminar este presupuesto y todos sus gastos?')) return;
     this.api.delete(`/budgets/${id}`).subscribe({ next: () => this.loadBudgets() });
   }
 
@@ -420,11 +420,11 @@ export class BudgetComponent implements OnInit {
   }
 
   periodLabel(b: any): string {
-    const base = this.typeLabelFor(b.budget_type) + ' Â· ' + this.cycleLabelFor(b.cycle);
+    const base = this.typeLabelFor(b.budget_type) + ' · ' + this.cycleLabelFor(b.cycle);
     if ((b.cycle || 'biweekly') === 'biweekly') {
-      return base + ' Â· ' + (b.period_type === 'first' ? '1ra Quincena' : '2da Quincena');
+      return base + ' · ' + (b.period_type === 'first' ? '1ra Quincena' : '2da Quincena');
     }
-    return base + ' Â· ' + (b.period_type === 'first' ? 'Periodo 1' : 'Periodo 2');
+    return base + ' · ' + (b.period_type === 'first' ? 'Periodo 1' : 'Periodo 2');
   }
 
 }

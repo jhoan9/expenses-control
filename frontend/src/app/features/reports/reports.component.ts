@@ -71,7 +71,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
             <div class="list" *ngIf="dashboard?.recentExpenses?.length; else noExpenses">
               <div class="list-item" *ngFor="let e of dashboard.recentExpenses">
                 <div class="item-info">
-                  <span class="item-description">{{ e.description || 'Sin descripciÃ³n' }}</span>
+                  <span class="item-description">{{ e.description || 'Sin descripción' }}</span>
                   <small class="item-category">{{ e.category_name }}</small>
                 </div>
                 <span class="item-amount negative">-{{ formatCurrency(e.amount) }}</span>
@@ -85,7 +85,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
             <div class="list" *ngIf="dashboard?.recentIncome?.length; else noIncome">
               <div class="list-item" *ngFor="let i of dashboard.recentIncome">
                 <div class="item-info">
-                  <span class="item-description">{{ i.description || 'Sin descripciÃ³n' }}</span>
+                  <span class="item-description">{{ i.description || 'Sin descripción' }}</span>
                   <small class="item-category">{{ i.category_name }}</small>
                 </div>
                 <span class="item-amount positive">+{{ formatCurrency(i.amount) }}</span>
@@ -109,10 +109,10 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
         </div>
 
         <div class="report-section" *ngIf="expensesData">
-          <h3>Por CategorÃ­a</h3>
+          <h3>Por Categoría</h3>
           <div class="table-container" *ngIf="expensesData.byCategory?.length; else noExpCat">
             <table>
-              <thead><tr><th>CategorÃ­a</th><th>Total</th><th>Porcentaje</th></tr></thead>
+              <thead><tr><th>Categoría</th><th>Total</th><th>Porcentaje</th></tr></thead>
               <tbody>
                 <tr *ngFor="let c of expensesData.byCategory">
                   <td><span class="category-dot" [style.background]="c.color"></span>{{ c.category_name }}</td>
@@ -129,7 +129,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               </tbody>
             </table>
           </div>
-          <ng-template #noExpCat><p class="no-data">No hay datos de categorÃ­as</p></ng-template>
+          <ng-template #noExpCat><p class="no-data">No hay datos de categorías</p></ng-template>
         </div>
 
         <div class="report-section" *ngIf="expensesData?.byMonth?.length">
@@ -156,10 +156,10 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
         </div>
 
         <div class="report-section" *ngIf="expensesData?.byPaymentMethod?.length">
-          <h3>Por MÃ©todo de Pago</h3>
+          <h3>Por Método de Pago</h3>
           <div class="table-container">
             <table>
-              <thead><tr><th>MÃ©todo</th><th>Total</th><th>Porcentaje</th></tr></thead>
+              <thead><tr><th>Método</th><th>Total</th><th>Porcentaje</th></tr></thead>
               <tbody>
                 <tr *ngFor="let pm of expensesData.byPaymentMethod">
                   <td>{{ pm.name }}</td>
@@ -192,10 +192,10 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
         </div>
 
         <div class="report-section" *ngIf="incomeData">
-          <h3>Por CategorÃ­a</h3>
+          <h3>Por Categoría</h3>
           <div class="table-container" *ngIf="incomeData.byCategory?.length; else noIncCat">
             <table>
-              <thead><tr><th>CategorÃ­a</th><th>Total</th><th>Porcentaje</th></tr></thead>
+              <thead><tr><th>Categoría</th><th>Total</th><th>Porcentaje</th></tr></thead>
               <tbody>
                 <tr *ngFor="let c of incomeData.byCategory">
                   <td>{{ c.category_name }}</td>
@@ -212,7 +212,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               </tbody>
             </table>
           </div>
-          <ng-template #noIncCat><p class="no-data">No hay datos de categorÃ­as</p></ng-template>
+          <ng-template #noIncCat><p class="no-data">No hay datos de categorías</p></ng-template>
         </div>
 
         <div class="report-section" *ngIf="incomeData?.byMonth?.length">
@@ -259,7 +259,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
         </div>
 
         <div class="report-section" *ngIf="investmentsData?.positions?.length">
-          <h3>Detalle por InversiÃ³n</h3>
+          <h3>Detalle por Inversión</h3>
           <div class="table-container">
             <table>
               <thead>
@@ -315,7 +315,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
                   <th>Balance</th>
                   <th>% del Total</th>
                   <th>Movimientos</th>
-                  <th>Ãšltimo Movimiento</th>
+                  <th>Último Movimiento</th>
                 </tr>
               </thead>
               <tbody>
@@ -368,7 +368,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
         </div>
 
         <div class="report-section" *ngIf="budgetData?.items?.length; else noBudget">
-          <h3>Detalle por Ãtem</h3>
+          <h3>Detalle por Ítem</h3>
           <div class="table-container">
             <table>
               <thead>
@@ -558,8 +558,8 @@ export class ReportsComponent implements OnInit {
 
   getTypeLabel(type: string): string {
     const labels: Record<string, string> = {
-      stock: 'AcciÃ³n', bond: 'Bono', etf: 'ETF', crypto: 'Crypto', other: 'Otro',
-      cash: 'Efectivo', savings: 'Ahorro', investment: 'InversiÃ³n', credit_card: 'CrÃ©dito',
+      stock: 'Acción', bond: 'Bono', etf: 'ETF', crypto: 'Crypto', other: 'Otro',
+      cash: 'Efectivo', savings: 'Ahorro', investment: 'Inversión', credit_card: 'Crédito',
     };
     return labels[type] || type;
   }

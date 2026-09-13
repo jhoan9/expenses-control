@@ -21,8 +21,8 @@ import { formatCurrency } from '../../shared/utils/format';
           <div class="account-header">
             <span class="account-icon">{{ getAccountIcon(account.type) }}</span>
             <div class="account-actions">
-              <button class="btn-icon" (click)="editAccount(account)">âœï¸</button>
-              <button class="btn-icon" (click)="deleteAccount(account.id)">ðŸ—‘ï¸</button>
+              <button class="btn-icon" (click)="editAccount(account)">✏️</button>
+              <button class="btn-icon" (click)="deleteAccount(account.id)">🗑️</button>
             </div>
           </div>
           <h3>{{ account.name }}</h3>
@@ -34,9 +34,9 @@ import { formatCurrency } from '../../shared/utils/format';
             Disponible: {{ formatCurrency(availableCredit(account)) }} de {{ formatCurrency(account.credit_limit) }}
           </p>
           <div class="account-actions-row">
-            <button class="btn-action" (click)="openMovements(account)">ðŸ“‹ Movimientos</button>
-            <button class="btn-action" (click)="openTransfer(account)">â‡„ Transferir</button>
-            <button class="btn-action btn-card" *ngIf="account.type === 'credit_card'" (click)="openAbono(account)">ðŸ’³ Pagar Tarjeta</button>
+            <button class="btn-action" (click)="openMovements(account)">📋 Movimientos</button>
+            <button class="btn-action" (click)="openTransfer(account)">⇄ Transferir</button>
+            <button class="btn-action btn-card" *ngIf="account.type === 'credit_card'" (click)="openAbono(account)">💳 Pagar Tarjeta</button>
           </div>
         </div>
       </div>
@@ -67,8 +67,8 @@ import { formatCurrency } from '../../shared/utils/format';
                 <option value="savings">Ahorros</option>
                 <option value="checking">Corriente</option>
                 <option value="cash">Efectivo</option>
-                <option value="investment">InversiÃ³n</option>
-                <option value="credit_card">Tarjeta de CrÃ©dito</option>
+                <option value="investment">Inversión</option>
+                <option value="credit_card">Tarjeta de Crédito</option>
                 <option value="bajo_monto">Bajo Monto</option>
                 <option value="other">Otro</option>
               </select>
@@ -106,7 +106,7 @@ import { formatCurrency } from '../../shared/utils/format';
               <div class="movement-item" *ngFor="let mov of movements" [class.movement-income]="isIncomeType(mov.type)" [class.movement-expense]="isExpenseType(mov.type)">
                 <div class="movement-info">
                   <span class="movement-type-badge" [class]="'type-' + mov.type">{{ getTypeLabel(mov.type) }}</span>
-                  <span class="movement-desc">{{ mov.description || 'Sin descripciÃ³n' }}</span>
+                  <span class="movement-desc">{{ mov.description || 'Sin descripción' }}</span>
                   <small class="movement-date">{{ mov.date | date:'dd/MM/yyyy' }}</small>
                 </div>
                 <div class="movement-amounts">
@@ -158,7 +158,7 @@ import { formatCurrency } from '../../shared/utils/format';
             </div>
 
             <div class="form-group">
-              <label for="transfer-desc">DescripciÃ³n</label>
+              <label for="transfer-desc">Descripción</label>
               <input id="transfer-desc" formControlName="description" placeholder="Opcional" />
             </div>
 
@@ -195,7 +195,7 @@ import { formatCurrency } from '../../shared/utils/format';
             </div>
 
             <div class="form-group">
-              <label for="abono-desc">DescripciÃ³n</label>
+              <label for="abono-desc">Descripción</label>
               <input id="abono-desc" formControlName="description" placeholder="Opcional" />
             </div>
 
@@ -374,19 +374,19 @@ export class AccountsComponent implements OnInit {
   }
 
   deleteAccount(id: number): void {
-    if (!confirm('Â¿Eliminar esta cuenta?')) return;
+    if (!confirm('¿Eliminar esta cuenta?')) return;
     this.api.delete(`/accounts/${id}`).subscribe({
       next: () => this.loadAccounts(),
     });
   }
 
   getAccountIcon(type: string): string {
-    const icons: Record<string, string> = { savings: 'ðŸ¦', checking: 'ðŸ’³', cash: 'ðŸ’µ', investment: 'ðŸ“ˆ', credit_card: 'ðŸ’³', bajo_monto: 'ðŸ’°', other: 'ðŸ’°' };
-    return icons[type] || 'ðŸ’°';
+    const icons: Record<string, string> = { savings: '🏦', checking: '💳', cash: '💵', investment: '📈', credit_card: '💳', bajo_monto: '💰', other: '💰' };
+    return icons[type] || '💰';
   }
 
   getAccountTypeLabel(type: string): string {
-    const labels: Record<string, string> = { savings: 'Ahorros', checking: 'Corriente', cash: 'Efectivo', investment: 'InversiÃ³n', credit_card: 'Tarjeta de CrÃ©dito', bajo_monto: 'Bajo Monto', other: 'Otro' };
+    const labels: Record<string, string> = { savings: 'Ahorros', checking: 'Corriente', cash: 'Efectivo', investment: 'Inversión', credit_card: 'Tarjeta de Crédito', bajo_monto: 'Bajo Monto', other: 'Otro' };
     return labels[type] || type;
   }
 

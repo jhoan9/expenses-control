@@ -14,17 +14,17 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
       <!-- List View -->
       <div *ngIf="selectedCredit === null">
         <div class="page-header">
-          <h1>CrÃ©ditos</h1>
-          <button class="btn-primary" (click)="openCreditModal()">+ Nuevo CrÃ©dito</button>
+          <h1>Créditos</h1>
+          <button class="btn-primary" (click)="openCreditModal()">+ Nuevo Crédito</button>
         </div>
 
         <div class="summary-bar" *ngIf="summary">
           <div class="summary-item">
-            <span>Total CrÃ©ditos</span>
+            <span>Total Créditos</span>
             <strong>{{ summary.total_credits }}</strong>
           </div>
           <div class="summary-item">
-            <span>LÃ­mite Total</span>
+            <span>Límite Total</span>
             <strong>{{ formatCurrency(summary.total_limit) }}</strong>
           </div>
           <div class="summary-item">
@@ -43,11 +43,11 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
           <div class="credit-card" *ngFor="let credit of credits" (click)="viewCredit(credit)">
             <div class="card-header">
               <h3>{{ credit.institution }}</h3>
-              <button class="btn-icon btn-danger-icon" (click)="deleteCredit(credit.id, $event)" title="Eliminar">ðŸ—‘ï¸</button>
+              <button class="btn-icon btn-danger-icon" (click)="deleteCredit(credit.id, $event)" title="Eliminar">🗑️</button>
             </div>
             <div class="card-values">
               <div class="card-row">
-                <span>LÃ­mite</span>
+                <span>Límite</span>
                 <strong>{{ formatCurrency(credit.credit_limit) }}</strong>
               </div>
               <div class="card-row">
@@ -69,20 +69,20 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               </div>
               <span class="usage-text">{{ getUsagePercent(credit) | number:'1.0-0' }}% usado</span>
             </div>
-            <button class="btn-detail" (click)="viewCredit(credit)">Ver detalle â†’</button>
+            <button class="btn-detail" (click)="viewCredit(credit)">Ver detalle →</button>
           </div>
         </div>
 
         <div class="empty-state" *ngIf="credits.length === 0 && !loading">
-          <p>No hay crÃ©ditos registrados</p>
-          <button class="btn-primary" (click)="openCreditModal()">Crear primer crÃ©dito</button>
+          <p>No hay créditos registrados</p>
+          <button class="btn-primary" (click)="openCreditModal()">Crear primer crédito</button>
         </div>
       </div>
 
       <!-- Detail View -->
       <div *ngIf="selectedCredit !== null">
         <div class="detail-header">
-          <button class="btn-back" (click)="goBack()">â† Volver</button>
+          <button class="btn-back" (click)="goBack()">← Volver</button>
           <div class="detail-info">
             <h2>{{ selectedCredit.institution }}</h2>
           </div>
@@ -94,7 +94,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
 
         <div class="summary-bar">
           <div class="summary-item">
-            <span>LÃ­mite</span>
+            <span>Límite</span>
             <strong>{{ formatCurrency(selectedCredit.credit_limit) }}</strong>
           </div>
           <div class="summary-item">
@@ -124,7 +124,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               <tr>
                 <th>Fecha</th>
                 <th>Monto</th>
-                <th>Pago MÃ­nimo</th>
+                <th>Pago Mínimo</th>
                 <th></th>
               </tr>
             </thead>
@@ -134,7 +134,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
                 <td class="amount-cell negative">{{ formatCurrency(payment.amount) }}</td>
                 <td>{{ payment.minimum_payment ? formatCurrency(payment.minimum_payment) : '-' }}</td>
                 <td class="actions-cell">
-                  <button class="btn-icon btn-danger-icon" (click)="deletePayment(payment)" title="Eliminar abono">ðŸ—‘ï¸</button>
+                  <button class="btn-icon btn-danger-icon" (click)="deletePayment(payment)" title="Eliminar abono">🗑️</button>
                 </td>
               </tr>
             </tbody>
@@ -151,16 +151,16 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
       <div class="modal-overlay" *ngIf="showCreditModal" (click)="closeCreditModal()">
         <div class="modal" (click)="$event.stopPropagation()">
           <div class="modal-header">
-            <h2>{{ editingCreditId ? 'Editar CrÃ©dito' : 'Nuevo CrÃ©dito' }}</h2>
+            <h2>{{ editingCreditId ? 'Editar Crédito' : 'Nuevo Crédito' }}</h2>
             <button class="btn-close" (click)="closeCreditModal()">&times;</button>
           </div>
           <form [formGroup]="creditForm" (ngSubmit)="onSubmitCredit()">
             <div class="form-group">
-              <label for="institution">InstituciÃ³n</label>
+              <label for="institution">Institución</label>
               <input id="institution" formControlName="institution" placeholder="Ej: Bancolombia" />
             </div>
             <div class="form-group">
-              <label for="credit_limit">LÃ­mite de crÃ©dito</label>
+              <label for="credit_limit">Límite de crédito</label>
               <app-currency-input id="credit_limit" formControlName="credit_limit" placeholder="0" />
             </div>
             <div class="form-group">
@@ -190,7 +190,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
           </div>
           <div class="modal-body-info" *ngIf="selectedCredit">
             <span>Saldo actual: <strong class="negative">{{ formatCurrency(selectedCredit.balance) }}</strong></span>
-            <span class="separator">â†’</span>
+            <span class="separator">→</span>
             <span>Nuevo saldo: <strong [class.negative]="getNewBalance() > 0" [class]="getNewBalance() <= 0 ? 'positive' : ''">
               {{ formatCurrency(getNewBalance()) }}
             </strong></span>
@@ -201,7 +201,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               <app-currency-input id="pay-amount" formControlName="amount" placeholder="0" />
             </div>
             <div class="form-group">
-              <label for="pay-minimum">Pago mÃ­nimo (opcional)</label>
+              <label for="pay-minimum">Pago mínimo (opcional)</label>
               <app-currency-input id="pay-minimum" formControlName="minimum_payment" placeholder="0" />
             </div>
             <div class="form-group">
@@ -360,7 +360,7 @@ export class CreditsComponent implements OnInit {
 
   deleteCredit(id: number, event: Event): void {
     event.stopPropagation();
-    if (!confirm('Â¿Eliminar este crÃ©dito y todos sus abonos?')) return;
+    if (!confirm('¿Eliminar este crédito y todos sus abonos?')) return;
     this.api.delete(`/credits/${id}`).subscribe({
       next: () => {
         this.loadCredits();
@@ -405,7 +405,7 @@ export class CreditsComponent implements OnInit {
   }
 
   deletePayment(payment: any): void {
-    if (!confirm('Â¿Eliminar este abono?')) return;
+    if (!confirm('¿Eliminar este abono?')) return;
     this.api.delete(`/credits/${this.selectedCredit.id}/payments/${payment.id}`).subscribe({
       next: () => {
         this.viewCredit(this.selectedCredit);

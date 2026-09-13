@@ -44,8 +44,8 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
             <div class="card-header">
               <h3>{{ account.person_name }}</h3>
               <div class="card-actions">
-                <button class="btn-icon" (click)="editAccount(account, $event)">âœï¸</button>
-                <button class="btn-icon" (click)="deleteAccount(account.id, $event)">ðŸ—‘ï¸</button>
+                <button class="btn-icon" (click)="editAccount(account, $event)">✏️</button>
+                <button class="btn-icon" (click)="deleteAccount(account.id, $event)">🗑️</button>
               </div>
             </div>
             <div class="card-values">
@@ -68,7 +68,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
                 </strong>
               </div>
             </div>
-            <button class="btn-detail" (click)="viewAccount(account)">Ver detalle â†’</button>
+            <button class="btn-detail" (click)="viewAccount(account)">Ver detalle →</button>
           </div>
         </div>
 
@@ -81,7 +81,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
       <!-- Detail View -->
       <div *ngIf="selectedAccount !== null">
         <div class="detail-header">
-          <button class="btn-back" (click)="selectedAccount = null; movements = []; movementsByType = []">â† Volver</button>
+          <button class="btn-back" (click)="selectedAccount = null; movements = []; movementsByType = []">← Volver</button>
           <div class="detail-info">
             <h2>{{ selectedAccount.person_name }}</h2>
           </div>
@@ -124,7 +124,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               <tr>
                 <th>Fecha</th>
                 <th>Tipo</th>
-                <th>DescripciÃ³n</th>
+                <th>Descripción</th>
                 <th>Monto</th>
               </tr>
             </thead>
@@ -159,7 +159,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
           <form [formGroup]="accountForm" (ngSubmit)="onSubmitAccount()">
             <div class="form-group">
               <label for="person_name">Nombre de la persona</label>
-              <input id="person_name" formControlName="person_name" placeholder="Ej: Juan PÃ©rez" />
+              <input id="person_name" formControlName="person_name" placeholder="Ej: Juan Pérez" />
             </div>
             <div class="modal-footer">
               <button type="button" class="btn-secondary" (click)="closeAccountModal()">Cancelar</button>
@@ -183,10 +183,10 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               <label for="mov-type">Tipo</label>
               <select id="mov-type" formControlName="type">
                 <option value="">Seleccionar tipo</option>
-                <option value="deposit">DepÃ³sito</option>
+                <option value="deposit">Depósito</option>
                 <option value="withdrawal">Retiro</option>
-                <option value="investment_buy">Compra de InversiÃ³n</option>
-                <option value="investment_sell">Venta de InversiÃ³n</option>
+                <option value="investment_buy">Compra de Inversión</option>
+                <option value="investment_sell">Venta de Inversión</option>
                 <option value="transfer">Transferencia</option>
               </select>
             </div>
@@ -199,8 +199,8 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
               <input id="mov-date" type="date" formControlName="date" />
             </div>
             <div class="form-group">
-              <label for="mov-description">DescripciÃ³n (opcional)</label>
-              <input id="mov-description" formControlName="description" placeholder="DescripciÃ³n del movimiento..." />
+              <label for="mov-description">Descripción (opcional)</label>
+              <input id="mov-description" formControlName="description" placeholder="Descripción del movimiento..." />
             </div>
             <div class="modal-footer">
               <button type="button" class="btn-secondary" (click)="closeMovementModal()">Cancelar</button>
@@ -321,7 +321,7 @@ export class ThirdPartyComponent implements OnInit {
 
   deleteAccount(id: number, event: Event): void {
     event.stopPropagation();
-    if (!confirm('Â¿Eliminar este tercero y todos sus movimientos?')) return;
+    if (!confirm('¿Eliminar este tercero y todos sus movimientos?')) return;
     this.api.delete(`/third-party/${id}`).subscribe({
       next: () => {
         if (this.selectedAccount?.id === id) {
@@ -364,7 +364,7 @@ export class ThirdPartyComponent implements OnInit {
 
   getMovementTypeLabel(type: string): string {
     const labels: Record<string, string> = {
-      deposit: 'DepÃ³sito',
+      deposit: 'Depósito',
       withdrawal: 'Retiro',
       investment_buy: 'Compra Inv.',
       investment_sell: 'Venta Inv.',
