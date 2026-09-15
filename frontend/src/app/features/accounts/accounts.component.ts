@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ApiService } from '../../core/services/api.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
 import { formatCurrency } from '../../shared/utils/format';
+import { ToastService } from '../../core/toast/toast.service';
 
 @Component({
   selector: 'app-accounts',
@@ -236,7 +237,11 @@ export class AccountsComponent implements OnInit {
   movementsAccountName = '';
   movements: any[] = [];
 
-  constructor(private api: ApiService, private fb: FormBuilder) {
+  constructor(
+    private api: ApiService,
+    private fb: FormBuilder,
+    private toast: ToastService
+  ) {
     this.form = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(100)]],
       type: ['', [Validators.required]],
@@ -306,7 +311,12 @@ export class AccountsComponent implements OnInit {
     if (this.transferForm.invalid) return;
     this.saving = true;
     this.api.post(`/accounts/${this.transferFromId}/transfer`, this.transferForm.value).subscribe({
-      next: () => { this.loadAccounts(); this.closeTransferModal(); this.saving = false; },
+      next: () => {
+        this.loadAccounts();
+        this.closeTransferModal();
+        this.saving = false;
+        this.toast.showSuccess('Transferencia realizada correctamente', 'Éxito');
+      },
       error: () => { this.saving = false; },
     });
   }
@@ -327,7 +337,12 @@ export class AccountsComponent implements OnInit {
     if (this.abonoForm.invalid) return;
     this.saving = true;
     this.api.post(`/accounts/${this.abonoCardId}/abono`, this.abonoForm.value).subscribe({
-      next: () => { this.loadAccounts(); this.closeAbonoModal(); this.saving = false; },
+      next: () => {
+        this.loadAccounts();
+        this.closeAbonoModal();
+        this.saving = false;
+        this.toast.showSuccess('Abono realizado correctamente', 'Éxito');
+      },
       error: () => { this.saving = false; },
     });
   }
@@ -368,7 +383,15 @@ export class AccountsComponent implements OnInit {
       : this.api.post('/accounts', formValue);
 
     request.subscribe({
-      next: () => { this.loadAccounts(); this.closeModal(); this.saving = false; },
+      next: () => {
+        this.loadAccounts();
+        this.closeModal();
+        this.saving = false;
+        this.toast.showSuccess(
+          this.editingId ? 'Cuenta actualizada correctamente' : 'Cuenta creada correctamente',
+          'Éxito'
+        );
+      },
       error: () => { this.saving = false; },
     });
   }
@@ -376,7 +399,10 @@ export class AccountsComponent implements OnInit {
   deleteAccount(id: number): void {
     if (!confirm('¿Eliminar esta cuenta?')) return;
     this.api.delete(`/accounts/${id}`).subscribe({
-      next: () => this.loadAccounts(),
+      next: () => {
+        this.loadAccounts();
+        this.toast.showSuccess('Cuenta eliminada correctamente', 'Éxito');
+      },
     });
   }
 

@@ -4,6 +4,7 @@ import { BehaviorSubject, Observable, Subject, throwError } from 'rxjs';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { Router } from '@angular/router';
+import { ToastService } from '../toast/toast.service';
 
 interface AuthResponse {
   success: boolean;
@@ -25,7 +26,7 @@ export class AuthService {
   private isRefreshing = false;
   private refreshTokenSubject = new Subject<string>();
 
-  constructor(private http: HttpClient, private router: Router) {
+  constructor(private http: HttpClient, private router: Router, private toast: ToastService) {
     try {
       const user = localStorage.getItem('user');
       if (user && user !== 'undefined') {
@@ -120,6 +121,7 @@ export class AuthService {
           this.refreshTokenSubject.error(error);
           this.refreshTokenSubject = new Subject<string>();
           this.isRefreshing = false;
+          this.toast.showError('Tu sesión expiró. Inicia sesión de nuevo.');
           this.logout();
           return throwError(() => error);
         })
