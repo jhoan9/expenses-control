@@ -2,11 +2,12 @@ import { Component, ViewChild } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { NavbarComponent } from '../navbar/navbar.component';
+import { AssistantComponent } from '../assistant/assistant.component';
 
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent, NavbarComponent],
+  imports: [RouterOutlet, SidebarComponent, NavbarComponent, AssistantComponent],
   template: `
     <div class="layout">
       <app-sidebar #appSidebar />
@@ -17,6 +18,7 @@ import { NavbarComponent } from '../navbar/navbar.component';
         </main>
       </div>
     </div>
+    <app-assistant />
   `,
 })
 export class LayoutComponent {

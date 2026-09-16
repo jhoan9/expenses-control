@@ -19,6 +19,7 @@ import thirdPartyRoutes from './modules/third-party/third-party.routes';
 import loansRoutes from './modules/loans/loans.routes';
 import creditsRoutes from './modules/credits/credits.routes';
 import reportsRoutes from './modules/reports/reports.routes';
+import aiRoutes from './modules/ai/ai.routes';
 
 const app = express();
 
@@ -47,7 +48,16 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 12,
+  message: 'Demasiadas solicitudes al asistente. Espera un momento.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use('/api/auth', authLimiter);
+app.use('/api/ai', aiLimiter);
 app.use('/api', limiter);
 
 app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
@@ -72,6 +82,7 @@ app.use('/api/third-party', thirdPartyRoutes);
 app.use('/api/loans', loansRoutes);
 app.use('/api/credits', creditsRoutes);
 app.use('/api/reports', reportsRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.use('/api', (req, res, next) => {
   next(AppError.notFound('Endpoint not found'));

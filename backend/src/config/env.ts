@@ -20,4 +20,13 @@ export const env = {
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
 
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:4200',
+
+  AI_API_KEY: process.env.AI_API_KEY || '',
+  AI_MODEL: process.env.AI_MODEL || 'gemini-3.6-flash',
+  AI_BASE_URL:
+    process.env.AI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta',
+  AI_REQUEST_TIMEOUT_MS: parseInt(
+    process.env.AI_REQUEST_TIMEOUT_MS || '45000',
+    10
+  ),
 };
