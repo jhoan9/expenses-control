@@ -27,7 +27,16 @@ app.use(helmet());
 
 app.use(
   cors({
-    origin: env.CORS_ORIGIN,
+    origin: (origin, callback) => {
+      const allowed = env.corsOrigins;
+
+      // Allow requests with no origin (curl, server-to-server) or wildcard
+      if (!origin || allowed.includes('*') || allowed.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   })
 );

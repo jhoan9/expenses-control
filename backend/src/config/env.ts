@@ -21,6 +21,12 @@ export const env = {
 
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:4200',
 
+  get corsOrigins(): string[] {
+    return env.CORS_ORIGIN.split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+  },
+
   AI_API_KEY: process.env.AI_API_KEY || '',
   AI_MODEL: process.env.AI_MODEL || 'gemini-3.6-flash',
   AI_BASE_URL:
