@@ -94,7 +94,7 @@ export class ReportsService {
       recentIncome,
     ] = await Promise.all([
       queryOne<{ total: number }>(
-        'SELECT COALESCE(SUM(amount), 0) as total FROM income WHERE user_id = $1 AND deleted_at IS NULL AND date >= $2 AND date <= $3',
+        'SELECT COALESCE(SUM(amount), 0) as total FROM income WHERE user_id = $1 AND deleted_at IS NULL AND status = \'completed\' AND date >= $2 AND date <= $3',
         [userId, firstDayMonth, lastDayMonth]
       ),
       queryOne<{ total: number }>(
@@ -137,7 +137,7 @@ export class ReportsService {
         `SELECT i.*, c.name as category_name
          FROM income i
          LEFT JOIN categories c ON i.category_id = c.id
-         WHERE i.user_id = $1 AND i.deleted_at IS NULL
+         WHERE i.user_id = $1 AND i.deleted_at IS NULL AND i.status = 'completed'
          ORDER BY i.date DESC, i.created_at DESC
          LIMIT 5`,
         [userId]
@@ -260,7 +260,7 @@ export class ReportsService {
 
   async getIncomeSummary(userId: number, filters: DateRange): Promise<any> {
     let paramIndex = 1;
-    let sql = `SELECT * FROM income WHERE user_id = $${paramIndex++} AND deleted_at IS NULL`;
+    let sql = `SELECT * FROM income WHERE user_id = $${paramIndex++} AND deleted_at IS NULL AND status = 'completed'`;
     const params: any[] = [userId];
 
     if (filters.date_from) {
@@ -292,7 +292,7 @@ export class ReportsService {
     const byCategory = await query(
       `SELECT c.id, c.name, COALESCE(SUM(i.amount), 0) as total
        FROM categories c
-       LEFT JOIN income i ON c.id = i.category_id AND i.user_id = $1 AND i.deleted_at IS NULL
+       LEFT JOIN income i ON c.id = i.category_id AND i.user_id = $1 AND i.deleted_at IS NULL AND i.status = 'completed'
        ${byCategoryDateClause}
        WHERE c.deleted_at IS NULL AND c.type IN ('income', 'both')
        GROUP BY c.id, c.name
@@ -316,7 +316,7 @@ export class ReportsService {
     const byMonth = await query(
       `SELECT TO_CHAR(date, 'YYYY-MM') as month, COALESCE(SUM(amount), 0) as total
        FROM income
-       WHERE user_id = $1 AND deleted_at IS NULL
+       WHERE user_id = $1 AND deleted_at IS NULL AND status = 'completed'
        ${byMonthDateClause}
        GROUP BY month
        ORDER BY month DESC`,

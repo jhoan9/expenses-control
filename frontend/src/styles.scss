@@ -1241,6 +1241,18 @@ td.actions-cell {
   color: var(--text-2);
 }
 
+.loan-badge {
+  display: inline-block;
+  padding: 3px 11px;
+  border-radius: var(--r-full);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  vertical-align: middle;
+  background: var(--info-soft);
+  color: var(--info);
+}
+
 .status-badge-op.closed {
   background: #eef1f5;
   color: var(--text-2);

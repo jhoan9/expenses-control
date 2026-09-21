@@ -19,6 +19,14 @@ export const createIncomeValidator = [
   body('date')
     .isISO8601()
     .withMessage('Date must be a valid date (YYYY-MM-DD)'),
+  body('loan_id')
+    .optional({ nullable: true })
+    .isInt({ min: 1 })
+    .withMessage('Loan ID must be a positive integer'),
+  body('status')
+    .optional()
+    .isIn(['pending', 'completed', 'cancelled'])
+    .withMessage('Status must be pending, completed or cancelled'),
 ];
 
 export const updateIncomeValidator = [
@@ -43,4 +51,12 @@ export const updateIncomeValidator = [
     .optional()
     .isISO8601()
     .withMessage('Date must be a valid date (YYYY-MM-DD)'),
+  body('loan_id')
+    .optional({ nullable: true })
+    .isInt({ min: 1 })
+    .withMessage('Loan ID must be a positive integer'),
+  body('status')
+    .optional()
+    .isIn(['pending', 'completed', 'cancelled'])
+    .withMessage('Status must be pending, completed or cancelled'),
 ];
