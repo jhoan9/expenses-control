@@ -20,6 +20,10 @@ import { formatCurrency, todayLocal } from '../../shared/utils/format';
       <div class="filters">
         <input type="date" [(ngModel)]="filters.date_from" (change)="onFiltersChange()" placeholder="Desde" />
         <input type="date" [(ngModel)]="filters.date_to" (change)="onFiltersChange()" placeholder="Hasta" />
+        <select [(ngModel)]="filters.category_id" (change)="onFiltersChange()">
+          <option value="">Todas las categorías</option>
+          <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+        </select>
       </div>
 
       <div class="table-container">
@@ -38,7 +42,11 @@ import { formatCurrency, todayLocal } from '../../shared/utils/format';
             <tr *ngFor="let item of income">
               <td>{{ item.date }}</td>
               <td>{{ item.description || '-' }}</td>
-              <td>{{ getCategoryName(item.category_id) }}</td>
+              <td>
+                <span class="category-badge" [style.background]="getCategoryColor(item.category_id)">
+                  {{ getCategoryName(item.category_id) }}
+                </span>
+              </td>
               <td>{{ getAccountName(item.account_id) }}</td>
               <td class="amount positive">{{ formatCurrency(item.amount) }}</td>
               <td>
@@ -133,7 +141,7 @@ export class IncomeComponent implements OnInit {
   showModal = false;
   editingId: number | null = null;
   saving = false;
-  filters: any = { date_from: '', date_to: '' };
+  filters: any = { date_from: '', date_to: '', category_id: '' };
   form: FormGroup;
 
   page = 1;
@@ -172,7 +180,9 @@ export class IncomeComponent implements OnInit {
 
   loadIncome(): void {
     this.loading = true;
-    this.api.get<any>('/income', { ...this.filters, page: this.page, limit: this.pageSize }).subscribe({
+    const params: any = { ...this.filters, page: this.page, limit: this.pageSize };
+    if (!params.category_id) delete params.category_id;
+    this.api.get<any>('/income', params).subscribe({
       next: (res) => {
         this.income = res.data;
         this.totalItems = res.pagination?.total ?? 0;
@@ -275,6 +285,10 @@ export class IncomeComponent implements OnInit {
 
   getCategoryName(id: number): string {
     return this.categories.find(c => c.id === id)?.name || '-';
+  }
+
+  getCategoryColor(id: number): string {
+    return this.categories.find(c => c.id === id)?.color || '#999';
   }
 
 }
