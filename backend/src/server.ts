@@ -2,6 +2,14 @@ import app from './app';
 import { env } from './config/env';
 import { testConnection } from './config/database';
 
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled promise rejection:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception:', error);
+});
+
 const startServer = async () => {
   const dbConnected = await testConnection();
 

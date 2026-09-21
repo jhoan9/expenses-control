@@ -5,15 +5,15 @@ const baseCreateValidator = [
     .isInt({ min: 1 })
     .withMessage('Account ID is required'),
   body('category_id')
-    .optional()
+    .optional({ values: 'falsy' })
     .isInt({ min: 1 })
     .withMessage('Category ID must be a positive integer'),
   body('subcategory_id')
-    .optional()
+    .optional({ values: 'falsy' })
     .isInt({ min: 1 })
     .withMessage('Subcategory ID must be a positive integer'),
   body('payment_method_id')
-    .optional()
+    .optional({ values: 'falsy' })
     .isInt({ min: 1 })
     .withMessage('Payment method ID must be a positive integer'),
   body('amount')
@@ -39,15 +39,15 @@ const baseUpdateValidator = [
     .isInt({ min: 1 })
     .withMessage('Account ID must be a positive integer'),
   body('category_id')
-    .optional()
+    .optional({ values: 'falsy' })
     .isInt({ min: 1 })
     .withMessage('Category ID must be a positive integer'),
   body('subcategory_id')
-    .optional()
+    .optional({ values: 'falsy' })
     .isInt({ min: 1 })
     .withMessage('Subcategory ID must be a positive integer'),
   body('payment_method_id')
-    .optional()
+    .optional({ values: 'falsy' })
     .isInt({ min: 1 })
     .withMessage('Payment method ID must be a positive integer'),
   body('amount')

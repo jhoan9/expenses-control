@@ -18,9 +18,11 @@ export const validate = (validations: ValidationChain[]) => {
       message: err.msg,
     }));
 
-    throw new AppError(
+    const err = new AppError(
       `Validation error: ${extractedErrors.map((e) => e.message).join(', ')}`,
       400
     );
+
+    return next(err);
   };
 };

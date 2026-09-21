@@ -5,7 +5,7 @@ export const createIncomeValidator = [
     .isInt({ min: 1 })
     .withMessage('Account ID is required'),
   body('category_id')
-    .optional()
+    .optional({ values: 'falsy' })
     .isInt({ min: 1 })
     .withMessage('Category ID must be a positive integer'),
   body('amount')
@@ -20,18 +20,18 @@ export const createIncomeValidator = [
     .isISO8601()
     .withMessage('Date must be a valid date (YYYY-MM-DD)'),
   body('subcategory_id')
-    .optional()
+    .optional({ values: 'falsy' })
     .isInt({ min: 1 })
     .withMessage('Subcategory ID must be a positive integer'),
 ];
 
 export const updateIncomeValidator = [
   body('account_id')
-    .optional()
+    .optional({ values: 'falsy' })
     .isInt({ min: 1 })
     .withMessage('Account ID must be a positive integer'),
   body('category_id')
-    .optional()
+    .optional({ values: 'falsy' })
     .isInt({ min: 1 })
     .withMessage('Category ID must be a positive integer'),
   body('amount')
@@ -48,7 +48,7 @@ export const updateIncomeValidator = [
     .isISO8601()
     .withMessage('Date must be a valid date (YYYY-MM-DD)'),
   body('subcategory_id')
-    .optional()
+    .optional({ values: 'falsy' })
     .isInt({ min: 1 })
     .withMessage('Subcategory ID must be a positive integer'),
 ];
