@@ -23,9 +23,9 @@ interface ExpenseItem {
       </div>
 
       <div class="filters">
-        <input type="date" [(ngModel)]="filters.date_from" (change)="loadExpenses()" />
-        <input type="date" [(ngModel)]="filters.date_to" (change)="loadExpenses()" />
-        <select [(ngModel)]="filters.category_id" (change)="loadExpenses()">
+        <input type="date" [(ngModel)]="filters.date_from" (change)="onFiltersChange()" />
+        <input type="date" [(ngModel)]="filters.date_to" (change)="onFiltersChange()" />
+        <select [(ngModel)]="filters.category_id" (change)="onFiltersChange()">
           <option value="">Todas las categorías</option>
           <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
         </select>
@@ -77,6 +77,17 @@ interface ExpenseItem {
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <div class="pagination" *ngIf="totalPages > 1">
+        <span class="page-info">
+          Mostrando {{ pageFirst }}–{{ pageLast }} de {{ totalItems }} · Página {{ page }} de {{ totalPages }}
+        </span>
+        <div class="page-buttons">
+          <button class="btn-mini" (click)="goToPage(page - 1)" [disabled]="page <= 1">← Anterior</button>
+          <button class="btn-mini page-num" *ngFor="let p of pageNumbers" [class.active]="p === page" (click)="goToPage(p)">{{ p }}</button>
+          <button class="btn-mini" (click)="goToPage(page + 1)" [disabled]="page >= totalPages">Siguiente →</button>
+        </div>
       </div>
 
       <div class="empty-state" *ngIf="expenses.length === 0 && !loading">
@@ -194,6 +205,12 @@ export class ExpensesComponent implements OnInit {
   editingId: number | null = null;
   saving = false;
 
+  page = 1;
+  pageSize = 20;
+  totalItems = 0;
+  totalPages = 1;
+  totalSum = 0;
+
   items: ExpenseItem[] = [];
   private templates: any[] = [];
   private templatesLoadedFor: number | null = null;
@@ -240,12 +257,51 @@ export class ExpensesComponent implements OnInit {
 
   loadExpenses(): void {
     this.loading = true;
-    const params = { ...this.filters };
+    const params = { ...this.filters, page: this.page, limit: this.pageSize };
     if (!params.category_id) delete params.category_id;
     this.api.get<any>('/expenses', params).subscribe({
-      next: (res) => { this.expenses = res.data; this.loading = false; },
+      next: (res) => {
+        this.expenses = res.data;
+        this.totalItems = res.pagination?.total ?? 0;
+        this.totalPages = Math.max(1, res.pagination?.totalPages ?? 1);
+        this.totalSum = res.pagination?.totalAmount ?? this.expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+        if (this.expenses.length === 0 && this.totalItems > 0 && this.page > this.totalPages) {
+          this.page = this.totalPages;
+          this.loadExpenses();
+          return;
+        }
+        this.loading = false;
+      },
       error: () => { this.loading = false; },
     });
+  }
+
+  onFiltersChange(): void {
+    this.page = 1;
+    this.loadExpenses();
+  }
+
+  goToPage(p: number): void {
+    const target = Math.max(1, Math.min(p, this.totalPages));
+    if (target === this.page) return;
+    this.page = target;
+    this.loadExpenses();
+  }
+
+  get pageFirst(): number {
+    return this.totalItems === 0 ? 0 : (this.page - 1) * this.pageSize + 1;
+  }
+
+  get pageLast(): number {
+    return Math.min(this.page * this.pageSize, this.totalItems);
+  }
+
+  get pageNumbers(): number[] {
+    const total = this.totalPages;
+    const current = this.page;
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const start = Math.max(1, Math.min(current - 2, total - 4));
+    return Array.from({ length: 5 }, (_, i) => start + i);
   }
 
   get expenseCategories(): any[] {
@@ -260,7 +316,7 @@ export class ExpensesComponent implements OnInit {
   }
 
   get totalAmount(): number {
-    return this.expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+    return this.totalSum;
   }
 
   itemsTotal(): number {
@@ -454,7 +510,12 @@ export class ExpensesComponent implements OnInit {
       : this.api.post('/expenses', data);
 
     request.subscribe({
-      next: () => { this.loadExpenses(); this.closeModal(); this.saving = false; },
+      next: () => {
+        if (!this.editingId) this.page = 1;
+        this.loadExpenses();
+        this.closeModal();
+        this.saving = false;
+      },
       error: () => { this.saving = false; },
     });
   }

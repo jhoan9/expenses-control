@@ -18,8 +18,8 @@ import { formatCurrency, todayLocal } from '../../shared/utils/format';
       </div>
 
       <div class="filters">
-        <input type="date" [(ngModel)]="filters.date_from" (change)="loadIncome()" placeholder="Desde" />
-        <input type="date" [(ngModel)]="filters.date_to" (change)="loadIncome()" placeholder="Hasta" />
+        <input type="date" [(ngModel)]="filters.date_from" (change)="onFiltersChange()" placeholder="Desde" />
+        <input type="date" [(ngModel)]="filters.date_to" (change)="onFiltersChange()" placeholder="Hasta" />
       </div>
 
       <div class="table-container">
@@ -55,6 +55,17 @@ import { formatCurrency, todayLocal } from '../../shared/utils/format';
             </tr>
           </tfoot>
         </table>
+      </div>
+
+      <div class="pagination" *ngIf="totalPages > 1">
+        <span class="page-info">
+          Mostrando {{ pageFirst }}–{{ pageLast }} de {{ totalItems }} · Página {{ page }} de {{ totalPages }}
+        </span>
+        <div class="page-buttons">
+          <button class="btn-mini" (click)="goToPage(page - 1)" [disabled]="page <= 1">← Anterior</button>
+          <button class="btn-mini page-num" *ngFor="let p of pageNumbers" [class.active]="p === page" (click)="goToPage(p)">{{ p }}</button>
+          <button class="btn-mini" (click)="goToPage(page + 1)" [disabled]="page >= totalPages">Siguiente →</button>
+        </div>
       </div>
 
       <div class="empty-state" *ngIf="income.length === 0 && !loading">
@@ -125,6 +136,12 @@ export class IncomeComponent implements OnInit {
   filters: any = { date_from: '', date_to: '' };
   form: FormGroup;
 
+  page = 1;
+  pageSize = 20;
+  totalItems = 0;
+  totalPages = 1;
+  totalSum = 0;
+
   constructor(private api: ApiService, private fb: FormBuilder) {
     const today = todayLocal();
     this.filters.date_from = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
@@ -155,14 +172,53 @@ export class IncomeComponent implements OnInit {
 
   loadIncome(): void {
     this.loading = true;
-    this.api.get<any>('/income', this.filters).subscribe({
-      next: (res) => { this.income = res.data; this.loading = false; },
+    this.api.get<any>('/income', { ...this.filters, page: this.page, limit: this.pageSize }).subscribe({
+      next: (res) => {
+        this.income = res.data;
+        this.totalItems = res.pagination?.total ?? 0;
+        this.totalPages = Math.max(1, res.pagination?.totalPages ?? 1);
+        this.totalSum = res.pagination?.totalAmount ?? this.income.reduce((sum, i) => sum + Number(i.amount), 0);
+        if (this.income.length === 0 && this.totalItems > 0 && this.page > this.totalPages) {
+          this.page = this.totalPages;
+          this.loadIncome();
+          return;
+        }
+        this.loading = false;
+      },
       error: () => { this.loading = false; },
     });
   }
 
+  onFiltersChange(): void {
+    this.page = 1;
+    this.loadIncome();
+  }
+
+  goToPage(p: number): void {
+    const target = Math.max(1, Math.min(p, this.totalPages));
+    if (target === this.page) return;
+    this.page = target;
+    this.loadIncome();
+  }
+
+  get pageFirst(): number {
+    return this.totalItems === 0 ? 0 : (this.page - 1) * this.pageSize + 1;
+  }
+
+  get pageLast(): number {
+    return Math.min(this.page * this.pageSize, this.totalItems);
+  }
+
+  get pageNumbers(): number[] {
+    const total = this.totalPages;
+    const current = this.page;
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const start = Math.max(1, Math.min(current - 2, total - 4));
+    return Array.from({ length: 5 }, (_, i) => start + i);
+  }
+
   get totalAmount(): number {
-    return this.income.reduce((sum, i) => sum + Number(i.amount), 0);
+    return this.totalSum;
   }
 
   openModal(): void {
@@ -198,7 +254,12 @@ export class IncomeComponent implements OnInit {
       : this.api.post('/income', this.form.value);
 
     request.subscribe({
-      next: () => { this.loadIncome(); this.closeModal(); this.saving = false; },
+      next: () => {
+        if (!this.editingId) this.page = 1;
+        this.loadIncome();
+        this.closeModal();
+        this.saving = false;
+      },
       error: () => { this.saving = false; },
     });
   }

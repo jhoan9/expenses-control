@@ -171,6 +171,17 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
           </table>
         </div>
 
+        <div class="pagination" *ngIf="paymentTotalPages > 1">
+          <span class="page-info">
+            Mostrando {{ paymentPageFirst }}–{{ paymentPageLast }} de {{ paymentTotal }} · Página {{ paymentPage }} de {{ paymentTotalPages }}
+          </span>
+          <div class="page-buttons">
+            <button class="btn-mini" (click)="loadPayments(paymentPage - 1)" [disabled]="paymentPage <= 1">← Anterior</button>
+            <button class="btn-mini page-num" *ngFor="let p of paymentPageNumbers" [class.active]="p === paymentPage" (click)="loadPayments(p)">{{ p }}</button>
+            <button class="btn-mini" (click)="loadPayments(paymentPage + 1)" [disabled]="paymentPage >= paymentTotalPages">Siguiente →</button>
+          </div>
+        </div>
+
         <div class="empty-state" *ngIf="payments.length === 0 && !loadingDetail">
           <p>No hay abonos registrados</p>
           <button class="btn-primary" (click)="openPaymentModal()" [disabled]="selectedLoan.status === 'paid' || selectedLoan.status === 'cancelled'">
@@ -259,6 +270,10 @@ export class LoansComponent implements OnInit {
   selectedLoan: any = null;
   loanDetail: any = null;
   payments: any[] = [];
+  paymentPage = 1;
+  paymentPageSize = 20;
+  paymentTotal = 0;
+  paymentTotalPages = 1;
   loading = false;
   loadingDetail = false;
   saving = false;
@@ -325,23 +340,56 @@ export class LoansComponent implements OnInit {
     }));
   }
 
-  viewLoan(loan: any): void {
+  viewLoan(loan: any, page: number = 1): void {
     this.selectedLoan = loan;
     this.loadingDetail = true;
-    this.api.get<any>(`/loans/${loan.id}`).subscribe({
+    this.loadPayments(page);
+  }
+
+  loadPayments(page: number): void {
+    if (!this.selectedLoan) return;
+    const target = Math.max(1, Math.min(page, this.paymentTotalPages));
+    this.paymentPage = target;
+    this.loadingDetail = true;
+    this.api.get<any>(`/loans/${this.selectedLoan.id}`, { page: this.paymentPage, limit: this.paymentPageSize }).subscribe({
       next: (res) => {
         this.loanDetail = res.data;
         this.payments = res.data.payments || [];
+        this.paymentTotal = res.data.paymentTotal ?? this.payments.length;
+        this.paymentTotalPages = Math.max(1, res.data.paymentTotalPages ?? 1);
+        if (this.payments.length === 0 && this.paymentTotal > 0 && this.paymentPage > this.paymentTotalPages) {
+          this.loadPayments(this.paymentTotalPages);
+          return;
+        }
         this.loadingDetail = false;
       },
       error: () => { this.loadingDetail = false; },
     });
   }
 
+  get paymentPageFirst(): number {
+    return this.paymentTotal === 0 ? 0 : (this.paymentPage - 1) * this.paymentPageSize + 1;
+  }
+
+  get paymentPageLast(): number {
+    return Math.min(this.paymentPage * this.paymentPageSize, this.paymentTotal);
+  }
+
+  get paymentPageNumbers(): number[] {
+    const total = this.paymentTotalPages;
+    const current = this.paymentPage;
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const start = Math.max(1, Math.min(current - 2, total - 4));
+    return Array.from({ length: 5 }, (_, i) => start + i);
+  }
+
   goBack(): void {
     this.selectedLoan = null;
     this.loanDetail = null;
     this.payments = [];
+    this.paymentPage = 1;
+    this.paymentTotal = 0;
+    this.paymentTotalPages = 1;
     this.loadLoans();
     this.loadSummary();
   }
@@ -448,7 +496,7 @@ export class LoansComponent implements OnInit {
     this.saving = true;
     this.api.post(`/loans/${this.selectedLoan.id}/payments`, this.paymentForm.value).subscribe({
       next: () => {
-        this.viewLoan(this.selectedLoan);
+        this.loadPayments(1);
         this.loadSummary();
         this.loadLoans();
         this.closePaymentModal();
@@ -462,7 +510,7 @@ export class LoansComponent implements OnInit {
     if (!confirm('¿Eliminar este abono?')) return;
     this.api.delete(`/loans/${this.selectedLoan.id}/payments/${payment.id}`).subscribe({
       next: () => {
-        this.viewLoan(this.selectedLoan);
+        this.loadPayments(this.paymentPage);
         this.loadSummary();
         this.loadLoans();
       },

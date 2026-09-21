@@ -141,6 +141,17 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
           </table>
         </div>
 
+        <div class="pagination" *ngIf="paymentTotalPages > 1">
+          <span class="page-info">
+            Mostrando {{ paymentPageFirst }}–{{ paymentPageLast }} de {{ paymentTotal }} · Página {{ paymentPage }} de {{ paymentTotalPages }}
+          </span>
+          <div class="page-buttons">
+            <button class="btn-mini" (click)="loadPayments(paymentPage - 1)" [disabled]="paymentPage <= 1">← Anterior</button>
+            <button class="btn-mini page-num" *ngFor="let p of paymentPageNumbers" [class.active]="p === paymentPage" (click)="loadPayments(p)">{{ p }}</button>
+            <button class="btn-mini" (click)="loadPayments(paymentPage + 1)" [disabled]="paymentPage >= paymentTotalPages">Siguiente →</button>
+          </div>
+        </div>
+
         <div class="empty-state" *ngIf="payments.length === 0 && !loadingDetail">
           <p>No hay abonos registrados</p>
           <button class="btn-primary" (click)="openPaymentModal()">Registrar primer abono</button>
@@ -227,6 +238,10 @@ export class CreditsComponent implements OnInit {
   selectedCredit: any = null;
   creditDetail: any = null;
   payments: any[] = [];
+  paymentPage = 1;
+  paymentPageSize = 20;
+  paymentTotal = 0;
+  paymentTotalPages = 1;
   loading = false;
   loadingDetail = false;
   saving = false;
@@ -270,25 +285,58 @@ export class CreditsComponent implements OnInit {
     });
   }
 
-  viewCredit(credit: any): void {
+  viewCredit(credit: any, page: number = 1): void {
     this.selectedCredit = credit;
     this.loadingDetail = true;
-    this.api.get<any>(`/credits/${credit.id}`).subscribe({
+    this.loadPayments(page);
+  }
+
+  loadPayments(page: number): void {
+    if (!this.selectedCredit) return;
+    const target = Math.max(1, Math.min(page, this.paymentTotalPages));
+    this.paymentPage = target;
+    this.loadingDetail = true;
+    this.api.get<any>(`/credits/${this.selectedCredit.id}`, { page: this.paymentPage, limit: this.paymentPageSize }).subscribe({
       next: (res) => {
         this.creditDetail = res.data;
         this.payments = res.data.payments || [];
-        this.selectedCredit.balance = res.data.balance ?? credit.balance;
-        this.selectedCredit.credit_limit = res.data.credit_limit ?? credit.credit_limit;
+        this.paymentTotal = res.data.paymentTotal ?? this.payments.length;
+        this.paymentTotalPages = Math.max(1, res.data.paymentTotalPages ?? 1);
+        this.selectedCredit.balance = res.data.balance ?? this.selectedCredit.balance;
+        this.selectedCredit.credit_limit = res.data.credit_limit ?? this.selectedCredit.credit_limit;
+        if (this.payments.length === 0 && this.paymentTotal > 0 && this.paymentPage > this.paymentTotalPages) {
+          this.loadPayments(this.paymentTotalPages);
+          return;
+        }
         this.loadingDetail = false;
       },
       error: () => { this.loadingDetail = false; },
     });
   }
 
+  get paymentPageFirst(): number {
+    return this.paymentTotal === 0 ? 0 : (this.paymentPage - 1) * this.paymentPageSize + 1;
+  }
+
+  get paymentPageLast(): number {
+    return Math.min(this.paymentPage * this.paymentPageSize, this.paymentTotal);
+  }
+
+  get paymentPageNumbers(): number[] {
+    const total = this.paymentTotalPages;
+    const current = this.paymentPage;
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const start = Math.max(1, Math.min(current - 2, total - 4));
+    return Array.from({ length: 5 }, (_, i) => start + i);
+  }
+
   goBack(): void {
     this.selectedCredit = null;
     this.creditDetail = null;
     this.payments = [];
+    this.paymentPage = 1;
+    this.paymentTotal = 0;
+    this.paymentTotalPages = 1;
     this.loadCredits();
     this.loadSummary();
   }
@@ -394,7 +442,7 @@ export class CreditsComponent implements OnInit {
     }
     this.api.post(`/credits/${this.selectedCredit.id}/payments`, payload).subscribe({
       next: () => {
-        this.viewCredit(this.selectedCredit);
+        this.loadPayments(1);
         this.loadSummary();
         this.loadCredits();
         this.closePaymentModal();
@@ -408,7 +456,7 @@ export class CreditsComponent implements OnInit {
     if (!confirm('¿Eliminar este abono?')) return;
     this.api.delete(`/credits/${this.selectedCredit.id}/payments/${payment.id}`).subscribe({
       next: () => {
-        this.viewCredit(this.selectedCredit);
+        this.loadPayments(this.paymentPage);
         this.loadSummary();
         this.loadCredits();
       },

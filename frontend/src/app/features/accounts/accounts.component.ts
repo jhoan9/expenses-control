@@ -118,6 +118,16 @@ import { ToastService } from '../../core/toast/toast.service';
                 </div>
               </div>
             </div>
+            <div class="pagination" *ngIf="movementsTotalPages > 1">
+              <span class="page-info">
+                Mostrando {{ movementsPageFirst }}–{{ movementsPageLast }} de {{ movementsTotal }} · Página {{ movementsPage }} de {{ movementsTotalPages }}
+              </span>
+              <div class="page-buttons">
+                <button class="btn-mini" (click)="loadMovements(movementsPage - 1)" [disabled]="movementsPage <= 1">← Anterior</button>
+                <button class="btn-mini page-num" *ngFor="let p of movementsPageNumbers" [class.active]="p === movementsPage" (click)="loadMovements(p)">{{ p }}</button>
+                <button class="btn-mini" (click)="loadMovements(movementsPage + 1)" [disabled]="movementsPage >= movementsTotalPages">Siguiente →</button>
+              </div>
+            </div>
             <ng-template #noMovements>
               <p class="no-data">No hay movimientos en esta cuenta</p>
             </ng-template>
@@ -236,6 +246,10 @@ export class AccountsComponent implements OnInit {
   movementsAccountId: number | null = null;
   movementsAccountName = '';
   movements: any[] = [];
+  movementsPage = 1;
+  movementsPageSize = 20;
+  movementsTotal = 0;
+  movementsTotalPages = 1;
 
   constructor(
     private api: ApiService,
@@ -424,11 +438,44 @@ export class AccountsComponent implements OnInit {
     this.movementsAccountId = account.id;
     this.movementsAccountName = account.name;
     this.movements = [];
+    this.movementsPage = 1;
+    this.movementsTotal = 0;
+    this.movementsTotalPages = 1;
     this.showMovementsModal = true;
-    this.api.get<any>(`/accounts/${account.id}/movements`).subscribe({
-      next: (res) => { this.movements = res.data; },
+    this.loadMovements(1);
+  }
+
+  loadMovements(page: number): void {
+    if (this.movementsAccountId === null) return;
+    const target = Math.max(1, Math.min(page, this.movementsTotalPages));
+    this.movementsPage = target;
+    this.api.get<any>(`/accounts/${this.movementsAccountId}/movements`, { page: this.movementsPage, limit: this.movementsPageSize }).subscribe({
+      next: (res) => {
+        this.movements = res.data;
+        this.movementsTotal = res.pagination?.total ?? 0;
+        this.movementsTotalPages = Math.max(1, res.pagination?.totalPages ?? 1);
+        if (this.movements.length === 0 && this.movementsTotal > 0 && this.movementsPage > this.movementsTotalPages) {
+          this.loadMovements(this.movementsTotalPages);
+        }
+      },
       error: () => { this.movements = []; },
     });
+  }
+
+  get movementsPageFirst(): number {
+    return this.movementsTotal === 0 ? 0 : (this.movementsPage - 1) * this.movementsPageSize + 1;
+  }
+
+  get movementsPageLast(): number {
+    return Math.min(this.movementsPage * this.movementsPageSize, this.movementsTotal);
+  }
+
+  get movementsPageNumbers(): number[] {
+    const total = this.movementsTotalPages;
+    const current = this.movementsPage;
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const start = Math.max(1, Math.min(current - 2, total - 4));
+    return Array.from({ length: 5 }, (_, i) => start + i);
   }
 
   closeMovementsModal(): void {

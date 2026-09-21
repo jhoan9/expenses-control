@@ -28,6 +28,8 @@ interface LoanWithPayments extends Loan {
   payments?: LoanPayment[];
   total_paid?: number;
   remaining?: number;
+  paymentTotal?: number;
+  paymentTotalPages?: number;
 }
 
 interface CreateLoanDTO {
@@ -57,7 +59,7 @@ export class LoansService {
     );
   }
 
-  async findById(id: number, userId: number): Promise<LoanWithPayments> {
+  async findById(id: number, userId: number, page: number = 1, limit: number = 20): Promise<LoanWithPayments> {
     const loan = await queryOne<Loan>(
       'SELECT * FROM loans WHERE id = $1 AND lender_id = $2 AND deleted_at IS NULL',
       [id, userId]
@@ -67,15 +69,28 @@ export class LoansService {
       throw AppError.notFound('Loan not found');
     }
 
+    const offset = (page - 1) * limit;
     const payments = await query<LoanPayment>(
-      'SELECT * FROM loan_payments WHERE loan_id = $1 ORDER BY date DESC',
-      [id]
+      'SELECT * FROM loan_payments WHERE loan_id = $1 ORDER BY date DESC LIMIT $2 OFFSET $3',
+      [id, limit, offset]
     );
 
-    const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+    const totals = await queryOne<{ total: number; total_paid: number }>(
+      'SELECT COUNT(*) as total, COALESCE(SUM(amount), 0) as total_paid FROM loan_payments WHERE loan_id = $1',
+      [id]
+    );
+    const totalPaid = Number(totals?.total_paid || 0);
+    const paymentTotal = Number(totals?.total || 0);
     const remaining = loan.amount - totalPaid;
 
-    return { ...loan, payments, total_paid: totalPaid, remaining };
+    return {
+      ...loan,
+      payments,
+      total_paid: totalPaid,
+      remaining,
+      paymentTotal,
+      paymentTotalPages: Math.ceil(paymentTotal / limit),
+    };
   }
 
   async create(userId: number, data: CreateLoanDTO): Promise<Loan> {

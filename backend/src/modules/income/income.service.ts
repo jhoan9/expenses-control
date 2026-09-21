@@ -43,7 +43,7 @@ export class IncomeService {
     filters: IncomeFilters = {},
     page: number = 1,
     limit: number = 20
-  ): Promise<{ income: Income[]; total: number }> {
+  ): Promise<{ income: Income[]; total: number; totalAmount: number }> {
     const offset = (page - 1) * limit;
     let sql = 'SELECT * FROM income WHERE user_id = $1 AND deleted_at IS NULL';
     const params: any[] = [userId];
@@ -66,16 +66,17 @@ export class IncomeService {
       params.push(filters.account_id);
     }
 
-    const countSql = sql.replace('SELECT *', 'SELECT COUNT(*) as total');
-    const countResult = await queryOne<{ total: number }>(countSql, params);
+    const countSql = sql.replace('SELECT *', 'SELECT COUNT(*) as total, COALESCE(SUM(amount), 0) as totalAmount');
+    const countResult = await queryOne<{ total: number; totalAmount: number }>(countSql, params);
     const total = countResult?.total || 0;
+    const totalAmount = Number(countResult?.totalAmount || 0);
 
     sql += ` ORDER BY date DESC, created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
     params.push(limit, offset);
 
     const income = await query<Income>(sql, params);
 
-    return { income, total };
+    return { income, total, totalAmount };
   }
 
   async findById(id: number, userId: number, client?: PoolClient): Promise<Income> {

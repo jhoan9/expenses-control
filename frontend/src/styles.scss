@@ -1162,6 +1162,39 @@ td.actions-cell {
   color: var(--text-2);
 }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  padding: var(--s3) 0;
+}
+
+.pagination .page-info {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+.pagination .page-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  flex-wrap: wrap;
+}
+
+.pagination .page-buttons .btn-mini {
+  min-width: 34px;
+  text-align: center;
+}
+
+.pagination .page-buttons .btn-mini.page-num.active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--text-inverse);
+}
+
 /* ----------------------------------------------------------------------------
    7. Badges
    ------------------------------------------------------------------------- */

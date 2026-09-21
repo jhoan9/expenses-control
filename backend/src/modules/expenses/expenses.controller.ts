@@ -26,6 +26,7 @@ export class ExpensesController {
           limit,
           total: result.total,
           totalPages: Math.ceil(result.total / limit),
+          totalAmount: result.totalAmount,
         },
       });
     } catch (error) {

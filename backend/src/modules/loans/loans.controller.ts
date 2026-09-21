@@ -18,7 +18,9 @@ export class LoansController {
   async getById(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = parseInt(req.params.id);
-      const loan = await loansService.findById(id, req.userId!);
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const loan = await loansService.findById(id, req.userId!, page, limit);
       res.json({
         success: true,
         data: loan,

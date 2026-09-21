@@ -95,10 +95,18 @@ export class AccountsController {
   async getMovements(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = parseInt(req.params.id);
-      const movements = await accountsService.getMovements(id, req.userId!);
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const result = await accountsService.getMovements(id, req.userId!, page, limit);
       res.json({
         success: true,
-        data: movements,
+        data: result.movements,
+        pagination: {
+          page,
+          limit,
+          total: result.total,
+          totalPages: Math.ceil(result.total / limit),
+        },
       });
     } catch (error) {
       next(error);

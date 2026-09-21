@@ -25,6 +25,8 @@ interface CreditPayment {
 interface CreditWithPayments extends Credit {
   payments?: CreditPayment[];
   available_credit?: number;
+  paymentTotal?: number;
+  paymentTotalPages?: number;
 }
 
 interface CreateCreditDTO {
@@ -48,7 +50,7 @@ export class CreditsService {
     );
   }
 
-  async findById(id: number, userId: number): Promise<CreditWithPayments> {
+  async findById(id: number, userId: number, page: number = 1, limit: number = 20): Promise<CreditWithPayments> {
     const credit = await queryOne<Credit>(
       'SELECT * FROM credits WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL',
       [id, userId]
@@ -58,14 +60,27 @@ export class CreditsService {
       throw AppError.notFound('Credit not found');
     }
 
+    const offset = (page - 1) * limit;
     const payments = await query<CreditPayment>(
-      'SELECT * FROM credit_payments WHERE credit_id = $1 ORDER BY date DESC',
+      'SELECT * FROM credit_payments WHERE credit_id = $1 ORDER BY date DESC LIMIT $2 OFFSET $3',
+      [id, limit, offset]
+    );
+
+    const totals = await queryOne<{ total: number }>(
+      'SELECT COUNT(*) as total FROM credit_payments WHERE credit_id = $1',
       [id]
     );
+    const paymentTotal = Number(totals?.total || 0);
 
     const available_credit = credit.credit_limit - credit.balance;
 
-    return { ...credit, payments, available_credit };
+    return {
+      ...credit,
+      payments,
+      available_credit,
+      paymentTotal,
+      paymentTotalPages: Math.ceil(paymentTotal / limit),
+    };
   }
 
   async create(userId: number, data: CreateCreditDTO): Promise<Credit> {

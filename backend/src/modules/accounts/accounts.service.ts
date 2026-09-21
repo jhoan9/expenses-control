@@ -239,9 +239,15 @@ export class AccountsService {
     });
   }
 
-  async getMovements(id: number, userId: number): Promise<any[]> {
+  async getMovements(id: number, userId: number, page: number = 1, limit: number = 20): Promise<{ movements: any[]; total: number }> {
     await this.findById(id, userId);
-    return query<any>(
+    const offset = (page - 1) * limit;
+    const totalResult = await queryOne<{ total: number }>(
+      'SELECT COUNT(*) as total FROM account_movements WHERE account_id = $1',
+      [id]
+    );
+    const total = totalResult?.total || 0;
+    const movements = await query<any>(
       `SELECT
          m.id, m.type, m.amount, m.balance_before, m.balance_after,
          m.reference_type, m.reference_id, m.description, m.created_at,
@@ -256,9 +262,11 @@ export class AccountsService {
        LEFT JOIN expenses e ON m.reference_type = 'expense' AND e.id = m.reference_id
        LEFT JOIN positions p ON m.reference_type = 'position' AND p.id = m.reference_id
        WHERE m.account_id = $1
-       ORDER BY date DESC, m.created_at DESC`,
-      [id]
+       ORDER BY date DESC, m.created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [id, limit, offset]
     );
+    return { movements, total };
   }
 }
 

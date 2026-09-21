@@ -23,6 +23,7 @@ export class IncomeController {
           limit,
           total: result.total,
           totalPages: Math.ceil(result.total / limit),
+          totalAmount: result.totalAmount,
         },
       });
     } catch (error) {

@@ -18,7 +18,9 @@ export class CreditsController {
   async getById(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = parseInt(req.params.id);
-      const credit = await creditsService.findById(id, req.userId!);
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const credit = await creditsService.findById(id, req.userId!, page, limit);
       res.json({
         success: true,
         data: credit,

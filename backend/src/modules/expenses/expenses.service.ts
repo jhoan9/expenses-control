@@ -62,7 +62,7 @@ export class ExpensesService {
     filters: ExpenseFilters = {},
     page: number = 1,
     limit: number = 20
-  ): Promise<{ expenses: Expense[]; total: number }> {
+  ): Promise<{ expenses: Expense[]; total: number; totalAmount: number }> {
     const offset = (page - 1) * limit;
     let sql = 'SELECT e.*, (SELECT COUNT(*) FROM expense_items ei WHERE ei.expense_id = e.id) as item_count FROM expenses e WHERE e.user_id = $1 AND e.deleted_at IS NULL';
     const params: any[] = [userId];
@@ -97,16 +97,17 @@ export class ExpensesService {
       params.push(filters.status);
     }
 
-    const countSql = sql.replace(/SELECT e\.\*, \(SELECT COUNT\(\*\) FROM expense_items ei WHERE ei\.expense_id = e\.id\) as item_count/, "SELECT COUNT(*) as total");
-    const countResult = await queryOne<{ total: number }>(countSql, params);
+    const countSql = sql.replace(/SELECT e\.\*, \(SELECT COUNT\(\*\) FROM expense_items ei WHERE ei\.expense_id = e\.id\) as item_count/, "SELECT COUNT(*) as total, COALESCE(SUM(e.amount), 0) as totalAmount");
+    const countResult = await queryOne<{ total: number; totalAmount: number }>(countSql, params);
     const total = countResult?.total || 0;
+    const totalAmount = Number(countResult?.totalAmount || 0);
 
     sql += ` ORDER BY date DESC, created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
     params.push(limit, offset);
 
     const expenses = await query<Expense>(sql, params);
 
-    return { expenses, total };
+    return { expenses, total, totalAmount };
   }
 
   async findById(id: number, userId: number, client?: PoolClient): Promise<Expense & { items: any[] }> {
