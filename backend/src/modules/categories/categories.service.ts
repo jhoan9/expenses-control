@@ -85,9 +85,10 @@ export class CategoriesService {
     const categories = await query<CategoryWithSubcategories>(sql, params);
 
     const debtCategoryIds = categories.filter(c => c.is_debt).map(c => c.id);
+    const categoryIds = categories.map(c => c.id);
     const subcategories = await query<Subcategory>(
       `SELECT * FROM subcategories WHERE deleted_at IS NULL AND category_id = ANY($1::int[]) ORDER BY category_id, name`,
-      [debtCategoryIds]
+      [categoryIds]
     );
 
     const byCategory = new Map<number, Subcategory[]>();
