@@ -6,6 +6,7 @@ import {
   createCategoryValidator,
   updateCategoryValidator,
   createSubcategoryValidator,
+  updateSubcategoryValidator,
 } from './categories.validator';
 
 const router = Router();
@@ -17,7 +18,7 @@ router.put('/:id', authenticate, validate(updateCategoryValidator), categoriesCo
 router.delete('/:id', authenticate, categoriesController.delete);
 
 router.post('/:id/subcategories', authenticate, validate(createSubcategoryValidator), categoriesController.addSubcategory);
-router.put('/:id/subcategories/:subcategoryId', authenticate, validate(createSubcategoryValidator), categoriesController.updateSubcategory);
+router.put('/:id/subcategories/:subcategoryId', authenticate, validate(updateSubcategoryValidator), categoriesController.updateSubcategory);
 router.delete('/:id/subcategories/:subcategoryId', authenticate, categoriesController.deleteSubcategory);
 
 export default router;

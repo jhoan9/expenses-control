@@ -469,7 +469,7 @@ export class InvestmentsComponent implements OnInit {
       position_id: [''],
     });
     this.abonoForm = this.fb.group({
-      amount: [null, [Validators.required, Validators.min(0.01)]],
+      amount: [null, [Validators.required, Validators.min(0.00000001)]],
       date: [todayLocal(), [Validators.required]],
       notes: [''],
     });

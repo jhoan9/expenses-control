@@ -1241,18 +1241,6 @@ td.actions-cell {
   color: var(--text-2);
 }
 
-.loan-badge {
-  display: inline-block;
-  padding: 3px 11px;
-  border-radius: var(--r-full);
-  font-size: var(--fs-xs);
-  font-weight: 600;
-  white-space: nowrap;
-  vertical-align: middle;
-  background: var(--info-soft);
-  color: var(--info);
-}
-
 .status-badge-op.closed {
   background: #eef1f5;
   color: var(--text-2);
@@ -1695,6 +1683,24 @@ td.actions-cell {
 .subcategory-name.inactive {
   color: var(--text-3);
   text-decoration: line-through;
+}
+
+.category-debt-flag {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: var(--r-full);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  background: var(--warning-soft);
+  color: #b45309;
+  margin-right: auto;
+}
+
+.debt-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: var(--s2);
 }
 
 .subcategory-actions {

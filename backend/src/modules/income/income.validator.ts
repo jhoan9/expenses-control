@@ -9,7 +9,7 @@ export const createIncomeValidator = [
     .isInt({ min: 1 })
     .withMessage('Category ID must be a positive integer'),
   body('amount')
-    .isFloat({ min: 0.01 })
+    .isFloat({ min: 0.00000001 })
     .withMessage('Amount must be a positive number'),
   body('description')
     .optional()
@@ -19,14 +19,10 @@ export const createIncomeValidator = [
   body('date')
     .isISO8601()
     .withMessage('Date must be a valid date (YYYY-MM-DD)'),
-  body('loan_id')
-    .optional({ nullable: true })
-    .isInt({ min: 1 })
-    .withMessage('Loan ID must be a positive integer'),
-  body('status')
+  body('subcategory_id')
     .optional()
-    .isIn(['pending', 'completed', 'cancelled'])
-    .withMessage('Status must be pending, completed or cancelled'),
+    .isInt({ min: 1 })
+    .withMessage('Subcategory ID must be a positive integer'),
 ];
 
 export const updateIncomeValidator = [
@@ -40,7 +36,7 @@ export const updateIncomeValidator = [
     .withMessage('Category ID must be a positive integer'),
   body('amount')
     .optional()
-    .isFloat({ min: 0.01 })
+    .isFloat({ min: 0.00000001 })
     .withMessage('Amount must be a positive number'),
   body('description')
     .optional()
@@ -51,12 +47,8 @@ export const updateIncomeValidator = [
     .optional()
     .isISO8601()
     .withMessage('Date must be a valid date (YYYY-MM-DD)'),
-  body('loan_id')
-    .optional({ nullable: true })
-    .isInt({ min: 1 })
-    .withMessage('Loan ID must be a positive integer'),
-  body('status')
+  body('subcategory_id')
     .optional()
-    .isIn(['pending', 'completed', 'cancelled'])
-    .withMessage('Status must be pending, completed or cancelled'),
+    .isInt({ min: 1 })
+    .withMessage('Subcategory ID must be a positive integer'),
 ];

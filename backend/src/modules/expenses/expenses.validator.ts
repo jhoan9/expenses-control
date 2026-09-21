@@ -17,7 +17,7 @@ const baseCreateValidator = [
     .isInt({ min: 1 })
     .withMessage('Payment method ID must be a positive integer'),
   body('amount')
-    .isFloat({ min: 0.01 })
+    .isFloat({ min: 0.00000001 })
     .withMessage('Amount must be a positive number'),
   body('description')
     .optional()
@@ -52,7 +52,7 @@ const baseUpdateValidator = [
     .withMessage('Payment method ID must be a positive integer'),
   body('amount')
     .optional()
-    .isFloat({ min: 0.01 })
+    .isFloat({ min: 0.00000001 })
     .withMessage('Amount must be a positive number'),
   body('description')
     .optional()

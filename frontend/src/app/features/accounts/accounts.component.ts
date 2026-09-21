@@ -264,13 +264,13 @@ export class AccountsComponent implements OnInit {
     });
     this.transferForm = this.fb.group({
       to_account_id: [null, [Validators.required]],
-      amount: [null, [Validators.required, Validators.min(0.01)]],
+      amount: [null, [Validators.required, Validators.min(0.00000001)]],
       applies_four_x_thousand: [false],
       description: [''],
     });
     this.abonoForm = this.fb.group({
       from_account_id: [null, [Validators.required]],
-      amount: [null, [Validators.required, Validators.min(0.01)]],
+      amount: [null, [Validators.required, Validators.min(0.00000001)]],
       description: [''],
     });
   }

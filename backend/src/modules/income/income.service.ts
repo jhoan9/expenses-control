@@ -7,11 +7,10 @@ interface Income {
   user_id: number;
   account_id: number;
   category_id: number | null;
-  loan_id: number | null;
+  subcategory_id: number | null;
   amount: number;
   description: string | null;
   date: string;
-  status: 'pending' | 'completed' | 'cancelled';
   created_at: Date;
   updated_at: Date;
 }
@@ -19,21 +18,19 @@ interface Income {
 interface CreateIncomeDTO {
   account_id: number;
   category_id?: number;
-  loan_id?: number | null;
+  subcategory_id?: number;
   amount: number;
   description?: string;
   date: string;
-  status?: 'pending' | 'completed' | 'cancelled';
 }
 
 interface UpdateIncomeDTO {
   account_id?: number;
   category_id?: number;
-  loan_id?: number | null;
+  subcategory_id?: number;
   amount?: number;
   description?: string;
   date?: string;
-  status?: 'pending' | 'completed' | 'cancelled';
 }
 
 interface IncomeFilters {
@@ -41,8 +38,7 @@ interface IncomeFilters {
   date_to?: string;
   category_id?: number;
   account_id?: number;
-  status?: string;
-  loan_id?: number;
+  subcategory_id?: number;
 }
 
 export class IncomeService {
@@ -53,45 +49,37 @@ export class IncomeService {
     limit: number = 20
   ): Promise<{ income: Income[]; total: number; totalAmount: number }> {
     const offset = (page - 1) * limit;
-    let sql =
-      'SELECT i.*, l.borrower_name as loan_borrower FROM income i LEFT JOIN loans l ON i.loan_id = l.id WHERE i.user_id = $1 AND i.deleted_at IS NULL';
+    let sql = 'SELECT * FROM income WHERE user_id = $1 AND deleted_at IS NULL';
     const params: any[] = [userId];
     let paramIndex = 2;
 
     if (filters.date_from) {
-      sql += ` AND i.date >= $${paramIndex++}`;
+      sql += ` AND date >= $${paramIndex++}`;
       params.push(filters.date_from);
     }
     if (filters.date_to) {
-      sql += ` AND i.date <= $${paramIndex++}`;
+      sql += ` AND date <= $${paramIndex++}`;
       params.push(filters.date_to);
     }
     if (filters.category_id) {
-      sql += ` AND i.category_id = $${paramIndex++}`;
+      sql += ` AND category_id = $${paramIndex++}`;
       params.push(filters.category_id);
     }
     if (filters.account_id) {
-      sql += ` AND i.account_id = $${paramIndex++}`;
+      sql += ` AND account_id = $${paramIndex++}`;
       params.push(filters.account_id);
     }
-    if (filters.status) {
-      sql += ` AND i.status = $${paramIndex++}`;
-      params.push(filters.status);
-    }
-    if (filters.loan_id) {
-      sql += ` AND i.loan_id = $${paramIndex++}`;
-      params.push(filters.loan_id);
+    if (filters.subcategory_id) {
+      sql += ` AND subcategory_id = $${paramIndex++}`;
+      params.push(filters.subcategory_id);
     }
 
-    const countSql = sql.replace(
-      'SELECT i.*, l.borrower_name as loan_borrower',
-      'SELECT COUNT(*) as total, COALESCE(SUM(i.amount), 0) as totalAmount'
-    );
+    const countSql = sql.replace('SELECT *', 'SELECT COUNT(*) as total, COALESCE(SUM(amount), 0) as totalAmount');
     const countResult = await queryOne<{ total: number; totalAmount: number }>(countSql, params);
     const total = countResult?.total || 0;
     const totalAmount = Number(countResult?.totalAmount || 0);
 
-    sql += ` ORDER BY i.date DESC, i.created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+    sql += ` ORDER BY date DESC, created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
     params.push(limit, offset);
 
     const income = await query<Income>(sql, params);
@@ -125,34 +113,11 @@ export class IncomeService {
         throw AppError.notFound('Account not found');
       }
 
-      let loan: any = null;
-      if (data.loan_id) {
-        loan = await queryOne<any>(
-          'SELECT id, amount, status, borrower_name FROM loans WHERE id = $1 AND lender_id = $2 AND deleted_at IS NULL',
-          [data.loan_id, userId],
-          client
-        );
-        if (!loan) {
-          throw AppError.notFound('Loan not found');
-        }
-      }
-
-      const status = data.status || (loan ? 'pending' : 'completed');
-
       const newBalance = Number(account.balance) + Number(data.amount);
 
       const result = await execute(
-        'INSERT INTO income (user_id, account_id, category_id, loan_id, amount, description, date, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id',
-        [
-          userId,
-          data.account_id,
-          data.category_id || null,
-          loan ? data.loan_id : null,
-          data.amount,
-          data.description || null,
-          data.date,
-          status,
-        ],
+        'INSERT INTO income (user_id, account_id, category_id, subcategory_id, amount, description, date) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+        [userId, data.account_id, data.category_id || null, data.subcategory_id || null, data.amount, data.description || null, data.date],
         client
       );
 
@@ -170,17 +135,8 @@ export class IncomeService {
         client
       );
 
-      if (loan) {
-        await execute(
-          'INSERT INTO loan_payments (loan_id, amount, description, date, income_id) VALUES ($1, $2, $3, $4, $5)',
-          [loan.id, data.amount, data.description || `Abono de ${loan.borrower_name || 'préstamo'}`, data.date, insertId],
-          client
-        );
-
-        const { paid } = await this.syncLoanFromPayments(loan.id, client);
-        if (paid) {
-          await execute('UPDATE income SET status = \'completed\' WHERE id = $1', [insertId], client);
-        }
+      if (data.subcategory_id) {
+        await this.clearSubcategoryDebtCompleted(data.subcategory_id, client);
       }
 
       return this.findById(insertId, userId, client);
@@ -189,7 +145,7 @@ export class IncomeService {
 
   async update(id: number, userId: number, data: UpdateIncomeDTO): Promise<Income> {
     return transaction(async (client: PoolClient) => {
-      const existing = await this.findById(id, userId, client);
+      const existing = await this.findById(id, userId);
 
       const fields: string[] = [];
       const values: any[] = [];
@@ -202,9 +158,9 @@ export class IncomeService {
         fields.push(`category_id = $${fields.length + 1}`);
         values.push(data.category_id);
       }
-      if (data.loan_id !== undefined) {
-        fields.push(`loan_id = $${fields.length + 1}`);
-        values.push(data.loan_id);
+      if (data.subcategory_id !== undefined) {
+        fields.push(`subcategory_id = $${fields.length + 1}`);
+        values.push(data.subcategory_id);
       }
       if (data.amount !== undefined) {
         fields.push(`amount = $${fields.length + 1}`);
@@ -217,10 +173,6 @@ export class IncomeService {
       if (data.date !== undefined) {
         fields.push(`date = $${fields.length + 1}`);
         values.push(data.date);
-      }
-      if (data.status !== undefined) {
-        fields.push(`status = $${fields.length + 1}`);
-        values.push(data.status);
       }
 
       if (fields.length === 0) {
@@ -295,7 +247,10 @@ export class IncomeService {
         client
       );
 
-      await this.syncIncomeLoan(client, id, existing, data);
+      const newSubcategoryId = data.subcategory_id !== undefined ? data.subcategory_id : existing.subcategory_id;
+      if (newSubcategoryId && newSubcategoryId !== existing.subcategory_id) {
+        await this.clearSubcategoryDebtCompleted(newSubcategoryId, client);
+      }
 
       return this.findById(id, userId, client);
     });
@@ -303,7 +258,7 @@ export class IncomeService {
 
   async delete(id: number, userId: number): Promise<void> {
     return transaction(async (client: PoolClient) => {
-      const existing = await this.findById(id, userId, client);
+      const existing = await this.findById(id, userId);
 
       const account = await queryOne<any>(
         'SELECT balance FROM accounts WHERE id = $1',
@@ -317,131 +272,33 @@ export class IncomeService {
         client
       );
 
-      if (existing.loan_id) {
-        await execute(
-          'DELETE FROM loan_payments WHERE income_id = $1 AND loan_id = $2',
-          [id, existing.loan_id],
-          client
-        );
-        await this.syncLoanFromPayments(existing.loan_id, client);
-      }
+      await execute(
+        'UPDATE income SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1',
+        [id],
+        client
+      );
 
       await execute(
         'DELETE FROM account_movements WHERE reference_type = \'income\' AND reference_id = $1',
         [id],
         client
       );
-
-      await execute(
-        'UPDATE income SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1',
-        [id],
-        client
-      );
     });
   }
 
-  private async syncLoanFromPayments(loanId: number, client: PoolClient): Promise<{ paid: boolean }> {
-    const loan = await queryOne<any>(
-      'SELECT id, amount, status FROM loans WHERE id = $1 AND deleted_at IS NULL',
-      [loanId],
+  private async clearSubcategoryDebtCompleted(subcategoryId: number, client: PoolClient): Promise<void> {
+    const sub = await queryOne<any>(
+      'SELECT s.id FROM subcategories s JOIN categories c ON c.id = s.category_id WHERE s.id = $1 AND c.is_debt = true',
+      [subcategoryId],
       client
     );
 
-    if (!loan) {
-      return { paid: false };
-    }
-
-    const totals = await queryOne<{ total: number }>(
-      'SELECT COALESCE(SUM(amount), 0) as total FROM loan_payments WHERE loan_id = $1',
-      [loanId],
-      client
-    );
-
-    const paid = Number(totals?.total || 0) >= Number(loan.amount);
-    const newStatus = paid ? 'paid' : 'active';
-
-    if (loan.status !== newStatus) {
+    if (sub) {
       await execute(
-        'UPDATE loans SET status = $1 WHERE id = $2',
-        [newStatus, loanId],
+        'UPDATE subcategories SET debt_completed = false WHERE id = $1',
+        [subcategoryId],
         client
       );
-    }
-
-    return { paid };
-  }
-
-  private async syncIncomeLoan(
-    client: PoolClient,
-    incomeId: number,
-    existing: Income,
-    data: UpdateIncomeDTO
-  ): Promise<void> {
-    const oldLoanId = existing.loan_id;
-    const newLoanId = data.loan_id !== undefined ? data.loan_id : existing.loan_id;
-    const amount = data.amount !== undefined ? data.amount : existing.amount;
-    const description = data.description !== undefined ? data.description : existing.description;
-    const date = data.date !== undefined ? data.date : existing.date;
-
-    if (oldLoanId) {
-      if (newLoanId === oldLoanId) {
-        await execute(
-          'UPDATE loan_payments SET amount = $1, description = $2, date = $3 WHERE income_id = $4 AND loan_id = $5',
-          [amount, description, date, incomeId, oldLoanId],
-          client
-        );
-        await this.syncLoanFromPayments(oldLoanId, client);
-      } else {
-        await execute(
-          'DELETE FROM loan_payments WHERE income_id = $1 AND loan_id = $2',
-          [incomeId, oldLoanId],
-          client
-        );
-        await this.syncLoanFromPayments(oldLoanId, client);
-
-        if (newLoanId) {
-          const loan = await queryOne<any>(
-            'SELECT id FROM loans WHERE id = $1 AND lender_id = $2 AND deleted_at IS NULL',
-            [newLoanId, existing.user_id],
-            client
-          );
-          if (!loan) {
-            throw AppError.notFound('Loan not found');
-          }
-          await execute(
-            'INSERT INTO loan_payments (loan_id, amount, description, date, income_id) VALUES ($1, $2, $3, $4, $5)',
-            [newLoanId, amount, description, date, incomeId],
-            client
-          );
-          await this.syncLoanFromPayments(newLoanId, client);
-        }
-      }
-    } else if (newLoanId) {
-      const loan = await queryOne<any>(
-        'SELECT id FROM loans WHERE id = $1 AND lender_id = $2 AND deleted_at IS NULL',
-        [newLoanId, existing.user_id],
-        client
-      );
-      if (!loan) {
-        throw AppError.notFound('Loan not found');
-      }
-      await execute(
-        'INSERT INTO loan_payments (loan_id, amount, description, date, income_id) VALUES ($1, $2, $3, $4, $5)',
-        [newLoanId, amount, description, date, incomeId],
-        client
-      );
-      await this.syncLoanFromPayments(newLoanId, client);
-    }
-
-    if (newLoanId && data.status === undefined) {
-      const loanInfo = await queryOne<any>(
-        'SELECT status FROM loans WHERE id = $1',
-        [newLoanId],
-        client
-      );
-      if (loanInfo?.status === 'paid') {
-        await execute('UPDATE income SET status = \'completed\' WHERE id = $1', [incomeId], client);
-      }
     }
   }
 }

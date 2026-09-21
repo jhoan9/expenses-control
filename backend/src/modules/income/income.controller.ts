@@ -12,8 +12,7 @@ export class IncomeController {
         date_to: req.query.date_to as string,
         category_id: req.query.category_id ? parseInt(req.query.category_id as string) : undefined,
         account_id: req.query.account_id ? parseInt(req.query.account_id as string) : undefined,
-        status: req.query.status as string,
-        loan_id: req.query.loan_id ? parseInt(req.query.loan_id as string) : undefined,
+        subcategory_id: req.query.subcategory_id ? parseInt(req.query.subcategory_id as string) : undefined,
       };
 
       const result = await incomeService.findAll(req.userId!, filters, page, limit);

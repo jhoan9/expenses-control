@@ -24,12 +24,6 @@ import { formatCurrency, todayLocal } from '../../shared/utils/format';
           <option value="">Todas las categorías</option>
           <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
         </select>
-        <select [(ngModel)]="filters.status" (change)="onFiltersChange()">
-          <option value="">Todos los estados</option>
-          <option value="completed">Completado</option>
-          <option value="pending">Pendiente</option>
-          <option value="cancelled">Cancelado</option>
-        </select>
       </div>
 
       <div class="table-container">
@@ -40,8 +34,6 @@ import { formatCurrency, todayLocal } from '../../shared/utils/format';
               <th>Descripción</th>
               <th>Categoría</th>
               <th>Cuenta</th>
-              <th>Préstamo</th>
-              <th>Estado</th>
               <th>Monto</th>
               <th>Acciones</th>
             </tr>
@@ -54,18 +46,9 @@ import { formatCurrency, todayLocal } from '../../shared/utils/format';
                 <span class="category-badge" [style.background]="getCategoryColor(item.category_id)">
                   {{ getCategoryName(item.category_id) }}
                 </span>
+                <span *ngIf="item.subcategory_id" class="subcategory-name">› {{ getSubcategoryName(item.subcategory_id) }}</span>
               </td>
               <td>{{ getAccountName(item.account_id) }}</td>
-              <td>
-                <span *ngIf="item.loan_id" class="loan-badge" [title]="getLoanHint(item.loan_id)">
-                  {{ getLoanName(item.loan_id) }}
-                </span>
-                <span *ngIf="!item.loan_id">-</span>
-              </td>
-              <td>
-                <span class="status-badge" [class]="'status-' + item.status">{{ getStatusLabel(item.status) }}</span>
-                <button *ngIf="item.status === 'pending'" class="btn-icon" (click)="markCompleted(item)" title="Marcar como completado">✓</button>
-              </td>
               <td class="amount positive">{{ formatCurrency(item.amount) }}</td>
               <td>
                 <button class="btn-icon" (click)="editItem(item)">✏️</button>
@@ -75,7 +58,7 @@ import { formatCurrency, todayLocal } from '../../shared/utils/format';
           </tbody>
           <tfoot>
             <tr>
-              <td colspan="6"><strong>Total</strong></td>
+              <td colspan="4"><strong>Total</strong></td>
               <td class="amount positive"><strong>{{ formatCurrency(totalAmount) }}</strong></td>
               <td></td>
             </tr>
@@ -127,32 +110,17 @@ import { formatCurrency, todayLocal } from '../../shared/utils/format';
 
             <div class="form-group">
               <label for="category_id">Categoría</label>
-              <select id="category_id" formControlName="category_id">
+              <select id="category_id" formControlName="category_id" (change)="onCategoryChange()">
                 <option value="">Sin categoría</option>
                 <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label for="loan_id">Vincular a préstamo <span class="hint">(opcional)</span></label>
-              <select id="loan_id" formControlName="loan_id" (change)="onLoanChange()">
-                <option [ngValue]="null">Sin préstamo</option>
-                <option *ngFor="let loan of loanOptions" [ngValue]="loan.id">
-                  {{ loan.borrower_name || 'Préstamo' }} — Pendiente {{ formatCurrency(loan.remaining || 0) }}
-                </option>
-              </select>
-              <small class="hint" *ngIf="selectedLoan">
-                Al guardar se registrará el abono de {{ formatCurrency(form.get('amount')?.value || 0) }} y el
-                préstamo quedará en {{ getStatusLabel(loanStatusLabel()) }}.
-              </small>
-            </div>
-
-            <div class="form-group">
-              <label for="status">Estado</label>
-              <select id="status" formControlName="status">
-                <option value="completed">Completado</option>
-                <option value="pending">Pendiente</option>
-                <option value="cancelled">Cancelado</option>
+              <label for="subcategory_id">Subcategoría</label>
+              <select id="subcategory_id" formControlName="subcategory_id">
+                <option value="">Sin subcategoría</option>
+                <option *ngFor="let sub of filteredSubcategories" [value]="sub.id">{{ sub.name }}</option>
               </select>
             </div>
 
@@ -178,12 +146,11 @@ export class IncomeComponent implements OnInit {
   income: any[] = [];
   accounts: any[] = [];
   categories: any[] = [];
-  loans: any[] = [];
   loading = false;
   showModal = false;
   editingId: number | null = null;
   saving = false;
-  filters: any = { date_from: '', date_to: '', category_id: '', status: '' };
+  filters: any = { date_from: '', date_to: '', category_id: '' };
   form: FormGroup;
 
   page = 1;
@@ -198,12 +165,11 @@ export class IncomeComponent implements OnInit {
     this.filters.date_to = today;
 
     this.form = this.fb.group({
-      amount: [null, [Validators.required, Validators.min(0.01)]],
+      amount: [null, [Validators.required, Validators.min(0.00000001)]],
       date: [today, [Validators.required]],
       account_id: [null, [Validators.required]],
       category_id: [null],
-      loan_id: [null],
-      status: ['completed'],
+      subcategory_id: [null],
       description: [''],
     });
   }
@@ -211,7 +177,6 @@ export class IncomeComponent implements OnInit {
   ngOnInit(): void {
     this.loadAccounts();
     this.loadCategories();
-    this.loadLoans();
     this.loadIncome();
   }
 
@@ -223,15 +188,10 @@ export class IncomeComponent implements OnInit {
     this.api.get<any>('/categories?type=income').subscribe({ next: (res) => this.categories = res.data });
   }
 
-  loadLoans(): void {
-    this.api.get<any>('/loans').subscribe({ next: (res) => this.loans = res.data });
-  }
-
   loadIncome(): void {
     this.loading = true;
     const params: any = { ...this.filters, page: this.page, limit: this.pageSize };
     if (!params.category_id) delete params.category_id;
-    if (!params.status) delete params.status;
     this.api.get<any>('/income', params).subscribe({
       next: (res) => {
         this.income = res.data;
@@ -281,10 +241,21 @@ export class IncomeComponent implements OnInit {
     return this.totalSum;
   }
 
+  get filteredSubcategories(): any[] {
+    const catId = this.form.get('category_id')?.value;
+    if (!catId) return [];
+    const cat = this.categories.find(c => c.id == catId);
+    return cat?.subcategories || [];
+  }
+
+  onCategoryChange(): void {
+    this.form.patchValue({ subcategory_id: null });
+  }
+
   openModal(): void {
     this.editingId = null;
     const today = todayLocal();
-    this.form.reset({ amount: null, date: today, account_id: null, category_id: null, loan_id: null, status: 'completed', description: '' });
+    this.form.reset({ amount: null, date: today, account_id: null, category_id: null, subcategory_id: null, description: '' });
     this.showModal = true;
   }
 
@@ -300,8 +271,7 @@ export class IncomeComponent implements OnInit {
       date: item.date,
       account_id: item.account_id,
       category_id: item.category_id,
-      loan_id: item.loan_id,
-      status: item.status || 'completed',
+      subcategory_id: item.subcategory_id,
       description: item.description,
     });
     this.showModal = true;
@@ -343,51 +313,13 @@ export class IncomeComponent implements OnInit {
     return this.categories.find(c => c.id === id)?.color || '#999';
   }
 
-  get loanOptions(): any[] {
-    const currentId = this.form?.get('loan_id')?.value;
-    return this.loans.filter(l => (l.status !== 'cancelled' || l.id === currentId));
-  }
-
-  get selectedLoan(): any {
-    const id = this.form?.get('loan_id')?.value;
-    return this.loans.find(l => l.id === id) || null;
-  }
-
-  onLoanChange(): void {
-    const loan = this.selectedLoan;
-    if (loan) {
-      this.form.get('status')?.setValue('pending');
+  getSubcategoryName(id: number): string {
+    for (const cat of this.categories) {
+      const subs: any[] = cat.subcategories || [];
+      const sub = subs.find(s => s.id === id);
+      if (sub) return sub.name;
     }
-  }
-
-  loanStatusLabel(): 'completado' | 'abierto' {
-    const loan = this.selectedLoan;
-    if (!loan) return 'abierto';
-    return (loan.status === 'paid' || Number(loan.remaining || 0) <= 0) ? 'completado' : 'abierto';
-  }
-
-  getLoanName(id: number): string {
-    return this.loans.find(l => l.id === id)?.borrower_name || '-';
-  }
-
-  getLoanHint(id: number): string {
-    const loan = this.loans.find(l => l.id === id);
-    if (!loan) return '';
-    return `Pendiente: ${formatCurrency(loan.remaining || 0)}`;
-  }
-
-  getStatusLabel(status: string): string {
-    switch (status) {
-      case 'completed': return 'Completado';
-      case 'pending': return 'Pendiente';
-      case 'cancelled': return 'Cancelado';
-      default: return status || '-';
-    }
-  }
-
-  markCompleted(item: any): void {
-    if (!confirm(`¿Marcar como completado el ingreso "${item.description || item.date}"?`)) return;
-    this.api.put(`/income/${item.id}`, { status: 'completed' }).subscribe({ next: () => this.loadIncome() });
+    return '-';
   }
 
 }

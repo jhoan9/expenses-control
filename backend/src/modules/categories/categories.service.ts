@@ -8,6 +8,7 @@ interface Category {
   icon: string | null;
   color: string | null;
   is_active: boolean;
+  is_debt: boolean;
   user_id: number | null;
   created_at: Date;
 }
@@ -17,7 +18,13 @@ interface Subcategory {
   category_id: number;
   name: string;
   is_active: boolean;
+  debt_completed: boolean;
   created_at: Date;
+  debt_stats?: {
+    borrowed: number;
+    repaid: number;
+    pending: number;
+  };
 }
 
 interface CategoryWithSubcategories extends Category {
@@ -29,6 +36,7 @@ interface CreateCategoryDTO {
   type?: 'expense' | 'income' | 'both';
   icon?: string;
   color?: string;
+  is_debt?: boolean;
   user_id?: number | null;
 }
 
@@ -37,11 +45,23 @@ interface UpdateCategoryDTO {
   type?: 'expense' | 'income' | 'both';
   icon?: string;
   color?: string;
+  is_debt?: boolean;
   is_active?: boolean;
 }
 
 interface CreateSubcategoryDTO {
   name: string;
+}
+
+interface UpdateSubcategoryDTO {
+  name?: string;
+  is_active?: boolean;
+  debt_completed?: boolean;
+}
+
+interface DebtTotals {
+  borrowed: Map<number, number>;
+  repaid: Map<number, number>;
 }
 
 export class CategoriesService {
@@ -64,11 +84,36 @@ export class CategoriesService {
 
     const categories = await query<CategoryWithSubcategories>(sql, params);
 
+    const debtCategoryIds = categories.filter(c => c.is_debt).map(c => c.id);
+    const subcategories = await query<Subcategory>(
+      `SELECT * FROM subcategories WHERE deleted_at IS NULL AND category_id = ANY($1::int[]) ORDER BY category_id, name`,
+      [debtCategoryIds]
+    );
+
+    const byCategory = new Map<number, Subcategory[]>();
+    for (const cat of categories) {
+      byCategory.set(cat.id, subcategories.filter(s => s.category_id === cat.id));
+    }
+
+    let debtTotals: DebtTotals | null = null;
+    if (userId && debtCategoryIds.length > 0) {
+      debtTotals = await this.computeDebtTotals(userId, subcategories.map(s => s.id));
+    }
+
     for (const category of categories) {
-      category.subcategories = await query<Subcategory>(
-        'SELECT * FROM subcategories WHERE category_id = $1 AND deleted_at IS NULL ORDER BY name',
-        [category.id]
-      );
+      const subs = byCategory.get(category.id) || [];
+      if (debtTotals && category.is_debt) {
+        for (const sub of subs) {
+          const borrowed = debtTotals.borrowed.get(sub.id) || 0;
+          const repaid = debtTotals.repaid.get(sub.id) || 0;
+          sub.debt_stats = {
+            borrowed,
+            repaid,
+            pending: Math.round((borrowed - repaid) * 100000000) / 100000000,
+          };
+        }
+      }
+      category.subcategories = subs;
     }
 
     return categories;
@@ -94,8 +139,8 @@ export class CategoriesService {
 
   async create(data: CreateCategoryDTO): Promise<Category> {
     const result = await execute(
-      'INSERT INTO categories (name, type, icon, color, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-      [data.name, data.type || 'both', data.icon || null, data.color || null, data.user_id || null]
+      'INSERT INTO categories (name, type, icon, color, user_id, is_debt) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+      [data.name, data.type || 'both', data.icon || null, data.color || null, data.user_id || null, data.is_debt || false]
     );
 
     return queryOne<Category>(
@@ -134,6 +179,10 @@ export class CategoriesService {
     if (data.is_active !== undefined) {
       fields.push(`is_active = $${fields.length + 1}`);
       values.push(data.is_active);
+    }
+    if (data.is_debt !== undefined) {
+      fields.push(`is_debt = $${fields.length + 1}`);
+      values.push(data.is_debt);
     }
 
     if (fields.length === 0) {
@@ -176,7 +225,7 @@ export class CategoriesService {
     return subcategory as Subcategory;
   }
 
-  async updateSubcategory(id: number, data: Partial<CreateSubcategoryDTO>): Promise<Subcategory> {
+  async updateSubcategory(id: number, data: UpdateSubcategoryDTO): Promise<Subcategory> {
     const subcategory = await queryOne<Subcategory>(
       'SELECT * FROM subcategories WHERE id = $1 AND deleted_at IS NULL',
       [id]
@@ -186,10 +235,27 @@ export class CategoriesService {
       throw AppError.notFound('Subcategory not found');
     }
 
+    const fields: string[] = [];
+    const values: any[] = [];
+
     if (data.name !== undefined) {
+      fields.push(`name = $${fields.length + 1}`);
+      values.push(data.name);
+    }
+    if (data.is_active !== undefined) {
+      fields.push(`is_active = $${fields.length + 1}`);
+      values.push(data.is_active);
+    }
+    if (data.debt_completed !== undefined) {
+      fields.push(`debt_completed = $${fields.length + 1}`);
+      values.push(data.debt_completed);
+    }
+
+    if (fields.length > 0) {
+      values.push(id);
       await execute(
-        'UPDATE subcategories SET name = $1 WHERE id = $2',
-        [data.name, id]
+        `UPDATE subcategories SET ${fields.join(', ')} WHERE id = $${fields.length + 1} AND deleted_at IS NULL`,
+        values
       );
     }
 
@@ -210,6 +276,37 @@ export class CategoriesService {
     }
 
     await execute('UPDATE subcategories SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1', [id]);
+  }
+
+  private async computeDebtTotals(userId: number, subcategoryIds: number[]): Promise<DebtTotals> {
+    const borrowed = new Map<number, number>();
+    const repaid = new Map<number, number>();
+
+    if (subcategoryIds.length === 0) {
+      return { borrowed, repaid };
+    }
+
+    const incomeRows = await query<{ subcategory_id: number; total: string }>(
+      `SELECT subcategory_id, SUM(amount) as total FROM income
+       WHERE user_id = $1 AND deleted_at IS NULL AND subcategory_id = ANY($2::int[])
+       GROUP BY subcategory_id`,
+      [userId, subcategoryIds]
+    );
+    for (const row of incomeRows) {
+      borrowed.set(row.subcategory_id, Number(row.total) || 0);
+    }
+
+    const expenseRows = await query<{ subcategory_id: number; total: string }>(
+      `SELECT subcategory_id, SUM(amount) as total FROM expenses
+       WHERE user_id = $1 AND deleted_at IS NULL AND status = 'completed' AND subcategory_id = ANY($2::int[])
+       GROUP BY subcategory_id`,
+      [userId, subcategoryIds]
+    );
+    for (const row of expenseRows) {
+      repaid.set(row.subcategory_id, Number(row.total) || 0);
+    }
+
+    return { borrowed, repaid };
   }
 }
 

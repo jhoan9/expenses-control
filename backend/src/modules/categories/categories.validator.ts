@@ -18,6 +18,10 @@ export const createCategoryValidator = [
     .optional()
     .matches(/^#[0-9A-Fa-f]{6}$/)
     .withMessage('Color must be a valid hex color'),
+  body('is_debt')
+    .optional()
+    .isBoolean()
+    .withMessage('is_debt must be a boolean'),
 ];
 
 export const updateCategoryValidator = [
@@ -43,6 +47,10 @@ export const updateCategoryValidator = [
     .optional()
     .isBoolean()
     .withMessage('is_active must be a boolean'),
+  body('is_debt')
+    .optional()
+    .isBoolean()
+    .withMessage('is_debt must be a boolean'),
 ];
 
 export const createSubcategoryValidator = [
@@ -50,4 +58,20 @@ export const createSubcategoryValidator = [
     .trim()
     .isLength({ min: 1, max: 100 })
     .withMessage('Name is required and must be between 1 and 100 characters'),
+];
+
+export const updateSubcategoryValidator = [
+  body('name')
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Name must be between 1 and 100 characters'),
+  body('is_active')
+    .optional()
+    .isBoolean()
+    .withMessage('is_active must be a boolean'),
+  body('debt_completed')
+    .optional()
+    .isBoolean()
+    .withMessage('debt_completed must be a boolean'),
 ];

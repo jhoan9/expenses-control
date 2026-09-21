@@ -21,7 +21,6 @@ interface LoanPayment {
   amount: number;
   date: string;
   description: string | null;
-  income_id: number | null;
   created_at: Date;
 }
 
@@ -224,42 +223,6 @@ export class LoansService {
 
       if (!payment) {
         throw AppError.notFound('Payment not found');
-      }
-
-      if (payment.income_id) {
-        const income = await queryOne<any>(
-          'SELECT * FROM income WHERE id = $1',
-          [payment.income_id],
-          client
-        );
-
-        if (income && !income.deleted_at) {
-          const account = await queryOne<any>(
-            'SELECT balance FROM accounts WHERE id = $1',
-            [income.account_id],
-            client
-          );
-
-          if (account) {
-            await execute(
-              'UPDATE accounts SET balance = $1 WHERE id = $2',
-              [Number(account.balance) - Number(income.amount), income.account_id],
-              client
-            );
-          }
-
-          await execute(
-            'DELETE FROM account_movements WHERE reference_type = \'income\' AND reference_id = $1',
-            [income.id],
-            client
-          );
-
-          await execute(
-            'UPDATE income SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1',
-            [income.id],
-            client
-          );
-        }
       }
 
       await execute('DELETE FROM loan_payments WHERE id = $1', [id], client);

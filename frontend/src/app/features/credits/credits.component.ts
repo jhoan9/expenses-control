@@ -259,7 +259,7 @@ export class CreditsComponent implements OnInit {
       due_date: [''],
     });
     this.paymentForm = this.fb.group({
-      amount: [null, [Validators.required, Validators.min(0.01)]],
+      amount: [null, [Validators.required, Validators.min(0.00000001)]],
       minimum_payment: [null],
       date: [todayLocal(), [Validators.required]],
     });

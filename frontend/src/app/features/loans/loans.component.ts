@@ -286,12 +286,12 @@ export class LoansComponent implements OnInit {
   constructor(private api: ApiService, private fb: FormBuilder) {
     this.loanForm = this.fb.group({
       borrower_name: ['', [Validators.required, Validators.maxLength(100)]],
-      amount: [null, [Validators.required, Validators.min(0.01)]],
+      amount: [null, [Validators.required, Validators.min(0.00000001)]],
       date: [todayLocal(), [Validators.required]],
       description: [''],
     });
     this.paymentForm = this.fb.group({
-      amount: [null, [Validators.required, Validators.min(0.01)]],
+      amount: [null, [Validators.required, Validators.min(0.00000001)]],
       date: [todayLocal(), [Validators.required]],
       description: [''],
     });

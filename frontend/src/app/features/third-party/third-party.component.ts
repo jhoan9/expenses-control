@@ -235,7 +235,7 @@ export class ThirdPartyComponent implements OnInit {
     });
     this.movementForm = this.fb.group({
       type: ['', [Validators.required]],
-      amount: [null, [Validators.required, Validators.min(0.01)]],
+      amount: [null, [Validators.required, Validators.min(0.00000001)]],
       date: [todayLocal(), [Validators.required]],
       description: [''],
     });

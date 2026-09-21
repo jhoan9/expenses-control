@@ -27,6 +27,7 @@ import { formatCurrency } from '../../shared/utils/format';
         <div class="category-card" *ngFor="let cat of filteredCategories">
           <div class="card-header">
             <h3>{{ cat.name }}</h3>
+            <span *ngIf="cat.is_debt" class="category-debt-flag">Deuda</span>
             <div class="card-actions">
               <button class="btn-icon" (click)="openCategoryModal(cat)">✏️</button>
               <button class="btn-icon" (click)="deleteCategory(cat.id)">🗑️</button>
@@ -37,6 +38,13 @@ import { formatCurrency } from '../../shared/utils/format';
             <div class="subcategory-item" *ngFor="let sub of cat.subcategories">
               <div class="subcategory-info" *ngIf="editingSubId !== sub.id">
                 <span class="subcategory-name" [class.inactive]="!sub.is_active">{{ sub.name }}</span>
+                <ng-container *ngIf="cat.is_debt">
+                  <span class="status-badge status-completed" *ngIf="isDebtSaldada(cat, sub)">Completada</span>
+                  <span class="debt-pill" *ngIf="!isDebtSaldada(cat, sub)">
+                    <span class="status-badge status-pending">Pendiente {{ formatCurrency(debtPending(cat, sub)) }}</span>
+                    <button class="btn-icon-sm" (click)="saldarSub(cat, sub)" title="Marcar deuda como completada">✓</button>
+                  </span>
+                </ng-container>
               </div>
               <div class="subcategory-edit" *ngIf="editingSubId === sub.id">
                 <input [(ngModel)]="editingSubName" (keyup.enter)="saveSubcategory(cat.id, sub)" (keyup.escape)="cancelSubEdit()" class="sub-input" />
@@ -106,6 +114,13 @@ import { formatCurrency } from '../../shared/utils/format';
               </label>
             </div>
 
+            <div class="form-group">
+              <label class="toggle-label">
+                <input type="checkbox" formControlName="is_debt" />
+                <span>Corresponde a una deuda <small class="hint">(cada subcategoría será una persona a la que debes)</small></span>
+              </label>
+            </div>
+
             <div class="modal-footer">
               <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
               <button type="submit" class="btn-primary" [disabled]="categoryForm.invalid || saving">
@@ -142,6 +157,7 @@ export class CategoriesComponent implements OnInit {
       icon: [''],
       color: ['#4caf50'],
       is_active: [true],
+      is_debt: [false],
     });
   }
 
@@ -175,10 +191,11 @@ export class CategoriesComponent implements OnInit {
         icon: category.icon || '',
         color: category.color || '#4caf50',
         is_active: category.is_active !== false,
+        is_debt: !!category.is_debt,
       });
     } else {
       this.editingCategoryId = null;
-      this.categoryForm.reset({ name: '', type: '', icon: '', color: '#4caf50', is_active: true });
+      this.categoryForm.reset({ name: '', type: '', icon: '', color: '#4caf50', is_active: true, is_debt: false });
     }
     this.showModal = true;
   }
@@ -256,6 +273,23 @@ export class CategoriesComponent implements OnInit {
   getTypeLabel(type: string): string {
     const labels: Record<string, string> = { expense: 'Gasto', income: 'Ingreso', both: 'Ambos' };
     return labels[type] || type;
+  }
+
+  debtPending(cat: any, sub: any): number {
+    return sub.debt_stats ? sub.debt_stats.pending : 0;
+  }
+
+  isDebtSaldada(cat: any, sub: any): boolean {
+    if (sub.debt_completed) return true;
+    if (sub.debt_stats && sub.debt_stats.pending <= 0) return true;
+    return false;
+  }
+
+  saldarSub(cat: any, sub: any): void {
+    if (!confirm(`¿Marcar la deuda "${sub.name}" como completada? Se reabrirá si registras otro movimiento en ella.`)) return;
+    this.api.put(`/categories/${cat.id}/subcategories/${sub.id}`, { debt_completed: true }).subscribe({
+      next: () => this.loadCategories(),
+    });
   }
 
 }

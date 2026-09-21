@@ -225,7 +225,7 @@ export class ExpensesComponent implements OnInit {
 
   constructor(private api: ApiService, private fb: FormBuilder) {
     this.form = this.fb.group({
-      amount: [null, [Validators.required, Validators.min(0.01)]],
+      amount: [null, [Validators.required, Validators.min(0.00000001)]],
       date: [todayLocal(), [Validators.required]],
       account_id: [null, [Validators.required]],
       category_id: [null],
