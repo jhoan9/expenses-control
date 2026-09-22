@@ -133,7 +133,7 @@ export class ExpensesService {
   async create(userId: number, data: CreateExpenseDTO): Promise<Expense> {
     return transaction(async (client: PoolClient) => {
       const account = await queryOne<any>(
-        'SELECT id, balance FROM accounts WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL',
+        'SELECT id, balance, type, credit_limit FROM accounts WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL',
         [data.account_id, userId],
         client
       );
@@ -142,8 +142,17 @@ export class ExpensesService {
         throw AppError.notFound('Account not found');
       }
 
-      if (data.status !== 'pending' && Number(account.balance) < Number(data.amount)) {
-        throw AppError.badRequest('Insufficient balance');
+      const isCard = account.type === 'credit_card';
+
+      if (data.status !== 'pending') {
+        if (isCard) {
+          const after = Number(account.balance) + Number(data.amount);
+          if (account.credit_limit > 0 && after > Number(account.credit_limit)) {
+            throw AppError.badRequest('Exceeds card credit limit');
+          }
+        } else if (Number(account.balance) < Number(data.amount)) {
+          throw AppError.badRequest('Insufficient balance');
+        }
       }
 
       const result = await execute(
@@ -175,7 +184,10 @@ export class ExpensesService {
       }
 
       if (data.status !== 'pending') {
-        const newBalance = Number(account.balance) - Number(data.amount);
+        // credit cards: debt grows with each purchase; other accounts spend down balance
+        const newBalance = isCard
+          ? Number(account.balance) + Number(data.amount)
+          : Number(account.balance) - Number(data.amount);
 
         await execute(
           'UPDATE accounts SET balance = $1 WHERE id = $2',
@@ -244,7 +256,7 @@ export class ExpensesService {
 
       if (existing.status !== 'pending') {
         const oldAccount = await queryOne<any>(
-          'SELECT balance FROM accounts WHERE id = $1',
+          'SELECT balance, type FROM accounts WHERE id = $1',
           [existing.account_id],
           client
         );
@@ -253,16 +265,21 @@ export class ExpensesService {
           throw AppError.notFound('Account not found');
         }
 
+        // Reverse previous effect: card debt goes down, regular balance goes up
+        const reversedBalance = oldAccount.type === 'credit_card'
+          ? Number(oldAccount.balance) - Number(existing.amount)
+          : Number(oldAccount.balance) + Number(existing.amount);
+
         await execute(
           'UPDATE accounts SET balance = $1 WHERE id = $2',
-          [Number(oldAccount.balance) + Number(existing.amount), existing.account_id],
+          [reversedBalance, existing.account_id],
           client
         );
       }
 
       if (newStatus !== 'pending') {
         const newAccount = await queryOne<any>(
-          'SELECT balance FROM accounts WHERE id = $1',
+          'SELECT balance, type, credit_limit FROM accounts WHERE id = $1',
           [newAccountId],
           client
         );
@@ -271,13 +288,22 @@ export class ExpensesService {
           throw AppError.notFound('Account not found');
         }
 
-        if (Number(newAccount.balance) < Number(newAmount)) {
+        if (newAccount.type === 'credit_card') {
+          const after = Number(newAccount.balance) + Number(newAmount);
+          if (newAccount.credit_limit > 0 && after > Number(newAccount.credit_limit)) {
+            throw AppError.badRequest('Exceeds card credit limit');
+          }
+        } else if (Number(newAccount.balance) < Number(newAmount)) {
           throw AppError.badRequest('Insufficient balance');
         }
 
+        const appliedBalance = newAccount.type === 'credit_card'
+          ? Number(newAccount.balance) + Number(newAmount)
+          : Number(newAccount.balance) - Number(newAmount);
+
         await execute(
           'UPDATE accounts SET balance = $1 WHERE id = $2',
-          [Number(newAccount.balance) - Number(newAmount), newAccountId],
+          [appliedBalance, newAccountId],
           client
         );
       }
@@ -368,7 +394,7 @@ export class ExpensesService {
 
       if (existing.status !== 'pending') {
         const account = await queryOne<any>(
-          'SELECT balance FROM accounts WHERE id = $1',
+          'SELECT balance, type FROM accounts WHERE id = $1',
           [existing.account_id],
           client
         );
@@ -377,9 +403,14 @@ export class ExpensesService {
           throw AppError.notFound('Account not found');
         }
 
+        // Revert effect: card debt goes down, regular balance goes up
+        const revertedBalance = account.type === 'credit_card'
+          ? Number(account.balance) - Number(existing.amount)
+          : Number(account.balance) + Number(existing.amount);
+
         await execute(
           'UPDATE accounts SET balance = $1 WHERE id = $2',
-          [Number(account.balance) + Number(existing.amount), existing.account_id],
+          [revertedBalance, existing.account_id],
           client
         );
       }

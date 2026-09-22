@@ -5,6 +5,7 @@ const BACKEND_MESSAGES: Record<string, string> = {
   'Insufficient balance (including 4x1000 tax)':
     'Saldo insuficiente (considera el impuesto 4x1000)',
   'Payment exceeds current card debt': 'El pago supera la deuda actual de la tarjeta',
+  'Exceeds card credit limit': 'El gasto supera el cupo disponible de la tarjeta',
   'Account is not a credit card': 'La cuenta seleccionada no es una tarjeta de crédito',
   'Cannot transfer to the same account': 'No se puede transferir a la misma cuenta',
   'Amount must be greater than zero': 'El monto debe ser mayor que cero',
