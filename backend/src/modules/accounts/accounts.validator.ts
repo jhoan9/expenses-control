@@ -59,6 +59,10 @@ export const transferValidator = [
     .optional()
     .isBoolean()
     .withMessage('applies_four_x_thousand must be a boolean'),
+  body('date')
+    .optional()
+    .isISO8601()
+    .withMessage('Date must be a valid date (YYYY-MM-DD)'),
   body('description')
     .optional()
     .trim()

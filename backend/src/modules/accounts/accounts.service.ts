@@ -38,6 +38,7 @@ interface TransferDTO {
   amount: number;
   applies_four_x_thousand?: boolean;
   description?: string;
+  date?: string;
 }
 
 interface CreditCardPaymentDTO {
@@ -47,6 +48,12 @@ interface CreditCardPaymentDTO {
 }
 
 const FOUR_X_THOUSAND_RATE = 0.004;
+
+const computeFourXThousandTax = (amount: number, role?: string): number => {
+  // ji01 uses a decimal system: keep full precision (8 decimals)
+  const decimals = role === 'ji01' ? 100000000 : 100000;
+  return Math.round(amount * FOUR_X_THOUSAND_RATE * decimals) / decimals;
+};
 
 export class AccountsService {
   async findAllByUser(userId: number): Promise<Account[]> {
@@ -142,7 +149,7 @@ export class AccountsService {
     return this.findById(id, userId);
   }
 
-  async transfer(fromId: number, toId: number, userId: number, data: TransferDTO): Promise<Account> {
+  async transfer(fromId: number, toId: number, userId: number, data: TransferDTO, role?: string): Promise<Account> {
     if (fromId === toId) {
       throw AppError.badRequest('Cannot transfer to the same account');
     }
@@ -151,7 +158,7 @@ export class AccountsService {
     const to = await this.findById(toId, userId);
 
     const amount = Number(data.amount);
-    const tax = data.applies_four_x_thousand ? Math.round(amount * FOUR_X_THOUSAND_RATE * 100000) / 100000 : 0;
+    const tax = data.applies_four_x_thousand ? computeFourXThousandTax(amount, role) : 0;
     const totalDebit = amount + tax;
 
     if (Number(from.balance) < totalDebit) {
@@ -174,14 +181,15 @@ export class AccountsService {
       );
 
       const description = data.description || `Transfer to ${to.name}`;
+      const date = data.date || new Date().toISOString().split('T')[0];
       await execute(
-        'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description, date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_DATE)',
-        [fromId, 'transfer', totalDebit, from.balance, newFromBalance, 'transfer', toId, description],
+        'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description, date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
+        [fromId, 'transfer', totalDebit, from.balance, newFromBalance, 'transfer', toId, description, date],
         client
       );
       await execute(
-        'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description, date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_DATE)',
-        [toId, 'transfer', amount, to.balance, newToBalance, 'transfer', fromId, `Transfer from ${from.name}`],
+        'INSERT INTO account_movements (account_id, type, amount, balance_before, balance_after, reference_type, reference_id, description, date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
+        [toId, 'transfer', amount, to.balance, newToBalance, 'transfer', fromId, `Transfer from ${from.name}`, date],
         client
       );
 

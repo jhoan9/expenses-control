@@ -69,7 +69,7 @@ export class AccountsController {
   async transfer(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = parseInt(req.params.id);
-      const account = await accountsService.transfer(id, req.body.to_account_id, req.userId!, req.body);
+      const account = await accountsService.transfer(id, req.body.to_account_id, req.userId!, req.body, req.userRole);
       res.json({
         success: true,
         data: account,

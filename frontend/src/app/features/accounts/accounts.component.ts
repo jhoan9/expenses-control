@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
-import { formatCurrency } from '../../shared/utils/format';
+import { formatCurrency, todayLocal } from '../../shared/utils/format';
 import { ToastService } from '../../core/toast/toast.service';
 
 @Component({
@@ -157,6 +157,11 @@ import { ToastService } from '../../core/toast/toast.service';
               <app-currency-input id="transfer-amount" formControlName="amount" placeholder="0" />
             </div>
 
+            <div class="form-group">
+              <label for="transfer-date">Fecha de Transferencia</label>
+              <input id="transfer-date" type="date" formControlName="date" />
+            </div>
+
             <div class="form-group tax-box">
               <label class="checkbox-label">
                 <input type="checkbox" formControlName="applies_four_x_thousand" />
@@ -265,6 +270,7 @@ export class AccountsComponent implements OnInit {
     this.transferForm = this.fb.group({
       to_account_id: [null, [Validators.required]],
       amount: [null, [Validators.required, Validators.min(0.00000001)]],
+      date: [todayLocal(), [Validators.required]],
       applies_four_x_thousand: [false],
       description: [''],
     });
@@ -301,7 +307,17 @@ export class AccountsComponent implements OnInit {
 
   get fourXThousandTax(): number {
     if (!this.transferForm.value.applies_four_x_thousand) return 0;
-    return Math.round(this.transferAmount * 0.004 * 100000) / 100000;
+    const decimals = this.isJi01Role ? 100000000 : 100000;
+    return Math.round(this.transferAmount * 0.004 * decimals) / decimals;
+  }
+
+  get isJi01Role(): boolean {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      return user.role === 'ji01';
+    } catch {
+      return false;
+    }
   }
 
   openTransfer(account: any): void {
@@ -310,6 +326,7 @@ export class AccountsComponent implements OnInit {
     this.transferForm.reset({
       to_account_id: null,
       amount: null,
+      date: todayLocal(),
       applies_four_x_thousand: false,
       description: '',
     });
