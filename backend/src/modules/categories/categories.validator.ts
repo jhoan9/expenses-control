@@ -1,5 +1,15 @@
 import { body } from 'express-validator';
 
+const debtKindCheck = () =>
+  body('is_debt')
+    .custom((value, { req }) => {
+      if (req.body.is_debt && req.body.is_receivable) {
+        throw new Error('A category cannot be a debt and a receivable at the same time');
+      }
+      return true;
+    })
+    .withMessage('A category cannot be a debt and a receivable at the same time');
+
 export const createCategoryValidator = [
   body('name')
     .trim()
@@ -22,6 +32,11 @@ export const createCategoryValidator = [
     .optional()
     .isBoolean()
     .withMessage('is_debt must be a boolean'),
+  body('is_receivable')
+    .optional()
+    .isBoolean()
+    .withMessage('is_receivable must be a boolean'),
+  debtKindCheck(),
 ];
 
 export const updateCategoryValidator = [
@@ -51,6 +66,11 @@ export const updateCategoryValidator = [
     .optional()
     .isBoolean()
     .withMessage('is_debt must be a boolean'),
+  body('is_receivable')
+    .optional()
+    .isBoolean()
+    .withMessage('is_receivable must be a boolean'),
+  debtKindCheck(),
 ];
 
 export const createSubcategoryValidator = [

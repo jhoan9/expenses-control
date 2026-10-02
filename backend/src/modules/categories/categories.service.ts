@@ -9,6 +9,7 @@ interface Category {
   color: string | null;
   is_active: boolean;
   is_debt: boolean;
+  is_receivable: boolean;
   user_id: number | null;
   created_at: Date;
 }
@@ -20,11 +21,19 @@ interface Subcategory {
   is_active: boolean;
   debt_completed: boolean;
   created_at: Date;
-  debt_stats?: {
-    borrowed: number;
-    repaid: number;
-    pending: number;
-  };
+  debt_stats?: DebtStats;
+}
+
+interface DebtStats {
+  /** is_debt: plata recibida al asumir la deuda */
+  borrowed?: number;
+  /** is_debt: abonos pagados */
+  repaid?: number;
+  /** is_receivable: plata prestada */
+  lent?: number;
+  /** is_receivable: plata recuperada */
+  recovered?: number;
+  pending: number;
 }
 
 interface CategoryWithSubcategories extends Category {
@@ -37,6 +46,7 @@ interface CreateCategoryDTO {
   icon?: string;
   color?: string;
   is_debt?: boolean;
+  is_receivable?: boolean;
   user_id?: number | null;
 }
 
@@ -46,6 +56,7 @@ interface UpdateCategoryDTO {
   icon?: string;
   color?: string;
   is_debt?: boolean;
+  is_receivable?: boolean;
   is_active?: boolean;
 }
 
@@ -60,8 +71,8 @@ interface UpdateSubcategoryDTO {
 }
 
 interface DebtTotals {
-  borrowed: Map<number, number>;
-  repaid: Map<number, number>;
+  income: Map<number, number>;
+  expenses: Map<number, number>;
 }
 
 export class CategoriesService {
@@ -84,7 +95,7 @@ export class CategoriesService {
 
     const categories = await query<CategoryWithSubcategories>(sql, params);
 
-    const debtCategoryIds = categories.filter(c => c.is_debt).map(c => c.id);
+    const debtCategoryIds = categories.filter(c => c.is_debt || c.is_receivable).map(c => c.id);
     const categoryIds = categories.map(c => c.id);
     const subcategories = await query<Subcategory>(
       `SELECT * FROM subcategories WHERE deleted_at IS NULL AND category_id = ANY($1::int[]) ORDER BY category_id, name`,
@@ -96,21 +107,31 @@ export class CategoriesService {
       byCategory.set(cat.id, subcategories.filter(s => s.category_id === cat.id));
     }
 
-    let debtTotals: DebtTotals | null = null;
+    let totals: DebtTotals | null = null;
     if (userId && debtCategoryIds.length > 0) {
-      debtTotals = await this.computeDebtTotals(userId, subcategories.map(s => s.id));
+      totals = await this.computeMovementTotals(userId, subcategories.map(s => s.id));
     }
 
     for (const category of categories) {
       const subs = byCategory.get(category.id) || [];
-      if (debtTotals && category.is_debt) {
+      if (totals && category.is_debt) {
         for (const sub of subs) {
-          const borrowed = debtTotals.borrowed.get(sub.id) || 0;
-          const repaid = debtTotals.repaid.get(sub.id) || 0;
+          const borrowed = totals.income.get(sub.id) || 0;
+          const repaid = totals.expenses.get(sub.id) || 0;
           sub.debt_stats = {
             borrowed,
             repaid,
-            pending: Math.round((borrowed - repaid) * 100000000) / 100000000,
+            pending: roundAmount(borrowed - repaid),
+          };
+        }
+      } else if (totals && category.is_receivable) {
+        for (const sub of subs) {
+          const lent = totals.expenses.get(sub.id) || 0;
+          const recovered = totals.income.get(sub.id) || 0;
+          sub.debt_stats = {
+            lent,
+            recovered,
+            pending: roundAmount(lent - recovered),
           };
         }
       }
@@ -139,9 +160,19 @@ export class CategoriesService {
   }
 
   async create(data: CreateCategoryDTO): Promise<Category> {
+    this.assertDebtKind(data.is_debt, data.is_receivable);
+
     const result = await execute(
-      'INSERT INTO categories (name, type, icon, color, user_id, is_debt) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
-      [data.name, data.type || 'both', data.icon || null, data.color || null, data.user_id || null, data.is_debt || false]
+      'INSERT INTO categories (name, type, icon, color, user_id, is_debt, is_receivable) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+      [
+        data.name,
+        data.type || 'both',
+        data.icon || null,
+        data.color || null,
+        data.user_id || null,
+        data.is_debt || false,
+        data.is_receivable || false,
+      ]
     );
 
     return queryOne<Category>(
@@ -157,6 +188,11 @@ export class CategoriesService {
     if (userId && category.user_id !== null && category.user_id !== userId) {
       throw AppError.forbidden('Cannot edit categories created by other users');
     }
+
+    this.assertDebtKind(
+      data.is_debt !== undefined ? data.is_debt : category.is_debt,
+      data.is_receivable !== undefined ? data.is_receivable : category.is_receivable
+    );
 
     const fields: string[] = [];
     const values: any[] = [];
@@ -184,6 +220,10 @@ export class CategoriesService {
     if (data.is_debt !== undefined) {
       fields.push(`is_debt = $${fields.length + 1}`);
       values.push(data.is_debt);
+    }
+    if (data.is_receivable !== undefined) {
+      fields.push(`is_receivable = $${fields.length + 1}`);
+      values.push(data.is_receivable);
     }
 
     if (fields.length === 0) {
@@ -279,12 +319,18 @@ export class CategoriesService {
     await execute('UPDATE subcategories SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1', [id]);
   }
 
-  private async computeDebtTotals(userId: number, subcategoryIds: number[]): Promise<DebtTotals> {
-    const borrowed = new Map<number, number>();
-    const repaid = new Map<number, number>();
+  private assertDebtKind(isDebt?: boolean, isReceivable?: boolean): void {
+    if (isDebt && isReceivable) {
+      throw AppError.badRequest('A category cannot be a debt and a receivable at the same time');
+    }
+  }
+
+  private async computeMovementTotals(userId: number, subcategoryIds: number[]): Promise<DebtTotals> {
+    const income = new Map<number, number>();
+    const expenses = new Map<number, number>();
 
     if (subcategoryIds.length === 0) {
-      return { borrowed, repaid };
+      return { income, expenses };
     }
 
     const incomeRows = await query<{ subcategory_id: number; total: string }>(
@@ -294,7 +340,7 @@ export class CategoriesService {
       [userId, subcategoryIds]
     );
     for (const row of incomeRows) {
-      borrowed.set(row.subcategory_id, Number(row.total) || 0);
+      income.set(row.subcategory_id, Number(row.total) || 0);
     }
 
     const expenseRows = await query<{ subcategory_id: number; total: string }>(
@@ -304,11 +350,15 @@ export class CategoriesService {
       [userId, subcategoryIds]
     );
     for (const row of expenseRows) {
-      repaid.set(row.subcategory_id, Number(row.total) || 0);
+      expenses.set(row.subcategory_id, Number(row.total) || 0);
     }
 
-    return { borrowed, repaid };
+    return { income, expenses };
   }
+}
+
+function roundAmount(value: number): number {
+  return Math.round(value * 100000000) / 100000000;
 }
 
 export const categoriesService = new CategoriesService();

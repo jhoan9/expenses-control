@@ -28,6 +28,7 @@ import { formatCurrency } from '../../shared/utils/format';
           <div class="card-header">
             <h3>{{ cat.name }}</h3>
             <span *ngIf="cat.is_debt" class="category-debt-flag">Deuda</span>
+            <span *ngIf="cat.is_receivable" class="category-receivable-flag">Por cobrar</span>
             <div class="card-actions">
               <button class="btn-icon" (click)="openCategoryModal(cat)">✏️</button>
               <button class="btn-icon" (click)="deleteCategory(cat.id)">🗑️</button>
@@ -38,11 +39,15 @@ import { formatCurrency } from '../../shared/utils/format';
             <div class="subcategory-item" *ngFor="let sub of cat.subcategories">
               <div class="subcategory-info" *ngIf="editingSubId !== sub.id">
                 <span class="subcategory-name" [class.inactive]="!sub.is_active">{{ sub.name }}</span>
-                <ng-container *ngIf="cat.is_debt">
-                  <span class="status-badge status-completed" *ngIf="isDebtSaldada(cat, sub)">Completada</span>
+                <ng-container *ngIf="isDebtCategory(cat)">
+                  <span class="status-badge status-completed" *ngIf="isDebtSaldada(cat, sub)">
+                    {{ cat.is_receivable ? 'Cobrada' : 'Completada' }}
+                  </span>
                   <span class="debt-pill" *ngIf="!isDebtSaldada(cat, sub)">
-                    <span class="status-badge status-pending">Pendiente {{ formatCurrency(debtPending(cat, sub)) }}</span>
-                    <button class="btn-icon-sm" (click)="saldarSub(cat, sub)" title="Marcar deuda como completada">✓</button>
+                    <span class="status-badge status-pending">
+                      {{ cat.is_receivable ? 'Pendiente por recibir' : 'Pendiente' }} {{ formatCurrency(debtPending(cat, sub)) }}
+                    </span>
+                    <button class="btn-icon-sm" (click)="saldarSub(cat, sub)" [title]="saldarTitle(cat)">✓</button>
                   </span>
                 </ng-container>
               </div>
@@ -116,8 +121,15 @@ import { formatCurrency } from '../../shared/utils/format';
 
             <div class="form-group">
               <label class="toggle-label">
-                <input type="checkbox" formControlName="is_debt" />
+                <input type="checkbox" formControlName="is_debt" (change)="onDebtKindChange('is_debt')" />
                 <span>Corresponde a una deuda <small class="hint">(cada subcategoría será una persona a la que debes)</small></span>
+              </label>
+            </div>
+
+            <div class="form-group">
+              <label class="toggle-label">
+                <input type="checkbox" formControlName="is_receivable" (change)="onDebtKindChange('is_receivable')" />
+                <span>Es una deuda a favor mío <small class="hint">(cada subcategoría será una persona que me debe; el préstamo se registra como gasto y el cobro como ingreso)</small></span>
               </label>
             </div>
 
@@ -158,6 +170,7 @@ export class CategoriesComponent implements OnInit {
       color: ['#4caf50'],
       is_active: [true],
       is_debt: [false],
+      is_receivable: [false],
     });
   }
 
@@ -192,12 +205,20 @@ export class CategoriesComponent implements OnInit {
         color: category.color || '#4caf50',
         is_active: category.is_active !== false,
         is_debt: !!category.is_debt,
+        is_receivable: !!category.is_receivable,
       });
     } else {
       this.editingCategoryId = null;
-      this.categoryForm.reset({ name: '', type: '', icon: '', color: '#4caf50', is_active: true, is_debt: false });
+      this.categoryForm.reset({ name: '', type: '', icon: '', color: '#4caf50', is_active: true, is_debt: false, is_receivable: false });
     }
     this.showModal = true;
+  }
+
+  onDebtKindChange(checkedField: 'is_debt' | 'is_receivable'): void {
+    if (this.categoryForm.get(checkedField)?.value) {
+      const other = checkedField === 'is_debt' ? 'is_receivable' : 'is_debt';
+      this.categoryForm.get(other)?.setValue(false, { emitEvent: false });
+    }
   }
 
   closeModal(): void {
@@ -275,6 +296,10 @@ export class CategoriesComponent implements OnInit {
     return labels[type] || type;
   }
 
+  isDebtCategory(cat: any): boolean {
+    return !!cat.is_debt || !!cat.is_receivable;
+  }
+
   debtPending(cat: any, sub: any): number {
     return sub.debt_stats ? sub.debt_stats.pending : 0;
   }
@@ -285,8 +310,17 @@ export class CategoriesComponent implements OnInit {
     return false;
   }
 
+  saldarTitle(cat: any): string {
+    return cat.is_receivable
+      ? 'Marcar la deuda a favor como cobrada'
+      : 'Marcar deuda como completada';
+  }
+
   saldarSub(cat: any, sub: any): void {
-    if (!confirm(`¿Marcar la deuda "${sub.name}" como completada? Se reabrirá si registras otro movimiento en ella.`)) return;
+    const message = cat.is_receivable
+      ? `¿Marcar la deuda a favor con "${sub.name}" como cobrada? Se reabrirá si prestas más plata o registras otro movimiento.`
+      : `¿Marcar la deuda "${sub.name}" como completada? Se reabrirá si registras otro movimiento en ella.`;
+    if (!confirm(message)) return;
     this.api.put(`/categories/${cat.id}/subcategories/${sub.id}`, { debt_completed: true }).subscribe({
       next: () => this.loadCategories(),
     });

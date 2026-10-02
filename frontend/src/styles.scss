@@ -1696,6 +1696,17 @@ td.actions-cell {
   margin-right: auto;
 }
 
+.category-receivable-flag {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: var(--r-full);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  background: var(--success-soft);
+  color: var(--success);
+  margin-right: auto;
+}
+
 .debt-pill {
   display: inline-flex;
   align-items: center;

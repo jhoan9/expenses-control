@@ -173,6 +173,10 @@ export class ExpensesService {
 
       const insertId = result.rows[0].id;
 
+      if (data.subcategory_id) {
+        await this.clearReceivableSubcategoryCompleted(data.subcategory_id, client);
+      }
+
       if (data.items && data.items.length > 0) {
         for (const item of data.items) {
           await execute(
@@ -314,6 +318,11 @@ export class ExpensesService {
         values,
         client
       );
+
+      const newSubcategoryId = data.subcategory_id !== undefined ? data.subcategory_id : existing.subcategory_id;
+      if (newSubcategoryId && newSubcategoryId !== existing.subcategory_id) {
+        await this.clearReceivableSubcategoryCompleted(newSubcategoryId, client);
+      }
 
       if (data.items !== undefined) {
         await execute('DELETE FROM expense_items WHERE expense_id = $1', [id], client);
@@ -504,6 +513,22 @@ export class ExpensesService {
     );
     if (result.rowCount === 0) {
       throw AppError.notFound('Template not found');
+    }
+  }
+
+  private async clearReceivableSubcategoryCompleted(subcategoryId: number, client: PoolClient): Promise<void> {
+    const sub = await queryOne<any>(
+      'SELECT s.id FROM subcategories s JOIN categories c ON c.id = s.category_id WHERE s.id = $1 AND c.is_receivable = true',
+      [subcategoryId],
+      client
+    );
+
+    if (sub) {
+      await execute(
+        'UPDATE subcategories SET debt_completed = false WHERE id = $1',
+        [subcategoryId],
+        client
+      );
     }
   }
 }

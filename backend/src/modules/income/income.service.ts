@@ -288,7 +288,7 @@ export class IncomeService {
 
   private async clearSubcategoryDebtCompleted(subcategoryId: number, client: PoolClient): Promise<void> {
     const sub = await queryOne<any>(
-      'SELECT s.id FROM subcategories s JOIN categories c ON c.id = s.category_id WHERE s.id = $1 AND c.is_debt = true',
+      'SELECT s.id FROM subcategories s JOIN categories c ON c.id = s.category_id WHERE s.id = $1 AND (c.is_debt = true OR c.is_receivable = true)',
       [subcategoryId],
       client
     );
