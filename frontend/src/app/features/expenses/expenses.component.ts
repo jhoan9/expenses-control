@@ -25,6 +25,10 @@ interface ExpenseItem {
       <div class="filters">
         <input type="date" [(ngModel)]="filters.date_from" (change)="onFiltersChange()" />
         <input type="date" [(ngModel)]="filters.date_to" (change)="onFiltersChange()" />
+        <select [(ngModel)]="filters.account_id" (change)="onFiltersChange()">
+          <option value="">Todas las cuentas</option>
+          <option *ngFor="let acc of accounts" [value]="acc.id">{{ acc.name }}</option>
+        </select>
         <select [(ngModel)]="filters.category_id" (change)="onFiltersChange()">
           <option value="">Todas las categorías</option>
           <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
@@ -32,8 +36,14 @@ interface ExpenseItem {
       </div>
 
       <div class="summary-bar">
-        <span>Total:</span>
-        <strong class="negative">{{ formatCurrency(totalAmount) }}</strong>
+        <div class="summary-item">
+          <span>Total Gastos</span>
+          <strong class="negative">{{ formatCurrency(totalAmount) }}</strong>
+        </div>
+        <div class="summary-item">
+          <span>Movimientos</span>
+          <strong>{{ totalItems }}</strong>
+        </div>
       </div>
 
       <div class="table-container">
@@ -218,6 +228,7 @@ export class ExpensesComponent implements OnInit {
   filters: any = {
     date_from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
     date_to: todayLocal(),
+    account_id: '',
     category_id: '',
   };
 
@@ -259,6 +270,7 @@ export class ExpensesComponent implements OnInit {
     this.loading = true;
     const params = { ...this.filters, page: this.page, limit: this.pageSize };
     if (!params.category_id) delete params.category_id;
+    if (!params.account_id) delete params.account_id;
     this.api.get<any>('/expenses', params).subscribe({
       next: (res) => {
         this.expenses = res.data;
