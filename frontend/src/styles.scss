@@ -1240,6 +1240,10 @@ td.actions-cell {
   background: #eef1f5;
   color: var(--text-2);
 }
+.status-exceeded {
+  background: var(--info-soft);
+  color: var(--info);
+}
 
 .status-badge-op.closed {
   background: #eef1f5;
@@ -1711,6 +1715,10 @@ td.actions-cell {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  margin-left: var(--s2);
+}
+
+.subcategory-info .status-exceeded {
   margin-left: var(--s2);
 }
 

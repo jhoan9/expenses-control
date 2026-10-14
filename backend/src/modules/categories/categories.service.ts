@@ -33,7 +33,10 @@ interface DebtStats {
   lent?: number;
   /** is_receivable: plata recuperada */
   recovered?: number;
+  /** falta por pagar/cobrar; nunca negativo */
   pending: number;
+  /** excedente cuando se pagó/cobró más de lo que se debía */
+  excess: number;
 }
 
 interface CategoryWithSubcategories extends Category {
@@ -118,21 +121,13 @@ export class CategoriesService {
         for (const sub of subs) {
           const borrowed = totals.income.get(sub.id) || 0;
           const repaid = totals.expenses.get(sub.id) || 0;
-          sub.debt_stats = {
-            borrowed,
-            repaid,
-            pending: roundAmount(borrowed - repaid),
-          };
+          sub.debt_stats = { borrowed, repaid, ...buildBalance(borrowed, repaid) };
         }
       } else if (totals && category.is_receivable) {
         for (const sub of subs) {
           const lent = totals.expenses.get(sub.id) || 0;
           const recovered = totals.income.get(sub.id) || 0;
-          sub.debt_stats = {
-            lent,
-            recovered,
-            pending: roundAmount(lent - recovered),
-          };
+          sub.debt_stats = { lent, recovered, ...buildBalance(lent, recovered) };
         }
       }
       category.subcategories = subs;
@@ -359,6 +354,19 @@ export class CategoriesService {
 
 function roundAmount(value: number): number {
   return Math.round(value * 100000000) / 100000000;
+}
+
+/**
+ * `credited` = total que genera la deuda (income para deudas, gasto para
+ * préstamos a favor); `debited` = total que la reduce. Si el débito supera
+ * al crédito, el exceso se expone aparte y el pendiente queda en cero.
+ */
+function buildBalance(credited: number, debited: number): { pending: number; excess: number } {
+  const balance = roundAmount(credited - debited);
+  if (balance >= 0) {
+    return { pending: balance, excess: 0 };
+  }
+  return { pending: 0, excess: roundAmount(-balance) };
 }
 
 export const categoriesService = new CategoriesService();

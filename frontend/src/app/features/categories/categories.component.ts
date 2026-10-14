@@ -43,6 +43,9 @@ import { formatCurrency } from '../../shared/utils/format';
                   <span class="status-badge status-completed" *ngIf="isDebtSaldada(cat, sub)">
                     {{ cat.is_receivable ? 'Cobrada' : 'Completada' }}
                   </span>
+                  <span class="status-badge status-exceeded" *ngIf="debtExcess(cat, sub) > 0">
+                    Excedió en {{ cat.is_receivable ? 'el cobro' : 'el pago' }} {{ formatCurrency(debtExcess(cat, sub)) }}
+                  </span>
                   <span class="debt-pill" *ngIf="!isDebtSaldada(cat, sub)">
                     <span class="status-badge status-pending">
                       {{ cat.is_receivable ? 'Pendiente por recibir' : 'Pendiente' }} {{ formatCurrency(debtPending(cat, sub)) }}
@@ -302,6 +305,10 @@ export class CategoriesComponent implements OnInit {
 
   debtPending(cat: any, sub: any): number {
     return sub.debt_stats ? sub.debt_stats.pending : 0;
+  }
+
+  debtExcess(cat: any, sub: any): number {
+    return sub.debt_stats ? sub.debt_stats.excess : 0;
   }
 
   isDebtSaldada(cat: any, sub: any): boolean {
