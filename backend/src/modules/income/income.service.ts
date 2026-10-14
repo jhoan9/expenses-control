@@ -74,10 +74,10 @@ export class IncomeService {
       params.push(filters.subcategory_id);
     }
 
-    const countSql = sql.replace('SELECT *', 'SELECT COUNT(*) as total, COALESCE(SUM(amount), 0) as totalAmount');
-    const countResult = await queryOne<{ total: number; totalAmount: number }>(countSql, params);
-    const total = countResult?.total || 0;
-    const totalAmount = Number(countResult?.totalAmount || 0);
+    const countSql = sql.replace('SELECT *', 'SELECT COUNT(*) as total, COALESCE(SUM(amount), 0) as total_amount');
+    const countResult = await queryOne<{ total: string; total_amount: string }>(countSql, params);
+    const total = Number(countResult?.total || 0);
+    const totalAmount = Number(countResult?.total_amount || 0);
 
     sql += ` ORDER BY date DESC, created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
     params.push(limit, offset);

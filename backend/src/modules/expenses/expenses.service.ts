@@ -97,10 +97,10 @@ export class ExpensesService {
       params.push(filters.status);
     }
 
-    const countSql = sql.replace(/SELECT e\.\*, \(SELECT COUNT\(\*\) FROM expense_items ei WHERE ei\.expense_id = e\.id\) as item_count/, "SELECT COUNT(*) as total, COALESCE(SUM(e.amount), 0) as totalAmount");
-    const countResult = await queryOne<{ total: number; totalAmount: number }>(countSql, params);
-    const total = countResult?.total || 0;
-    const totalAmount = Number(countResult?.totalAmount || 0);
+    const countSql = sql.replace(/SELECT e\.\*, \(SELECT COUNT\(\*\) FROM expense_items ei WHERE ei\.expense_id = e\.id\) as item_count/, "SELECT COUNT(*) as total, COALESCE(SUM(e.amount), 0) as total_amount");
+    const countResult = await queryOne<{ total: string; total_amount: string }>(countSql, params);
+    const total = Number(countResult?.total || 0);
+    const totalAmount = Number(countResult?.total_amount || 0);
 
     sql += ` ORDER BY date DESC, created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
     params.push(limit, offset);
