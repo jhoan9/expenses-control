@@ -68,6 +68,7 @@ interface ExpenseItem {
                 <span class="category-badge" [style.background]="getCategoryColor(item.category_id)">
                   {{ getCategoryName(item.category_id) }}
                 </span>
+                <span *ngIf="item.subcategory_id" class="subcategory-name">› {{ getSubcategoryName(item.subcategory_id) }}</span>
               </td>
               <td>{{ getPaymentMethodName(item.payment_method_id) }}</td>
               <td>{{ getAccountName(item.account_id) }}</td>
@@ -540,6 +541,14 @@ export class ExpensesComponent implements OnInit {
   getAccountName(id: number): string { return this.accounts.find(a => a.id === id)?.name || '-'; }
   getCategoryName(id: number): string { return this.categories.find(c => c.id === id)?.name || '-'; }
   getCategoryColor(id: number): string { return this.categories.find(c => c.id === id)?.color || '#999'; }
+  getSubcategoryName(id: number): string {
+    for (const cat of this.categories) {
+      const subs: any[] = cat.subcategories || [];
+      const sub = subs.find(s => s.id === id);
+      if (sub) return sub.name;
+    }
+    return '-';
+  }
   getPaymentMethodName(id: number): string { return this.paymentMethods.find(p => p.id === id)?.name || '-'; }
   getStatusLabel(status: string): string {
     const labels: Record<string, string> = { completed: 'Completado', pending: 'Pendiente', cancelled: 'Cancelado' };
