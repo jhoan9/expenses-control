@@ -20,6 +20,9 @@ import loansRoutes from './modules/loans/loans.routes';
 import creditsRoutes from './modules/credits/credits.routes';
 import reportsRoutes from './modules/reports/reports.routes';
 import aiRoutes from './modules/ai/ai.routes';
+import quickEntryRoutes from './modules/quick-entry/quick-entry.routes';
+import integrationsRoutes from './modules/integrations/integrations.routes';
+import whatsappRoutes from './modules/whatsapp/whatsapp.routes';
 
 const app = express();
 
@@ -65,7 +68,25 @@ const aiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Registro rápido desde el celular: suficiente para uso personal, frena abusos con un token filtrado
+const quickLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: 'Demasiados registros seguidos. Espera un momento.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Cuerpo crudo para verificar la firma de los webhooks de WhatsApp
+const captureRawBody = (req: express.Request, _res: express.Response, buf: Buffer) => {
+  (req as express.Request & { rawBody?: Buffer }).rawBody = buf;
+};
+
+// El webhook va antes del limitador general: todos los mensajes llegan desde las IP de Meta
+app.use('/api/whatsapp', express.json({ limit: '1mb', verify: captureRawBody }), whatsappRoutes);
+
 app.use('/api/auth', authLimiter);
+app.use('/api/quick', quickLimiter);
 app.use('/api/ai', aiLimiter);
 app.use('/api', limiter);
 
@@ -92,6 +113,8 @@ app.use('/api/loans', loansRoutes);
 app.use('/api/credits', creditsRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/quick', quickEntryRoutes);
+app.use('/api/integrations', integrationsRoutes);
 
 app.use('/api', (req, res, next) => {
   next(AppError.notFound('Endpoint not found'));

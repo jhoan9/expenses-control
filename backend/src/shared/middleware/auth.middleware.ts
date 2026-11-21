@@ -6,6 +6,8 @@ import { AppError } from '../errors/AppError';
 export interface AuthRequest extends Request {
   userId?: number;
   userRole?: string;
+  /** 'token' cuando se autenticó con un token personal (automatizaciones) */
+  authVia?: 'session' | 'token';
 }
 
 export const authenticate = (

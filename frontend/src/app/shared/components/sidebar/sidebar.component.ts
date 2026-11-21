@@ -93,6 +93,10 @@ import { IconComponent } from '../icon/icon.component';
             <app-icon class="nav-icon" name="bar-chart" />
             <span class="nav-text">Reportes</span>
           </a>
+          <a class="nav-item" routerLink="/integrations" routerLinkActive="active">
+            <app-icon class="nav-icon" name="plug" />
+            <span class="nav-text">Integraciones</span>
+          </a>
         </div>
       </nav>
 
