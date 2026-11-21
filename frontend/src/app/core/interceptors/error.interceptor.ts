@@ -9,6 +9,10 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const toastService = inject(ToastService);
   const authService = inject(AuthService);
 
+  // Peticiones que muestran su propio mensaje de error en la página
+  const silent = req.headers.has('X-Silent-Errors');
+  if (silent) req = req.clone({ headers: req.headers.delete('X-Silent-Errors') });
+
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       // 401 se maneja en authInterceptor (refresh). Solo se notifica aquí
@@ -16,6 +20,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       if (error.status === 401 && authService.refreshToken) {
         return throwError(() => error);
       }
+
+      if (silent) return throwError(() => error);
 
       const { title, message } = getErrorMessage(error);
       toastService.showError(message, title);

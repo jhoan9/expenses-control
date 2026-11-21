@@ -40,4 +40,22 @@ export const env = {
     process.env.AI_REQUEST_TIMEOUT_MS || '45000',
     10
   ),
+
+  /** Zona horaria para interpretar "hoy" / "ayer" en registros rápidos. */
+  APP_TIMEZONE: process.env.APP_TIMEZONE || 'America/Bogota',
+
+  // WhatsApp Cloud API (Meta). Ver docs/integraciones/whatsapp-cloud-api.md
+  WHATSAPP_VERIFY_TOKEN: process.env.WHATSAPP_VERIFY_TOKEN || '',
+  WHATSAPP_APP_SECRET: process.env.WHATSAPP_APP_SECRET || '',
+  WHATSAPP_ACCESS_TOKEN: process.env.WHATSAPP_ACCESS_TOKEN || '',
+  WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID || '',
+  /** Número del bot en formato internacional sin "+", p. ej. 573001234567 (para el enlace wa.me) */
+  WHATSAPP_BOT_NUMBER: (process.env.WHATSAPP_BOT_NUMBER || '').replace(/\D/g, ''),
+  WHATSAPP_API_VERSION: process.env.WHATSAPP_API_VERSION || 'v21.0',
+  /** true: no llama a Meta, imprime en consola los mensajes que enviaría (pruebas locales) */
+  WHATSAPP_DRY_RUN: process.env.WHATSAPP_DRY_RUN === 'true',
+
+  get whatsappEnabled(): boolean {
+    return Boolean(env.WHATSAPP_ACCESS_TOKEN && env.WHATSAPP_PHONE_NUMBER_ID && env.WHATSAPP_VERIFY_TOKEN);
+  },
 };

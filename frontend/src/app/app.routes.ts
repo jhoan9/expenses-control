@@ -109,6 +109,13 @@ export const routes: Routes = [
             (m) => m.ReportsComponent
           ),
       },
+      {
+        path: 'integrations',
+        loadComponent: () =>
+          import('./features/integrations/integrations.component').then(
+            (m) => m.IntegrationsComponent
+          ),
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

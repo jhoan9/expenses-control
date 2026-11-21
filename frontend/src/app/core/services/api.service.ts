@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
@@ -21,8 +21,14 @@ export class ApiService {
     return this.http.get<T>(`${this.API_URL}${path}`, { params: httpParams });
   }
 
-  post<T>(path: string, body: any = {}): Observable<T> {
-    return this.http.post<T>(`${this.API_URL}${path}`, body);
+  post<T>(path: string, body: any = {}, options: { silentErrors?: boolean } = {}): Observable<T> {
+    const headers = options.silentErrors ? new HttpHeaders({ 'X-Silent-Errors': '1' }) : undefined;
+    return this.http.post<T>(`${this.API_URL}${path}`, body, { headers });
+  }
+
+  /** URL absoluta de la API (para mostrarla en instrucciones de automatizaciones). */
+  get baseUrl(): string {
+    return this.API_URL;
   }
 
   put<T>(path: string, body: any = {}): Observable<T> {

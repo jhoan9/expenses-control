@@ -17,6 +17,7 @@ const TITLES: Record<string, string> = {
   credits: 'Créditos',
   categories: 'Categorías',
   reports: 'Reportes',
+  integrations: 'Integraciones',
 };
 
 const SECTIONS: Record<string, string> = {
@@ -31,6 +32,7 @@ const SECTIONS: Record<string, string> = {
   credits: 'Financiación',
   categories: 'Administración',
   reports: 'Administración',
+  integrations: 'Administración',
 };
 
 @Component({
