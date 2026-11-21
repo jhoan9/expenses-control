@@ -5,6 +5,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ApiService } from '../../core/services/api.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
 import { formatCurrency, todayLocal } from '../../shared/utils/format';
+import { IconComponent } from '../../shared/components/icon/icon.component';
 
 interface ExpenseItem {
   name: string;
@@ -14,7 +15,7 @@ interface ExpenseItem {
 @Component({
   selector: 'app-expenses',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, CurrencyInputComponent],
+  imports: [IconComponent, CommonModule, ReactiveFormsModule, FormsModule, CurrencyInputComponent],
   template: `
     <div class="page">
       <div class="page-header">
@@ -74,7 +75,7 @@ interface ExpenseItem {
               <td>{{ getAccountName(item.account_id) }}</td>
               <td class="amount negative">
                 {{ formatCurrency(item.amount) }}
-                <span class="items-count" *ngIf="item.item_count > 0" [title]="item.item_count + ' ítems'">🧾{{ item.item_count }}</span>
+                <span class="items-count" *ngIf="item.item_count > 0" [title]="item.item_count + ' ítems'"><app-icon name="receipt" /> {{ item.item_count }}</span>
               </td>
               <td>
                 <span class="status-badge" [class]="'status-' + item.status">
@@ -82,8 +83,8 @@ interface ExpenseItem {
                 </span>
               </td>
               <td>
-                <button class="btn-icon" (click)="editItem(item)">✏️</button>
-                <button class="btn-icon" (click)="deleteItem(item.id)">🗑️</button>
+                <button class="btn-icon" (click)="editItem(item)" aria-label="Editar"><app-icon name="pencil" /></button>
+                <button class="btn-icon" (click)="deleteItem(item.id)" aria-label="Eliminar"><app-icon name="trash" /></button>
               </td>
             </tr>
           </tbody>
@@ -165,15 +166,15 @@ interface ExpenseItem {
               <div class="items-header">
                 <label>Ítems <span class="hint">(opcional, ej: arroz, lenteja, carne)</span></label>
                 <div class="items-actions">
-                  <button type="button" class="btn-mini" *ngIf="hasTemplate()" (click)="applyTemplate()">📋 Usar plantilla</button>
-                  <button type="button" class="btn-mini" (click)="saveAsTemplate()" [disabled]="templateNames().length === 0">💾 Guardar plantilla</button>
+                  <button type="button" class="btn-mini" *ngIf="hasTemplate()" (click)="applyTemplate()"><app-icon name="clipboard" /> Usar plantilla</button>
+                  <button type="button" class="btn-mini" (click)="saveAsTemplate()" [disabled]="templateNames().length === 0"><app-icon name="save" /> Guardar plantilla</button>
                 </div>
               </div>
 
               <div class="item-row" *ngFor="let it of items; let i = index">
                 <input type="text" [(ngModel)]="it.name" [ngModelOptions]="{ standalone: true }" placeholder="Nombre del ítem" class="item-name" />
                 <app-currency-input [(ngModel)]="it.amount" [ngModelOptions]="{ standalone: true }" placeholder="0" class="item-amount"></app-currency-input>
-                <button type="button" class="btn-icon" (click)="removeItem(i)">✖</button>
+                <button type="button" class="btn-icon" (click)="removeItem(i)" aria-label="Quitar"><app-icon name="x" /></button>
               </div>
 
               <button type="button" class="btn-add-item" (click)="addItem()">+ Agregar ítem</button>

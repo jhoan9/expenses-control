@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
 import { formatCurrency } from '../../shared/utils/format';
+import { IconComponent } from '../../shared/components/icon/icon.component';
 
 @Component({
   selector: 'app-budget',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyInputComponent],
+  imports: [IconComponent, CommonModule, FormsModule, CurrencyInputComponent],
   template: `
     <div class="page">
       <!-- LIST VIEW -->
@@ -25,8 +26,8 @@ import { formatCurrency } from '../../shared/utils/format';
                 {{ periodLabel(b) }}
               </span>
               <div class="card-actions">
-                <button class="btn-icon" (click)="editBudget(b, $event)" title="Editar">✏️</button>
-                <button class="btn-icon" (click)="deleteBudget(b.id, $event)" title="Eliminar">🗑️</button>
+                <button class="btn-icon" (click)="editBudget(b, $event)" title="Editar" aria-label="Editar"><app-icon name="pencil" /></button>
+                <button class="btn-icon" (click)="deleteBudget(b.id, $event)" title="Eliminar" aria-label="Eliminar"><app-icon name="trash" /></button>
               </div>
             </div>
             <div class="card-body">
@@ -100,7 +101,7 @@ import { formatCurrency } from '../../shared/utils/format';
               (change)="toggleCompleted(item, $event)" />
             <input class="check-cell" type="checkbox" [checked]="item.status === 'cancelled'"
               (change)="toggleCancelled(item, $event)" />
-            <button class="btn-icon" (click)="removeDraftItem(item)" title="Eliminar">🗑️</button>
+            <button class="btn-icon" (click)="removeDraftItem(item)" title="Eliminar" aria-label="Eliminar"><app-icon name="trash" /></button>
           </div>
           <button class="btn-add-row" (click)="addDraftItem()">+ Agregar Ítem</button>
         </div>

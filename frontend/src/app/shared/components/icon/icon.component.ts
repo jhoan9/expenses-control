@@ -1,4 +1,5 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 const ICONS: Record<string, string> = {
   menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
@@ -34,26 +35,19 @@ const ICONS: Record<string, string> = {
   send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
   sparkles: '<path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>',
   trash: '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  pencil: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
+  list: '<path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/>',
+  save: '<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/>',
+  clipboard: '<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
+  banknote: '<rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/>',
+  piggy: '<path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/>',
   'user': '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
 };
 
 @Component({
   selector: 'app-icon',
   standalone: true,
-  template: `
-    <svg
-      [innerHTML]="iconPath || ''"
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      [style.color]="color || undefined"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      role="img"
-    ></svg>
-  `,
+  template: `<span class="icon-svg" [innerHTML]="svg" aria-hidden="true"></span>`,
   styles: [
     `
       :host {
@@ -61,8 +55,12 @@ const ICONS: Record<string, string> = {
         align-items: center;
         justify-content: center;
         line-height: 0;
+        flex-shrink: 0;
       }
-      :host svg {
+      .icon-svg {
+        display: inline-flex;
+      }
+      .icon-svg ::ng-deep svg {
         width: 1em;
         height: 1em;
         flex-shrink: 0;
@@ -70,13 +68,29 @@ const ICONS: Record<string, string> = {
     `,
   ],
 })
-export class IconComponent {
+export class IconComponent implements OnChanges, OnInit {
   readonly icons = ICONS;
 
   @Input() name = 'grid';
   @Input() color?: string;
+  @Input() strokeWidth = 1.75;
 
-  get iconPath(): string {
-    return this.icons[this.name] || '';
+  svg: SafeHtml = '';
+
+  constructor(private sanitizer: DomSanitizer) {}
+
+  ngOnInit(): void {
+    if (!this.svg) this.ngOnChanges();
+  }
+
+  ngOnChanges(): void {
+    const paths = this.icons[this.name] || '';
+    const color = this.color && /^[#a-zA-Z0-9(),.\s%-]+$/.test(this.color) ? this.color : 'currentColor';
+    // The markup comes only from the static ICONS map above, never from user input,
+    // so it is safe to bypass Angular's sanitizer (which would strip the SVG namespace).
+    this.svg = this.sanitizer.bypassSecurityTrustHtml(
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="${color}" ` +
+        `stroke-width="${Number(this.strokeWidth) || 1.75}" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`
+    );
   }
 }

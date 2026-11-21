@@ -2,11 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
+import { IconComponent } from '../../shared/components/icon/icon.component';
 
 @Component({
   selector: 'app-payment-methods',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [IconComponent, CommonModule, ReactiveFormsModule],
   template: `
     <div class="page">
       <div class="page-header">
@@ -19,8 +20,8 @@ import { ApiService } from '../../core/services/api.service';
           <div class="method-header">
             <span class="method-icon">{{ method.icon || getTypeIcon(method.type) }}</span>
             <div class="method-actions">
-              <button class="btn-icon" (click)="editMethod(method)">✏️</button>
-              <button class="btn-icon" (click)="deleteMethod(method.id)">🗑️</button>
+              <button class="btn-icon" (click)="editMethod(method)" aria-label="Editar"><app-icon name="pencil" /></button>
+              <button class="btn-icon" (click)="deleteMethod(method.id)" aria-label="Eliminar"><app-icon name="trash" /></button>
             </div>
           </div>
           <h3>{{ method.name }}</h3>

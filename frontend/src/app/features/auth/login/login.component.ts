@@ -21,17 +21,34 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
         </div>
 
         <div class="auth-brand-mid">
-          <h1>Controlá tu dinero,<br />no al revés.</h1>
-          <p>
-            Registra tus ingresos y gastos, planifica presupuestos y visualiza el
-            estado real de tus finanzas en un solo lugar.
-          </p>
+          <h1>Tus cuentas, gastos y presupuesto en un solo tablero.</h1>
+          <p>Registra cada movimiento en pesos, mira a dónde se va el dinero por categoría y planifica la quincena antes de que empiece.</p>
         </div>
 
-        <div class="auth-brand-features">
-          <span><app-icon name="shield-check" /> Datos seguros</span>
-          <span><app-icon name="target" /> Objetivos claros</span>
-          <span><app-icon name="bar-chart" /> Reportes simples</span>
+        <div class="auth-preview" aria-hidden="true">
+          <div class="auth-preview-head">
+            <span>Neto mensual, últimos 12 meses</span>
+            <span>COP</span>
+          </div>
+          <div class="auth-preview-bars">
+            <span style="height: 38%; animation-delay: 0ms"></span>
+            <span style="height: 52%; animation-delay: 40ms"></span>
+            <span style="height: 45%; animation-delay: 80ms"></span>
+            <span style="height: 64%; animation-delay: 120ms"></span>
+            <span style="height: 58%; animation-delay: 160ms"></span>
+            <span style="height: 76%; animation-delay: 200ms"></span>
+            <span style="height: 68%; animation-delay: 240ms"></span>
+            <span style="height: 86%; animation-delay: 280ms"></span>
+            <span style="height: 74%; animation-delay: 320ms"></span>
+            <span style="height: 96%; animation-delay: 360ms"></span>
+            <span style="height: 82%; animation-delay: 400ms"></span>
+            <span style="height: 100%; animation-delay: 440ms"></span>
+          </div>
+          <div class="auth-brand-features">
+            <span><app-icon name="shield-check" /> Sesión protegida con token</span>
+            <span><app-icon name="target" /> Presupuesto por quincena</span>
+            <span><app-icon name="bar-chart" /> Reportes por categoría</span>
+          </div>
         </div>
       </div>
 

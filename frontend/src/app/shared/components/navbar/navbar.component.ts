@@ -18,6 +18,20 @@ const TITLES: Record<string, string> = {
   reports: 'Reportes',
 };
 
+const SECTIONS: Record<string, string> = {
+  dashboard: 'Resumen',
+  accounts: 'Movimientos',
+  income: 'Movimientos',
+  expenses: 'Movimientos',
+  budget: 'Planificación',
+  investments: 'Crecimiento',
+  'third-party': 'Crecimiento',
+  loans: 'Financiación',
+  credits: 'Financiación',
+  categories: 'Administración',
+  reports: 'Administración',
+};
+
 @Component({
   selector: 'app-navbar',
   standalone: true,
@@ -32,11 +46,12 @@ const TITLES: Record<string, string> = {
       >
         <app-icon name="menu" />
       </button>
-      <h1 class="navbar-title">{{ pageTitle }}</h1>
-      <span class="navbar-date">
-        <app-icon name="calendar" />
-        {{ todayLabel }}
-      </span>
+      <div class="navbar-crumbs">
+        <span class="crumb-section">{{ sectionTitle }}</span>
+        <span class="crumb-sep" aria-hidden="true">/</span>
+        <h1 class="navbar-title">{{ pageTitle }}</h1>
+      </div>
+      <span class="navbar-date">{{ todayLabel }}</span>
     </nav>
   `,
 })
@@ -51,12 +66,18 @@ export class NavbarComponent {
     return TITLES[seg] ?? 'Dashboard';
   }
 
+  get sectionTitle(): string {
+    const seg = this.router.url.split('?')[0].split('/').filter(Boolean)[0] ?? 'dashboard';
+    return SECTIONS[seg] ?? 'Resumen';
+  }
+
   get todayLabel(): string {
-    return new Date().toLocaleDateString('es-ES', {
+    const label = new Date().toLocaleDateString('es-ES', {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
       year: 'numeric',
     });
+    return label.charAt(0).toUpperCase() + label.slice(1);
   }
 }

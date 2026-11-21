@@ -21,17 +21,34 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
         </div>
 
         <div class="auth-brand-mid">
-          <h1>Tu dinero merece <br />una segunda mirada.</h1>
-          <p>
-            Crea tu cuenta y empieza a tomar decisiones financieras con
-            confianza, claridad y control total.
-          </p>
+          <h1>Empieza a ver tu dinero con claridad.</h1>
+          <p>Crea tu cuenta, registra tus cuentas y en minutos sabrás cuánto entra, cuánto sale y cuánto te queda cada mes.</p>
         </div>
 
-        <div class="auth-brand-features">
-          <span><app-icon name="shield-check" /> Datos seguros</span>
-          <span><app-icon name="target" /> Objetivos claros</span>
-          <span><app-icon name="bar-chart" /> Reportes simples</span>
+        <div class="auth-preview" aria-hidden="true">
+          <div class="auth-preview-head">
+            <span>Neto mensual, últimos 12 meses</span>
+            <span>COP</span>
+          </div>
+          <div class="auth-preview-bars">
+            <span style="height: 38%; animation-delay: 0ms"></span>
+            <span style="height: 52%; animation-delay: 40ms"></span>
+            <span style="height: 45%; animation-delay: 80ms"></span>
+            <span style="height: 64%; animation-delay: 120ms"></span>
+            <span style="height: 58%; animation-delay: 160ms"></span>
+            <span style="height: 76%; animation-delay: 200ms"></span>
+            <span style="height: 68%; animation-delay: 240ms"></span>
+            <span style="height: 86%; animation-delay: 280ms"></span>
+            <span style="height: 74%; animation-delay: 320ms"></span>
+            <span style="height: 96%; animation-delay: 360ms"></span>
+            <span style="height: 82%; animation-delay: 400ms"></span>
+            <span style="height: 100%; animation-delay: 440ms"></span>
+          </div>
+          <div class="auth-brand-features">
+            <span><app-icon name="shield-check" /> Sesión protegida con token</span>
+            <span><app-icon name="target" /> Presupuesto por quincena</span>
+            <span><app-icon name="bar-chart" /> Reportes por categoría</span>
+          </div>
         </div>
       </div>
 

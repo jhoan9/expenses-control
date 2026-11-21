@@ -5,11 +5,12 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ApiService } from '../../core/services/api.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
 import { formatCurrency, todayLocal } from '../../shared/utils/format';
+import { IconComponent } from '../../shared/components/icon/icon.component';
 
 @Component({
   selector: 'app-income',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, CurrencyInputComponent],
+  imports: [IconComponent, CommonModule, ReactiveFormsModule, FormsModule, CurrencyInputComponent],
   template: `
     <div class="page">
       <div class="page-header">
@@ -51,8 +52,8 @@ import { formatCurrency, todayLocal } from '../../shared/utils/format';
               <td>{{ getAccountName(item.account_id) }}</td>
               <td class="amount positive">{{ formatCurrency(item.amount) }}</td>
               <td>
-                <button class="btn-icon" (click)="editItem(item)">✏️</button>
-                <button class="btn-icon" (click)="deleteItem(item.id)">🗑️</button>
+                <button class="btn-icon" (click)="editItem(item)" aria-label="Editar"><app-icon name="pencil" /></button>
+                <button class="btn-icon" (click)="deleteItem(item.id)" aria-label="Eliminar"><app-icon name="trash" /></button>
               </td>
             </tr>
           </tbody>

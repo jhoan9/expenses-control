@@ -4,11 +4,12 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ApiService } from '../../core/services/api.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
 import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../shared/utils/format';
+import { IconComponent } from '../../shared/components/icon/icon.component';
 
 @Component({
   selector: 'app-loans',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, CurrencyInputComponent],
+  imports: [IconComponent, CommonModule, ReactiveFormsModule, CurrencyInputComponent],
   template: `
     <div class="page">
       <!-- List View -->
@@ -83,8 +84,8 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
                   </div>
                 </div>
                 <div class="card-actions">
-                  <button class="btn-icon" (click)="editLoan(loan, $event)" title="Editar">✏️</button>
-                  <button class="btn-icon" (click)="deleteLoan(loan.id, $event)" title="Eliminar">🗑️</button>
+                  <button class="btn-icon" (click)="editLoan(loan, $event)" title="Editar" aria-label="Editar"><app-icon name="pencil" /></button>
+                  <button class="btn-icon" (click)="deleteLoan(loan.id, $event)" title="Eliminar" aria-label="Eliminar"><app-icon name="trash" /></button>
                 </div>
                 <button class="btn-detail" (click)="viewLoan(loan)">Ver detalle →</button>
               </div>
@@ -164,7 +165,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
                 <td>{{ payment.description || '-' }}</td>
                 <td class="amount-cell positive">{{ formatCurrency(payment.amount) }}</td>
                 <td class="actions-cell">
-                  <button class="btn-icon btn-danger-icon" (click)="deletePayment(payment)" title="Eliminar abono">🗑️</button>
+                  <button class="btn-icon btn-danger-icon" (click)="deletePayment(payment)" title="Eliminar abono" aria-label="Eliminar"><app-icon name="trash" /></button>
                 </td>
               </tr>
             </tbody>
