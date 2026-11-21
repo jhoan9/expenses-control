@@ -4,11 +4,12 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ApiService } from '../../core/services/api.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
 import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../shared/utils/format';
+import { IconComponent } from '../../shared/components/icon/icon.component';
 
 @Component({
   selector: 'app-credits',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, CurrencyInputComponent],
+  imports: [IconComponent, CommonModule, ReactiveFormsModule, CurrencyInputComponent],
   template: `
     <div class="page">
       <!-- List View -->
@@ -43,7 +44,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
           <div class="credit-card" *ngFor="let credit of credits" (click)="viewCredit(credit)">
             <div class="card-header">
               <h3>{{ credit.institution }}</h3>
-              <button class="btn-icon btn-danger-icon" (click)="deleteCredit(credit.id, $event)" title="Eliminar">🗑️</button>
+              <button class="btn-icon btn-danger-icon" (click)="deleteCredit(credit.id, $event)" title="Eliminar" aria-label="Eliminar"><app-icon name="trash" /></button>
             </div>
             <div class="card-values">
               <div class="card-row">
@@ -134,7 +135,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
                 <td class="amount-cell negative">{{ formatCurrency(payment.amount) }}</td>
                 <td>{{ payment.minimum_payment ? formatCurrency(payment.minimum_payment) : '-' }}</td>
                 <td class="actions-cell">
-                  <button class="btn-icon btn-danger-icon" (click)="deletePayment(payment)" title="Eliminar abono">🗑️</button>
+                  <button class="btn-icon btn-danger-icon" (click)="deletePayment(payment)" title="Eliminar abono" aria-label="Eliminar"><app-icon name="trash" /></button>
                 </td>
               </tr>
             </tbody>

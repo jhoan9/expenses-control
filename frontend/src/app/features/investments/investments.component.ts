@@ -4,11 +4,12 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ApiService } from '../../core/services/api.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
 import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../shared/utils/format';
+import { IconComponent } from '../../shared/components/icon/icon.component';
 
 @Component({
   selector: 'app-investments',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, CurrencyInputComponent],
+  imports: [IconComponent, CommonModule, ReactiveFormsModule, CurrencyInputComponent],
   template: `
     <div class="page">
       <div class="page-header">
@@ -33,8 +34,8 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
                 <span class="exchange" *ngIf="inv.exchange"> · {{ inv.exchange }}</span>
               </div>
               <div class="card-actions">
-                <button class="btn-icon" (click)="editInvestment(inv, $event)">✏️</button>
-                <button class="btn-icon" (click)="deleteInvestment(inv.id, $event)">🗑️</button>
+                <button class="btn-icon" (click)="editInvestment(inv, $event)" aria-label="Editar"><app-icon name="pencil" /></button>
+                <button class="btn-icon" (click)="deleteInvestment(inv.id, $event)" aria-label="Eliminar"><app-icon name="trash" /></button>
               </div>
             </div>
             <span class="type-badge" [class]="'type-' + inv.type">{{ getTypeLabel(inv.type) }}</span>
@@ -152,7 +153,7 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
                   <span class="op-date">{{ formatDate(abono.date) }}</span>
                   <strong class="op-main">{{ formatCurrency(abono.amount) }}</strong>
                   <span class="op-actions">
-                    <button class="btn-icon btn-danger-icon" (click)="deleteAbono(abono)" title="Eliminar abono">🗑️</button>
+                    <button class="btn-icon btn-danger-icon" (click)="deleteAbono(abono)" title="Eliminar abono" aria-label="Eliminar"><app-icon name="trash" /></button>
                   </span>
                 </div>
                 <div class="op-footer" *ngIf="abono.notes">

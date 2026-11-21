@@ -19,9 +19,10 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
       :host { display: block; width: 100%; }
       input {
         width: 100%;
-        padding: 10px 12px;
+        min-height: 40px;
+        padding: 9px 12px;
         border: 1px solid var(--border-strong);
-        border-radius: var(--r-sm);
+        border-radius: var(--r-md);
         font-family: inherit;
         font-size: var(--fs-base);
         color: var(--text);
@@ -32,7 +33,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
       input:focus {
         outline: none;
         border-color: var(--brand);
-        box-shadow: 0 0 0 3px rgba(14, 159, 110, 0.14);
+        box-shadow: 0 0 0 3px var(--brand-ring);
       }
       input::placeholder {
         color: var(--text-3);

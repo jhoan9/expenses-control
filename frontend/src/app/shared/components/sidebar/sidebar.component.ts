@@ -104,8 +104,8 @@ import { IconComponent } from '../icon/icon.component';
             <small class="user-role">{{ user.role }}</small>
           </div>
         </div>
-        <button class="logout-btn" (click)="logout()">
-          <app-icon class="nav-icon" name="log-out" />
+        <button class="logout-btn" (click)="logout()" title="Cerrar sesión" aria-label="Cerrar sesión">
+          <app-icon name="log-out" />
           <span>{{ roleLabel }}</span>
         </button>
       </div>

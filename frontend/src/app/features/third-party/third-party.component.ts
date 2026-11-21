@@ -4,11 +4,12 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ApiService } from '../../core/services/api.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
 import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../shared/utils/format';
+import { IconComponent } from '../../shared/components/icon/icon.component';
 
 @Component({
   selector: 'app-third-party',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, CurrencyInputComponent],
+  imports: [IconComponent, CommonModule, ReactiveFormsModule, CurrencyInputComponent],
   template: `
     <div class="page">
       <!-- List View -->
@@ -44,8 +45,8 @@ import { formatCurrency, todayLocal, formatDate as formatDateUtil } from '../../
             <div class="card-header">
               <h3>{{ account.person_name }}</h3>
               <div class="card-actions">
-                <button class="btn-icon" (click)="editAccount(account, $event)">✏️</button>
-                <button class="btn-icon" (click)="deleteAccount(account.id, $event)">🗑️</button>
+                <button class="btn-icon" (click)="editAccount(account, $event)" aria-label="Editar"><app-icon name="pencil" /></button>
+                <button class="btn-icon" (click)="deleteAccount(account.id, $event)" aria-label="Eliminar"><app-icon name="trash" /></button>
               </div>
             </div>
             <div class="card-values">

@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { formatCurrency } from '../../shared/utils/format';
+import { IconComponent } from '../../shared/components/icon/icon.component';
 
 @Component({
   selector: 'app-categories',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [IconComponent, CommonModule, ReactiveFormsModule, FormsModule],
   template: `
     <div class="page">
       <div class="page-header">
@@ -30,8 +31,8 @@ import { formatCurrency } from '../../shared/utils/format';
             <span *ngIf="cat.is_debt" class="category-debt-flag">Deuda</span>
             <span *ngIf="cat.is_receivable" class="category-receivable-flag">Por cobrar</span>
             <div class="card-actions">
-              <button class="btn-icon" (click)="openCategoryModal(cat)">✏️</button>
-              <button class="btn-icon" (click)="deleteCategory(cat.id)">🗑️</button>
+              <button class="btn-icon" (click)="openCategoryModal(cat)" aria-label="Editar"><app-icon name="pencil" /></button>
+              <button class="btn-icon" (click)="deleteCategory(cat.id)" aria-label="Eliminar"><app-icon name="trash" /></button>
             </div>
           </div>
 
@@ -58,10 +59,10 @@ import { formatCurrency } from '../../shared/utils/format';
                 <input [(ngModel)]="editingSubName" (keyup.enter)="saveSubcategory(cat.id, sub)" (keyup.escape)="cancelSubEdit()" class="sub-input" />
               </div>
               <div class="subcategory-actions">
-                <button class="btn-icon-sm" *ngIf="editingSubId !== sub.id" (click)="startEditSub(sub)">✏️</button>
+                <button class="btn-icon-sm" *ngIf="editingSubId !== sub.id" (click)="startEditSub(sub)" aria-label="Editar"><app-icon name="pencil" /></button>
                 <button class="btn-icon-sm" *ngIf="editingSubId === sub.id" (click)="saveSubcategory(cat.id, sub)">✓</button>
                 <button class="btn-icon-sm" *ngIf="editingSubId === sub.id" (click)="cancelSubEdit()">✕</button>
-                <button class="btn-icon-sm" *ngIf="editingSubId !== sub.id" (click)="deleteSubcategory(cat.id, sub.id)">🗑️</button>
+                <button class="btn-icon-sm" *ngIf="editingSubId !== sub.id" (click)="deleteSubcategory(cat.id, sub.id)" aria-label="Eliminar"><app-icon name="trash" /></button>
               </div>
             </div>
 

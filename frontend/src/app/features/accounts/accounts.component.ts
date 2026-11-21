@@ -5,11 +5,12 @@ import { ApiService } from '../../core/services/api.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
 import { formatCurrency, todayLocal } from '../../shared/utils/format';
 import { ToastService } from '../../core/toast/toast.service';
+import { IconComponent } from '../../shared/components/icon/icon.component';
 
 @Component({
   selector: 'app-accounts',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, CurrencyInputComponent],
+  imports: [IconComponent, CommonModule, ReactiveFormsModule, CurrencyInputComponent],
   template: `
     <div class="page">
       <div class="page-header">
@@ -20,10 +21,10 @@ import { ToastService } from '../../core/toast/toast.service';
       <div class="cards-grid">
         <div class="account-card" *ngFor="let account of accounts" [class.card-credit]="account.type === 'credit_card'">
           <div class="account-header">
-            <span class="account-icon">{{ getAccountIcon(account.type) }}</span>
+            <span class="account-icon"><app-icon [name]="getAccountIcon(account.type)" /></span>
             <div class="account-actions">
-              <button class="btn-icon" (click)="editAccount(account)">✏️</button>
-              <button class="btn-icon" (click)="deleteAccount(account.id)">🗑️</button>
+              <button class="btn-icon" (click)="editAccount(account)" aria-label="Editar"><app-icon name="pencil" /></button>
+              <button class="btn-icon" (click)="deleteAccount(account.id)" aria-label="Eliminar"><app-icon name="trash" /></button>
             </div>
           </div>
           <h3>{{ account.name }}</h3>
@@ -35,9 +36,9 @@ import { ToastService } from '../../core/toast/toast.service';
             Disponible: {{ formatCurrency(availableCredit(account)) }} de {{ formatCurrency(account.credit_limit) }}
           </p>
           <div class="account-actions-row">
-            <button class="btn-action" (click)="openMovements(account)">📋 Movimientos</button>
-            <button class="btn-action" (click)="openTransfer(account)">⇄ Transferir</button>
-            <button class="btn-action btn-card" *ngIf="account.type === 'credit_card'" (click)="openAbono(account)">💳 Pagar Tarjeta</button>
+            <button class="btn-action" (click)="openMovements(account)"><app-icon name="list" /> Movimientos</button>
+            <button class="btn-action" (click)="openTransfer(account)"><app-icon name="exchange" /> Transferir</button>
+            <button class="btn-action btn-card" *ngIf="account.type === 'credit_card'" (click)="openAbono(account)"><app-icon name="credit-card" /> Pagar tarjeta</button>
           </div>
         </div>
       </div>
@@ -438,8 +439,8 @@ export class AccountsComponent implements OnInit {
   }
 
   getAccountIcon(type: string): string {
-    const icons: Record<string, string> = { savings: '🏦', checking: '💳', cash: '💵', investment: '📈', credit_card: '💳', bajo_monto: '💰', other: '💰' };
-    return icons[type] || '💰';
+    const icons: Record<string, string> = { savings: 'piggy', checking: 'bank', cash: 'banknote', investment: 'trending-up', credit_card: 'credit-card', bajo_monto: 'wallet', other: 'wallet' };
+    return icons[type] || 'wallet';
   }
 
   getAccountTypeLabel(type: string): string {
