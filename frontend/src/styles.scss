@@ -102,6 +102,178 @@
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --tr: 160ms var(--ease-out);
+
+  /* Tokens derivados (cambian con el tema) */
+  color-scheme: light;
+  --primary-bg: #101814;
+  --primary-fg: #ffffff;
+  --primary-hover: #26302b;
+  --danger-hover: #a82f26;
+  --danger-border: #f1cfcb;
+  --warning-border: #f3dfb8;
+  --warning-soft-hover: #fae9c8;
+  --brand-soft-hover: #d6eadf;
+  --neutral-soft: #eef0ec;
+  --earth: #8b6f47;
+  --earth-soft: #f5f1ea;
+  --badge-tint: rgba(255, 255, 255, 0.84);
+  --navbar-bg: rgba(244, 245, 242, 0.86);
+  --overlay: rgba(16, 24, 20, 0.42);
+  --scroll-thumb: #cfd4cc;
+  --scroll-thumb-hover: #b3b9b1;
+  --shimmer: rgba(255, 255, 255, 0.6);
+  --danger-solid: #c2382e;
+}
+
+/* Tema oscuro: explícito con [data-theme="dark"], o automático según el sistema
+   cuando el usuario no eligió ("system"). */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --brand: #3fb689;
+  --brand-hover: #5cc79c;
+  --brand-strong: #5cc79c;
+  --brand-soft: rgba(63, 182, 137, 0.14);
+  --brand-deep: #0f2a1f;
+  --brand-gradient: #0d7a55;
+  --brand-ring: rgba(63, 182, 137, 0.28);
+
+  --income: #3fb689;
+  --income-soft: rgba(63, 182, 137, 0.14);
+  --expense: #f07167;
+  --expense-soft: rgba(240, 113, 103, 0.14);
+  --investment: #7b9cf0;
+  --investment-soft: rgba(123, 156, 240, 0.14);
+  --savings: #4fb3cc;
+  --savings-soft: rgba(79, 179, 204, 0.14);
+  --warning: #e3a443;
+  --warning-soft: rgba(227, 164, 67, 0.14);
+  --success: #3fb689;
+  --success-soft: rgba(63, 182, 137, 0.14);
+  --danger: #f07167;
+  --danger-soft: rgba(240, 113, 103, 0.14);
+  --info: #7b9cf0;
+  --info-soft: rgba(123, 156, 240, 0.14);
+
+  --bg: #0d110f;
+  --surface: #151a17;
+  --surface-2: #1a201c;
+  --surface-3: #212823;
+  --border: #262d29;
+  --border-strong: #353e38;
+  --text: #e8ece9;
+  --text-2: #b3bcb6;
+  --text-3: #87918b;
+  --text-inverse: #ffffff;
+
+  --sidebar-bg: #111613;
+  --sidebar-bg-2: #111613;
+  --sidebar-border: #232a26;
+  --sidebar-text: #b3bcb6;
+  --sidebar-text-active: #e8ece9;
+  --sidebar-hover: #1c221e;
+  --sidebar-active-soft: rgba(63, 182, 137, 0.12);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 20px -8px rgba(0, 0, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 24px 48px -16px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.4);
+
+  --primary-bg: #e8ece9;
+  --primary-fg: #0d110f;
+  --primary-hover: #ffffff;
+  --danger-hover: #d4463b;
+  --danger-border: rgba(240, 113, 103, 0.3);
+  --warning-border: rgba(227, 164, 67, 0.3);
+  --warning-soft-hover: rgba(227, 164, 67, 0.22);
+  --brand-soft-hover: rgba(63, 182, 137, 0.22);
+  --neutral-soft: #222924;
+  --earth: #c9a878;
+  --earth-soft: rgba(201, 168, 120, 0.14);
+  --badge-tint: rgba(21, 26, 23, 0.8);
+  --navbar-bg: rgba(13, 17, 15, 0.82);
+  --overlay: rgba(0, 0, 0, 0.6);
+  --scroll-thumb: #2f3732;
+  --scroll-thumb-hover: #414b45;
+  --shimmer: rgba(255, 255, 255, 0.05);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']):not([data-theme='dark']) {
+    color-scheme: dark;
+    --brand: #3fb689;
+    --brand-hover: #5cc79c;
+    --brand-strong: #5cc79c;
+    --brand-soft: rgba(63, 182, 137, 0.14);
+    --brand-deep: #0f2a1f;
+    --brand-gradient: #0d7a55;
+    --brand-ring: rgba(63, 182, 137, 0.28);
+
+    --income: #3fb689;
+    --income-soft: rgba(63, 182, 137, 0.14);
+    --expense: #f07167;
+    --expense-soft: rgba(240, 113, 103, 0.14);
+    --investment: #7b9cf0;
+    --investment-soft: rgba(123, 156, 240, 0.14);
+    --savings: #4fb3cc;
+    --savings-soft: rgba(79, 179, 204, 0.14);
+    --warning: #e3a443;
+    --warning-soft: rgba(227, 164, 67, 0.14);
+    --success: #3fb689;
+    --success-soft: rgba(63, 182, 137, 0.14);
+    --danger: #f07167;
+    --danger-soft: rgba(240, 113, 103, 0.14);
+    --info: #7b9cf0;
+    --info-soft: rgba(123, 156, 240, 0.14);
+
+    --bg: #0d110f;
+    --surface: #151a17;
+    --surface-2: #1a201c;
+    --surface-3: #212823;
+    --border: #262d29;
+    --border-strong: #353e38;
+    --text: #e8ece9;
+    --text-2: #b3bcb6;
+    --text-3: #87918b;
+    --text-inverse: #ffffff;
+
+    --sidebar-bg: #111613;
+    --sidebar-bg-2: #111613;
+    --sidebar-border: #232a26;
+    --sidebar-text: #b3bcb6;
+    --sidebar-text-active: #e8ece9;
+    --sidebar-hover: #1c221e;
+    --sidebar-active-soft: rgba(63, 182, 137, 0.12);
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 8px 20px -8px rgba(0, 0, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 24px 48px -16px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.4);
+
+    --primary-bg: #e8ece9;
+    --primary-fg: #0d110f;
+    --primary-hover: #ffffff;
+    --danger-hover: #d4463b;
+    --danger-border: rgba(240, 113, 103, 0.3);
+    --warning-border: rgba(227, 164, 67, 0.3);
+    --warning-soft-hover: rgba(227, 164, 67, 0.22);
+    --brand-soft-hover: rgba(63, 182, 137, 0.22);
+    --neutral-soft: #222924;
+    --earth: #c9a878;
+    --earth-soft: rgba(201, 168, 120, 0.14);
+    --badge-tint: rgba(21, 26, 23, 0.8);
+    --navbar-bg: rgba(13, 17, 15, 0.82);
+    --overlay: rgba(0, 0, 0, 0.6);
+    --scroll-thumb: #2f3732;
+    --scroll-thumb-hover: #414b45;
+    --shimmer: rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* Transición suave al cambiar de tema (solo mientras dura el cambio) */
+:root.theme-switching *,
+:root.theme-switching *::before,
+:root.theme-switching *::after {
+  transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease !important;
 }
 
 /* ----------------------------------------------------------------------------
@@ -175,13 +347,13 @@ button {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cfd4cc;
+  background: var(--scroll-thumb);
   border-radius: 8px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #b3b9b1;
+  background-color: var(--scroll-thumb-hover);
 }
 
 .positive {
@@ -567,7 +739,7 @@ button {
   top: 0;
   z-index: 90;
   height: var(--navbar-h);
-  background: rgba(244, 245, 242, 0.86);
+  background: var(--navbar-bg);
   backdrop-filter: saturate(160%) blur(10px);
   -webkit-backdrop-filter: saturate(160%) blur(10px);
   border-bottom: 1px solid var(--border);
@@ -629,6 +801,57 @@ button {
 }
 
 /* ----------------------------------------------------------------------------
+   Selector de tema
+   ------------------------------------------------------------------------- */
+.theme-toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.theme-option {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-3);
+  font-size: 15px;
+  cursor: pointer;
+  transition: background var(--tr), color var(--tr), transform 120ms var(--ease-out);
+}
+
+.theme-option:hover {
+  color: var(--text);
+}
+
+.theme-option:active {
+  transform: scale(0.92);
+}
+
+.theme-option.active {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+.auth-form-side {
+  position: relative;
+}
+
+.auth-theme-toggle {
+  position: absolute;
+  top: var(--s4);
+  right: var(--s4);
+}
+
+/* ----------------------------------------------------------------------------
    4. Botones
    ------------------------------------------------------------------------- */
 .btn-primary,
@@ -672,12 +895,12 @@ button {
 }
 
 .btn-primary {
-  background: var(--text);
-  color: var(--text-inverse);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 1px 2px rgba(16, 24, 20, 0.16);
 }
 .btn-primary:hover {
-  background: #26302b;
+  background: var(--primary-hover);
 }
 .btn-primary:disabled {
   background: var(--border);
@@ -708,11 +931,11 @@ button {
 }
 
 .btn-danger {
-  background: var(--expense);
+  background: var(--danger-solid);
   color: var(--text-inverse);
 }
 .btn-danger:hover {
-  background: #a82f26;
+  background: var(--danger-hover);
 }
 
 .btn-copy {
@@ -737,7 +960,7 @@ button {
 }
 
 .btn-buy {
-  background: var(--income);
+  background: var(--brand-gradient);
   color: var(--text-inverse);
 }
 .btn-buy:hover {
@@ -745,11 +968,11 @@ button {
 }
 
 .btn-sell {
-  background: var(--expense);
+  background: var(--danger-solid);
   color: var(--text-inverse);
 }
 .btn-sell:hover {
-  background: #a82f26;
+  background: var(--danger-hover);
 }
 
 .btn-action {
@@ -765,10 +988,10 @@ button {
 .btn-action.btn-card {
   background: var(--warning-soft);
   color: var(--warning);
-  border-color: #f3dfb8;
+  border-color: var(--warning-border);
 }
 .btn-action.btn-card:hover {
-  background: #fae9c8;
+  background: var(--warning-soft-hover);
 }
 
 .btn-detail {
@@ -779,7 +1002,7 @@ button {
   padding: 7px 12px;
 }
 .btn-detail:hover {
-  background: #d6eadf;
+  background: var(--brand-soft-hover);
 }
 
 .btn-icon {
@@ -892,8 +1115,8 @@ button {
 }
 
 .btn-primary-sm {
-  background: var(--text);
-  color: var(--text-inverse);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
   border: none;
   padding: 6px 12px;
   font-size: var(--fs-xs);
@@ -903,7 +1126,7 @@ button {
   transition: background var(--tr);
 }
 .btn-primary-sm:hover {
-  background: #26302b;
+  background: var(--primary-hover);
 }
 
 .btn-add-item,
@@ -1052,7 +1275,7 @@ input[type='checkbox'] {
 
 .error-message {
   background: var(--expense-soft);
-  border: 1px solid #f1cfcb;
+  border: 1px solid var(--danger-border);
   color: var(--expense);
   padding: 11px 14px;
   border-radius: var(--r-sm);
@@ -1322,9 +1545,9 @@ td.actions-cell {
 }
 
 .pagination .page-buttons .btn-mini.page-num.active {
-  background: var(--text);
-  border-color: var(--text);
-  color: var(--text-inverse);
+  background: var(--primary-bg);
+  border-color: var(--primary-bg);
+  color: var(--primary-fg);
 }
 
 /* ----------------------------------------------------------------------------
@@ -1353,7 +1576,7 @@ td.actions-cell {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: rgba(255, 255, 255, 0.84);
+  background: var(--badge-tint);
 }
 
 .status-badge,
@@ -1381,11 +1604,11 @@ td.actions-cell {
 .status-pending,
 .status-open {
   background: var(--warning-soft);
-  color: #b45309;
+  color: var(--warning);
 }
 .status-cancelled,
 .status-closed {
-  background: #eef1f5;
+  background: var(--neutral-soft);
   color: var(--text-2);
 }
 .status-exceeded {
@@ -1394,7 +1617,7 @@ td.actions-cell {
 }
 
 .status-badge-op.closed {
-  background: #eef1f5;
+  background: var(--neutral-soft);
   color: var(--text-2);
 }
 
@@ -1417,8 +1640,8 @@ td.actions-cell {
 }
 .type-bond,
 .type-checking {
-  background: #f3e8ff;
-  color: #7c3aed;
+  background: var(--savings-soft);
+  color: var(--savings);
 }
 .type-etf {
   background: var(--success-soft);
@@ -1426,15 +1649,15 @@ td.actions-cell {
 }
 .type-crypto {
   background: var(--warning-soft);
-  color: #b45309;
+  color: var(--warning);
 }
 .type-land,
 .type-cash {
-  background: #f5f3ee;
-  color: #8b6f47;
+  background: var(--earth-soft);
+  color: var(--earth);
 }
 .type-other {
-  background: #eef1f5;
+  background: var(--neutral-soft);
   color: var(--text-2);
 }
 .type-bank {
@@ -1450,7 +1673,7 @@ td.actions-cell {
   color: var(--success);
 }
 .type-inactive {
-  background: #eef1f5;
+  background: var(--neutral-soft);
   color: var(--text-2);
 }
 .type-deposit {
@@ -1466,12 +1689,12 @@ td.actions-cell {
   color: var(--info);
 }
 .type-investment_sell {
-  background: #f3e8ff;
-  color: #7c3aed;
+  background: var(--savings-soft);
+  color: var(--savings);
 }
 .type-transfer {
   background: var(--warning-soft);
-  color: #b45309;
+  color: var(--warning);
 }
 .movement-type-label {
   display: inline-flex;
@@ -1541,7 +1764,7 @@ td.actions-cell {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(16, 24, 20, 0.42);
+  background: var(--overlay);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
   display: flex;
@@ -1857,7 +2080,7 @@ td.actions-cell {
   font-size: var(--fs-xs);
   font-weight: 600;
   background: var(--warning-soft);
-  color: #b45309;
+  color: var(--warning);
   margin-right: auto;
 }
 
@@ -2048,7 +2271,7 @@ td.actions-cell {
 
 .status-badge-op {
   background: var(--warning-soft);
-  color: #b45309;
+  color: var(--warning);
 }
 
 .op-footer {
@@ -2419,8 +2642,8 @@ td.actions-cell {
 }
 
 .movement-type-badge.type-transfer {
-  background: #f3e8ff;
-  color: #7c3aed;
+  background: var(--savings-soft);
+  color: var(--savings);
 }
 
 .movement-desc {
@@ -3247,7 +3470,7 @@ td.actions-cell {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.6),
+    var(--shimmer),
     transparent
   );
   animation: shimmer 1.4s infinite;
@@ -3267,7 +3490,7 @@ td.actions-cell {
    ------------------------------------------------------------------------- */
 @media (max-width: 1200px) {
   .kpi-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
 
   .kpi-grid .stat-card.featured {
@@ -3859,7 +4082,7 @@ td.actions-cell {
   transition: background 0.15s ease;
 }
 .ai-new-chat:hover {
-  background: #d8f0e7;
+  background: var(--brand-soft-hover);
 }
 
 .ai-conv-list {
@@ -3965,7 +4188,7 @@ td.actions-cell {
   gap: var(--s2);
   padding: var(--s2) var(--s3);
   background: var(--danger-soft);
-  border-bottom: 1px solid #f5c6c8;
+  border-bottom: 1px solid var(--danger-border);
   font-size: var(--fs-xs);
   color: var(--danger);
   flex-shrink: 0;
@@ -3982,8 +4205,8 @@ td.actions-cell {
   cursor: pointer;
 }
 .ai-confirm-yes {
-  background: var(--danger);
-  color: #fff;
+  background: var(--danger-solid);
+  color: var(--text-inverse);
 }
 .ai-confirm-no {
   background: var(--surface);

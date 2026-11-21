@@ -4,11 +4,12 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, IconComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, IconComponent, ThemeToggleComponent],
   template: `
     <div class="auth-container">
       <div class="auth-brand">
@@ -53,6 +54,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
       </div>
 
       <div class="auth-form-side">
+        <app-theme-toggle class="auth-theme-toggle" />
         <div class="auth-card">
           <div class="auth-card-header">
             <div class="auth-mobile-brand">

@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { CommonModule } from '@angular/common';
 import { IconComponent } from '../icon/icon.component';
+import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 
 const TITLES: Record<string, string> = {
   dashboard: 'Dashboard',
@@ -35,7 +36,7 @@ const SECTIONS: Record<string, string> = {
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, IconComponent],
+  imports: [CommonModule, IconComponent, ThemeToggleComponent],
   template: `
     <nav class="navbar">
       <button
@@ -52,6 +53,7 @@ const SECTIONS: Record<string, string> = {
         <h1 class="navbar-title">{{ pageTitle }}</h1>
       </div>
       <span class="navbar-date">{{ todayLabel }}</span>
+      <app-theme-toggle />
     </nav>
   `,
 })
