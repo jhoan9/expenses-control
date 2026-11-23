@@ -12,12 +12,33 @@ export interface Conversation {
   updated_at: string;
 }
 
+export interface ToolTrace {
+  name: string;
+  label: string;
+  ok: boolean;
+}
+
+export interface ProposedAction {
+  id: number;
+  tool: string;
+  summary: string;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'failed' | 'expired';
+  result?: string | null;
+}
+
 export interface Message {
   id: number;
   conversation_id: number;
   role: 'user' | 'assistant';
   content: string;
   created_at: string;
+  meta?: { tools?: ToolTrace[]; action_result?: number } | null;
+  actions?: ProposedAction[];
+}
+
+export interface ActionResult {
+  action: ProposedAction;
+  message: Message;
 }
 
 export interface SendResult {
@@ -63,6 +84,12 @@ export class AssistantService {
       .post<ApiResponse<SendResult>>(`/ai/conversations/${conversationId}/messages`, {
         content,
       })
+      .pipe(map((r) => r.data));
+  }
+
+  resolveAction(actionId: number, decision: 'confirm' | 'cancel'): Observable<ActionResult> {
+    return this.api
+      .post<ApiResponse<ActionResult>>(`/ai/actions/${actionId}/${decision}`)
       .pipe(map((r) => r.data));
   }
 }

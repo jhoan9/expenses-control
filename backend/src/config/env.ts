@@ -55,6 +55,13 @@ export const env = {
   /** true: no llama a Meta, imprime en consola los mensajes que enviaría (pruebas locales) */
   WHATSAPP_DRY_RUN: process.env.WHATSAPP_DRY_RUN === 'true',
 
+  // Datos de mercado para el asistente. Ver docs/asistente/README.md
+  MARKET_DATA_PROVIDER: (process.env.MARKET_DATA_PROVIDER || 'yahoo').toLowerCase(),
+  TWELVE_DATA_API_KEY: process.env.TWELVE_DATA_API_KEY || '',
+  ALPHA_VANTAGE_API_KEY: process.env.ALPHA_VANTAGE_API_KEY || '',
+  /** Clave para cifrar los secretos de los conectores (32+ caracteres). Si falta, se deriva de JWT_SECRET. */
+  CONNECTORS_SECRET_KEY: process.env.CONNECTORS_SECRET_KEY || '',
+
   get whatsappEnabled(): boolean {
     return Boolean(env.WHATSAPP_ACCESS_TOKEN && env.WHATSAPP_PHONE_NUMBER_ID && env.WHATSAPP_VERIFY_TOKEN);
   },

@@ -6,7 +6,7 @@ import { incomeService } from '../income/income.service';
 import { Draft, EntryKind, ParserAccount, ParserCategory, ParserContext, parseEntry } from './parser';
 import { aiParse } from './ai-parser';
 
-export type QuickSource = 'whatsapp' | 'api' | 'web';
+export type QuickSource = 'whatsapp' | 'api' | 'web' | 'assistant';
 
 /** Borrador listo para mostrar: ids resueltos + nombres + qué falta. */
 export interface ResolvedDraft extends Draft {

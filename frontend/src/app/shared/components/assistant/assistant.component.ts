@@ -6,15 +6,26 @@ import {
   AssistantService,
   Conversation,
   Message,
+  ProposedAction,
 } from '../../../core/services/assistant.service';
 import { ToastService } from '../../../core/toast/toast.service';
 
 const SUGGESTIONS = [
-  { icon: 'pie-chart', label: 'Resumen de mis finanzas' },
-  { icon: 'coins', label: 'Dame un plan de ahorro' },
-  { icon: 'bar-chart', label: '¿En qué gasto más?' },
-  { icon: 'sparkles', label: 'Mejora mis hábitos' },
+  { icon: 'bar-chart', label: 'Informe de mis finanzas de este mes' },
+  { icon: 'receipt', label: 'Registra un gasto de 25 mil en almuerzo' },
+  { icon: 'calendar', label: 'Arma mi presupuesto de la próxima quincena' },
+  { icon: 'tags', label: '¿Mis categorías están bien organizadas?' },
+  { icon: 'trending-up', label: 'Analiza la acción de Apple antes de invertir' },
 ];
+
+const ACTION_TITLES: Record<string, string> = {
+  register_transaction: 'Registrar movimiento',
+  rename_category: 'Renombrar categoría',
+  create_category: 'Crear categoría',
+  recategorize_transactions: 'Recategorizar movimientos',
+  create_budget: 'Crear presupuesto',
+  propose_connector: 'Autorizar API externa',
+};
 
 @Component({
   selector: 'app-assistant',
@@ -37,7 +48,7 @@ const SUGGESTIONS = [
             <span class="ai-avatar"><app-icon name="bot" /></span>
             <div>
               <h3>Asesor Financiero</h3>
-              <span>Resume, analiza y propone mejoras</span>
+              <span>Consulta, registra, planifica e investiga</span>
             </div>
           </div>
           <button class="ai-icon-btn" (click)="close()" aria-label="Cerrar">
@@ -124,8 +135,9 @@ const SUGGESTIONS = [
                     <span class="ai-empty-icon"><app-icon name="sparkles" /></span>
                     <p>¡Hola! Soy tu asesor financiero.</p>
                     <p class="ai-empty-sub">
-                      Tengo acceso a tus cuentas, gastos, ingresos, presupuesto e
-                      inversiones. Pregúntame lo que necesites.
+                      Puedo consultar tus movimientos por fechas, hacer informes, registrar gastos,
+                      armar presupuestos, ordenar tus categorías y analizar acciones con datos del mercado.
+                      Antes de cambiar algo te pido confirmación.
                     </p>
                     <div class="ai-suggestions">
                       @for (s of suggestions; track s.label) {
@@ -141,10 +153,42 @@ const SUGGESTIONS = [
                       @if (m.role !== 'user') {
                         <span class="ai-msg-avatar"><app-icon name="bot" /></span>
                       }
-                      <div
-                        class="ai-bubble"
-                        [innerHTML]="formatContent(m.content)"
-                      ></div>
+                      <div class="ai-msg-body">
+                        @if (toolLabels(m).length) {
+                          <div class="ai-tools" aria-label="Herramientas usadas">
+                            @for (t of toolLabels(m); track t.label) {
+                              <span class="ai-tool" [class.failed]="!t.ok">
+                                <app-icon [name]="t.ok ? 'check' : 'alert-circle'" /> {{ t.label }}
+                              </span>
+                            }
+                          </div>
+                        }
+                        <div
+                          class="ai-bubble"
+                          [innerHTML]="formatContent(m.content)"
+                        ></div>
+                        @for (a of m.actions ?? []; track a.id) {
+                          <div class="ai-action" [attr.data-status]="a.status">
+                            <div class="ai-action-head">
+                              <app-icon [name]="actionIcon(a)" />
+                              <span>{{ actionTitle(a) }}</span>
+                            </div>
+                            <p class="ai-action-summary">{{ a.summary }}</p>
+                            @if (a.status === 'pending') {
+                              <div class="ai-action-buttons">
+                                <button class="ai-action-confirm" [disabled]="resolving === a.id" (click)="resolve(a, 'confirm')">
+                                  {{ resolving === a.id ? 'Aplicando…' : 'Confirmar' }}
+                                </button>
+                                <button class="ai-action-cancel" [disabled]="resolving === a.id" (click)="resolve(a, 'cancel')">
+                                  Cancelar
+                                </button>
+                              </div>
+                            } @else if (a.result) {
+                              <p class="ai-action-result">{{ a.result }}</p>
+                            }
+                          </div>
+                        }
+                      </div>
                     </div>
                   }
                 }
@@ -166,7 +210,7 @@ const SUGGESTIONS = [
                 [(ngModel)]="input"
                 (keydown.enter)="onKeydown($event)"
                 (input)="autoGrow($event)"
-                placeholder="Escribe tu pregunta…"
+                placeholder="Pregunta o pide algo…"
                 [disabled]="sending"
               ></textarea>
               <button
@@ -196,6 +240,7 @@ export class AssistantComponent {
   messages: Message[] = [];
   input = '';
   sending = false;
+  resolving: number | null = null;
   loadingConversations = false;
   loadingMessages = false;
   confirmDelete = false;
@@ -352,15 +397,83 @@ export class AssistantComponent {
     }
   }
 
+  toolLabels(m: Message): { label: string; ok: boolean }[] {
+    const seen = new Map<string, boolean>();
+    for (const t of m.meta?.tools ?? []) seen.set(t.label, (seen.get(t.label) ?? true) && t.ok);
+    return [...seen.entries()].map(([label, ok]) => ({ label, ok }));
+  }
+
+  actionTitle(a: ProposedAction): string {
+    const base = ACTION_TITLES[a.tool] ?? 'Acción propuesta';
+    const status: Record<string, string> = {
+      pending: '',
+      confirmed: ' · hecho',
+      cancelled: ' · cancelado',
+      failed: ' · no se pudo',
+      expired: ' · vencido',
+    };
+    return base + (status[a.status] ?? '');
+  }
+
+  actionIcon(a: ProposedAction): string {
+    if (a.status === 'confirmed') return 'check';
+    if (a.status === 'failed' || a.status === 'expired') return 'alert-circle';
+    if (a.status === 'cancelled') return 'x';
+    return 'sparkles';
+  }
+
+  resolve(a: ProposedAction, decision: 'confirm' | 'cancel'): void {
+    if (this.resolving) return;
+    this.resolving = a.id;
+    this.assistantService.resolveAction(a.id, decision).subscribe({
+      next: (r) => {
+        Object.assign(a, r.action);
+        this.messages.push(r.message);
+        this.resolving = null;
+        setTimeout(() => this.scrollToBottom(), 0);
+      },
+      error: () => {
+        this.resolving = null;
+        // Puede haber vencido o resuelto en otra pestaña: recarga el estado real
+        if (this.active) this.openConversation(this.active);
+      },
+    });
+  }
+
   formatContent(text: string): string {
     const escaped = text
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
 
-    const html = escaped
-      .split('\n')
+    // Tablas Markdown: bloques de líneas que empiezan y terminan con "|"
+    const lines = escaped.split('\n');
+    const out: string[] = [];
+    for (let i = 0; i < lines.length; i++) {
+      const isRow = (l: string | undefined) => !!l && /^\s*\|.*\|\s*$/.test(l);
+      if (isRow(lines[i]) && /^\s*\|?\s*:?-{2,}/.test(lines[i + 1] ?? '')) {
+        const cells = (l: string) => l.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
+        const head = cells(lines[i]);
+        let j = i + 2;
+        const body: string[][] = [];
+        while (isRow(lines[j])) body.push(cells(lines[j++]));
+        const num = (c: string) => /^[-+−]?\$?\s?[\d.,]+%?$/.test(c);
+        out.push(
+          '@@TABLE@@<div class="ai-table-wrap"><table class="ai-table"><thead><tr>' +
+            head.map((h) => `<th>${h}</th>`).join('') +
+            '</tr></thead><tbody>' +
+            body.map((r) => '<tr>' + r.map((c) => `<td${num(c) ? ' class="num"' : ''}>${c}</td>`).join('') + '</tr>').join('') +
+            '</tbody></table></div>'
+        );
+        i = j - 1;
+      } else {
+        out.push(lines[i]);
+      }
+    }
+
+    const html = out
       .map((line) => {
+        if (line.startsWith('@@TABLE@@')) return line.slice(9);
         const t = line.trim();
         if (!t) return '<div class="ai-gap"></div>';
         if (/^#{1,3}\s+(.+)$/.test(t))

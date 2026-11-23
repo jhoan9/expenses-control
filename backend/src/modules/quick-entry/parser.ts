@@ -79,7 +79,7 @@ const EXPENSE_HINTS = [
  * Sinónimos frecuentes → nombres de categoría habituales. Solo se usan si el
  * usuario tiene una categoría con alguno de esos nombres.
  */
-const CATEGORY_SYNONYMS: { words: string[]; categories: string[] }[] = [
+export const CATEGORY_SYNONYMS: { words: string[]; categories: string[] }[] = [
   {
     words: ['uber', 'didi', 'taxi', 'bus', 'buseta', 'metro', 'transmilenio', 'tullave', 'sitp', 'pasaje', 'peaje', 'gasolina', 'tanquee', 'parqueadero', 'indriver', 'cabify', 'moto'],
     categories: ['transporte', 'movilidad', 'gasolina', 'carro', 'vehiculo'],

@@ -27,7 +27,19 @@ interface Account {
   type: string;
 }
 
-type Tab = 'whatsapp' | 'shortcuts';
+type Tab = 'whatsapp' | 'shortcuts' | 'connectors';
+
+interface Connector {
+  id: number;
+  name: string;
+  description: string | null;
+  base_url: string;
+  auth_type: 'none' | 'header' | 'query';
+  auth_name: string | null;
+  has_secret: boolean;
+  enabled: boolean;
+  last_used_at: string | null;
+}
 
 @Component({
   selector: 'app-integrations',
@@ -50,6 +62,9 @@ type Tab = 'whatsapp' | 'shortcuts';
         </button>
         <button role="tab" [class.active]="tab === 'shortcuts'" [attr.aria-selected]="tab === 'shortcuts'" (click)="tab = 'shortcuts'">
           Atajos de iPhone y Android
+        </button>
+        <button role="tab" [class.active]="tab === 'connectors'" [attr.aria-selected]="tab === 'connectors'" (click)="tab = 'connectors'; loadConnectors()">
+          Conectores de API
         </button>
       </div>
 
@@ -191,6 +206,113 @@ type Tab = 'whatsapp' | 'shortcuts';
           </div>
         </section>
 
+        <!-- ================= Conectores de API ================= -->
+        <section class="int-card" *ngIf="tab === 'connectors'">
+          <header class="int-card-head">
+            <span class="int-icon"><app-icon name="plug" /></span>
+            <div>
+              <h2>Conectores de API para el asistente</h2>
+              <p>
+                APIs externas que el asistente puede consultar (solo lectura). También puede proponerlas él mismo desde el chat;
+                aquí agregas las claves, que nunca pasan por la conversación.
+              </p>
+            </div>
+          </header>
+
+          <div class="int-body">
+            <div class="notice">
+              <app-icon name="shield-check" />
+              <span>
+                Solo HTTPS, solo peticiones GET, solo al dominio registrado y nunca a redes privadas. Las claves se guardan cifradas.
+                Datos de mercado integrados: <strong>{{ marketProvider || '—' }}</strong>.
+              </span>
+            </div>
+
+            <div class="table-container" *ngIf="connectors.length">
+              <table>
+                <thead>
+                  <tr><th>Conector</th><th>Clave</th><th>Activo</th><th></th></tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let c of connectors">
+                    <td>
+                      <strong>{{ c.name }}</strong>
+                      <div class="conn-url">{{ c.base_url }}</div>
+                      <div class="conn-desc" *ngIf="c.description">{{ c.description }}</div>
+                    </td>
+                    <td>
+                      <ng-container *ngIf="c.auth_type === 'none'">No requiere</ng-container>
+                      <ng-container *ngIf="c.auth_type !== 'none'">
+                        <div class="copy-row" *ngIf="editingSecret === c.id; else secretState">
+                          <input type="password" [(ngModel)]="secretValue" [name]="'secret' + c.id" placeholder="Pega la clave" autocomplete="off" />
+                          <button class="btn-primary" (click)="saveSecret(c)" [disabled]="!secretValue.trim()">Guardar</button>
+                        </div>
+                        <ng-template #secretState>
+                          <span class="status-badge" [class.status-active]="c.has_secret" [class.status-pending]="!c.has_secret">
+                            {{ c.has_secret ? 'Configurada' : 'Falta la clave' }}
+                          </span>
+                          <button class="btn-ghost" (click)="editingSecret = c.id; secretValue = ''">
+                            {{ c.has_secret ? 'Cambiar' : 'Agregar' }}
+                          </button>
+                        </ng-template>
+                      </ng-container>
+                    </td>
+                    <td>
+                      <label class="toggle-label">
+                        <input type="checkbox" [checked]="c.enabled" (change)="toggleConnector(c, $any($event.target).checked)" />
+                        {{ c.enabled ? 'Sí' : 'No' }}
+                      </label>
+                    </td>
+                    <td class="actions-cell">
+                      <button class="btn-icon" aria-label="Eliminar" title="Eliminar" (click)="deleteConnector(c)"><app-icon name="trash" /></button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="hint" *ngIf="!connectors.length">
+              Aún no hay conectores. Pídele al asistente, por ejemplo: "conecta una API de tasas de cambio", o agrégala aquí.
+            </p>
+
+            <form class="conn-form" (ngSubmit)="createConnector()">
+              <span class="examples-title">Agregar manualmente</span>
+              <div class="conn-grid">
+                <div class="form-group">
+                  <label for="c-name">Nombre</label>
+                  <input id="c-name" name="cname" [(ngModel)]="newConn.name" placeholder="tasas-fx" maxlength="40" required />
+                </div>
+                <div class="form-group">
+                  <label for="c-url">URL base (HTTPS)</label>
+                  <input id="c-url" name="curl" [(ngModel)]="newConn.base_url" placeholder="https://api.ejemplo.com/v1" required />
+                </div>
+                <div class="form-group span-2">
+                  <label for="c-desc">Qué datos ofrece</label>
+                  <input id="c-desc" name="cdesc" [(ngModel)]="newConn.description" placeholder="Tasas de cambio diarias" maxlength="500" />
+                </div>
+                <div class="form-group">
+                  <label for="c-auth">Autenticación</label>
+                  <select id="c-auth" name="cauth" [(ngModel)]="newConn.auth_type">
+                    <option value="none">Sin clave</option>
+                    <option value="header">Clave en encabezado</option>
+                    <option value="query">Clave en parámetro de la URL</option>
+                  </select>
+                </div>
+                <div class="form-group" *ngIf="newConn.auth_type !== 'none'">
+                  <label for="c-authname">{{ newConn.auth_type === 'header' ? 'Nombre del encabezado' : 'Nombre del parámetro' }}</label>
+                  <input id="c-authname" name="cauthname" [(ngModel)]="newConn.auth_name" [placeholder]="newConn.auth_type === 'header' ? 'X-Api-Key' : 'apikey'" />
+                </div>
+                <div class="form-group span-2" *ngIf="newConn.auth_type !== 'none'">
+                  <label for="c-secret">Clave</label>
+                  <input id="c-secret" name="csecret" type="password" [(ngModel)]="newConn.secret" autocomplete="off" />
+                </div>
+              </div>
+              <div class="int-actions">
+                <button class="btn-primary" type="submit" [disabled]="busy || !newConn.name || !newConn.base_url">Agregar conector</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
         <!-- ================= Lateral: preferencias + prueba ================= -->
         <aside class="int-side">
           <section class="int-card compact">
@@ -254,6 +376,12 @@ export class IntegrationsComponent implements OnInit, OnDestroy {
     default_expense_account_id: null,
     default_income_account_id: null,
   };
+
+  connectors: Connector[] = [];
+  marketProvider = '';
+  editingSecret: number | null = null;
+  secretValue = '';
+  newConn = { name: '', base_url: '', description: '', auth_type: 'none', auth_name: '', secret: '' };
 
   tryText = '';
   tryResult: { ok: boolean; message: string } | null = null;
@@ -383,6 +511,55 @@ export class IntegrationsComponent implements OnInit, OnDestroy {
           this.tryResult = { ok: false, message: e.error?.message || e.error?.error?.message || 'No se pudo interpretar el mensaje' };
         },
       });
+  }
+
+  loadConnectors(): void {
+    this.api.get<any>('/ai/connectors').subscribe((r) => (this.connectors = r.data ?? []));
+    if (!this.marketProvider) {
+      this.api.get<any>('/ai/capabilities').subscribe((r) => {
+        const names: Record<string, string> = { yahoo: 'Yahoo Finance (sin clave)', twelvedata: 'Twelve Data', alphavantage: 'Alpha Vantage' };
+        this.marketProvider = names[r.data?.market_provider] ?? r.data?.market_provider ?? '';
+      });
+    }
+  }
+
+  createConnector(): void {
+    this.busy = true;
+    const body: any = { ...this.newConn };
+    if (body.auth_type === 'none') {
+      delete body.auth_name;
+      delete body.secret;
+    }
+    this.api.post<any>('/ai/connectors', body).subscribe({
+      next: () => {
+        this.busy = false;
+        this.toast.showSuccess('Conector agregado');
+        this.newConn = { name: '', base_url: '', description: '', auth_type: 'none', auth_name: '', secret: '' };
+        this.loadConnectors();
+      },
+      error: () => (this.busy = false),
+    });
+  }
+
+  saveSecret(c: Connector): void {
+    this.api.put<any>(`/ai/connectors/${c.id}/secret`, { secret: this.secretValue }).subscribe(() => {
+      this.toast.showSuccess('Clave guardada');
+      this.editingSecret = null;
+      this.secretValue = '';
+      this.loadConnectors();
+    });
+  }
+
+  toggleConnector(c: Connector, enabled: boolean): void {
+    this.api.patch<any>(`/ai/connectors/${c.id}`, { enabled }).subscribe(() => (c.enabled = enabled));
+  }
+
+  deleteConnector(c: Connector): void {
+    if (!confirm(`¿Eliminar el conector "${c.name}"? El asistente ya no podrá consultarlo.`)) return;
+    this.api.delete<any>(`/ai/connectors/${c.id}`).subscribe(() => {
+      this.toast.showSuccess('Conector eliminado');
+      this.loadConnectors();
+    });
   }
 
   copy(value: string, msg: string): void {

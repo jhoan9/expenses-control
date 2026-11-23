@@ -38,11 +38,39 @@ const isTransient = (data: GeminiResponse | null, status: number): boolean => {
 const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
-export const chatCompletion = async (
-  system: string,
-  messages: LLMMessage[],
-  temperature = 0.7
-): Promise<string> => {
+export interface GeminiPart {
+  text?: string;
+  functionCall?: { name: string; args?: Record<string, unknown> };
+  functionResponse?: { name: string; response: Record<string, unknown> };
+  thoughtSignature?: string;
+  thought?: boolean;
+  [key: string]: unknown;
+}
+
+export interface GeminiContent {
+  role: 'user' | 'model';
+  parts: GeminiPart[];
+}
+
+export interface FunctionDeclaration {
+  name: string;
+  description: string;
+  parameters?: Record<string, unknown>;
+}
+
+interface GenerateOptions {
+  system?: string;
+  contents: GeminiContent[];
+  tools?: FunctionDeclaration[];
+  temperature?: number;
+  maxOutputTokens?: number;
+}
+
+/**
+ * Llamada cruda a generateContent con reintentos, timeout y manejo de errores.
+ * Devuelve el contenido del primer candidato (texto y/o llamadas a funciones).
+ */
+export const generateContent = async (opts: GenerateOptions): Promise<GeminiContent> => {
   if (!env.AI_API_KEY) {
     throw new AppError('El asistente no está configurado.', 503);
   }
@@ -52,14 +80,17 @@ export const chatCompletion = async (
   )}:generateContent?key=${encodeURIComponent(env.AI_API_KEY)}`;
 
   const buildBody = (useThinkingLimit: boolean) => ({
-    systemInstruction: system ? { parts: [{ text: system }] } : undefined,
-    contents: messages.map((m) => ({
-      role: m.role === 'model' ? 'model' : 'user',
-      parts: [{ text: m.text }],
-    })),
+    systemInstruction: opts.system ? { parts: [{ text: opts.system }] } : undefined,
+    contents: opts.contents,
+    ...(opts.tools?.length
+      ? {
+          tools: [{ functionDeclarations: opts.tools }],
+          toolConfig: { functionCallingConfig: { mode: 'AUTO' } },
+        }
+      : {}),
     generationConfig: {
-      temperature,
-      maxOutputTokens: 2048,
+      temperature: opts.temperature ?? 0.7,
+      maxOutputTokens: opts.maxOutputTokens ?? 2048,
       ...(useThinkingLimit
         ? { thinkingConfig: { thinkingBudget: 0 } }
         : {}),
@@ -97,23 +128,24 @@ export const chatCompletion = async (
           }
         }
 
-        const detail =
-          data?.error?.message || `Error del modelo (${response.status})`;
-        throw new AppError(
-          `El modelo de IA respondió con un error: ${detail}`,
-          attempt === MAX_RETRIES && response.status === 429 ? 429 : 502
-        );
+        if (!response.ok) {
+          const detail =
+            data?.error?.message || `Error del modelo (${response.status})`;
+          throw new AppError(
+            `El modelo de IA respondió con un error: ${detail}`,
+            attempt === MAX_RETRIES && response.status === 429 ? 429 : 502
+          );
+        }
       }
 
-      const data = (await response.json()) as GeminiResponse;
-
-      const text =
-        data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ??
-        '';
-      if (!text.trim()) {
+      const data = (await response.json()) as GeminiResponse & {
+        candidates?: Array<{ content?: GeminiContent }>;
+      };
+      const content = data.candidates?.[0]?.content;
+      if (!content?.parts?.length) {
         throw new AppError('El modelo de IA no devolvió una respuesta.', 502);
       }
-      return text.trim();
+      return { role: 'model', parts: content.parts };
     } catch (error) {
       if (error instanceof AppError) throw error;
       if ((error as Error).name === 'AbortError') {
@@ -140,4 +172,32 @@ export const chatCompletion = async (
       clearTimeout(timeout);
     }
   }
+};
+
+/** Texto visible de una respuesta (sin partes de razonamiento interno). */
+export const textOf = (content: GeminiContent): string =>
+  content.parts
+    .filter((p) => typeof p.text === 'string' && !p.thought)
+    .map((p) => p.text)
+    .join('')
+    .trim();
+
+export const chatCompletion = async (
+  system: string,
+  messages: LLMMessage[],
+  temperature = 0.7
+): Promise<string> => {
+  const content = await generateContent({
+    system,
+    temperature,
+    contents: messages.map((m) => ({
+      role: m.role === 'model' ? 'model' : 'user',
+      parts: [{ text: m.text }],
+    })),
+  });
+  const text = textOf(content);
+  if (!text) {
+    throw new AppError('El modelo de IA no devolvió una respuesta.', 502);
+  }
+  return text;
 };
